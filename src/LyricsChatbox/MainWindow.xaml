@@ -1,0 +1,30 @@
+<Window x:Class="LyricsChatbox.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LyricsChatbox" Width="540" Height="690" MinWidth="480" MinHeight="620" Background="#10151F" Foreground="#EBF0F7" FontFamily="Segoe UI" FontSize="14" WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <Style TargetType="Button"><Setter Property="Padding" Value="12,7"/><Setter Property="Margin" Value="0,0,8,0"/><Setter Property="Background" Value="#DFE8FA"/><Setter Property="Foreground" Value="#182234"/></Style>
+    <Style TargetType="TextBox"><Setter Property="Padding" Value="8,6"/><Setter Property="Background" Value="#232D3E"/><Setter Property="Foreground" Value="#FFFFFF"/><Setter Property="BorderBrush" Value="#53617A"/></Style>
+  </Window.Resources>
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+  <StackPanel Margin="26">
+    <DockPanel Margin="0,0,0,18"><TextBlock Text="LyricsChatbox" FontSize="27" FontWeight="SemiBold"/><TextBlock Text="LOCAL · MVP" Foreground="#98AAC7" HorizontalAlignment="Right" VerticalAlignment="Center"/></DockPanel>
+    <CheckBox x:Name="EnabledBox" Content="Send lyrics to VRChat" Foreground="#EBF0F7" FontSize="16" Checked="EnabledChanged" Unchecked="EnabledChanged" Margin="0,0,0,16"/>
+    <TextBlock x:Name="SourceText" Text="Connecting to Apple Music…" Foreground="#A4B9DB" Margin="0,0,0,12"/>
+    <TextBlock x:Name="TrackText" Text="Waiting for a track" FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap"/>
+    <TextBlock x:Name="ArtistText" Foreground="#A4B9DB" Margin="0,5,0,14" TextWrapping="Wrap"/>
+    <Border Background="#1D283B" CornerRadius="10" Padding="18" MinHeight="105"><TextBlock x:Name="LyricText" Text="Your current lyric appears here" FontSize="22" TextWrapping="Wrap" VerticalAlignment="Center"/></Border>
+    <TextBlock x:Name="LyricsStatusText" Text="Waiting for a track" Foreground="#A4B9DB" Margin="0,10,0,4" TextWrapping="Wrap"/>
+    <TextBlock x:Name="PositionText" Foreground="#8397B8" FontSize="12" Margin="0,0,0,17"/>
+    <DockPanel><TextBlock Text="Lyric offset"/><TextBlock x:Name="OffsetText" Text="+0.0 s" HorizontalAlignment="Right"/></DockPanel>
+    <Slider x:Name="OffsetSlider" Minimum="-5" Maximum="5" TickFrequency="0.1" SmallChange="0.1" LargeChange="0.5" IsSnapToTickEnabled="True" ValueChanged="OffsetChanged" Margin="0,8,0,2" AutomationProperties.Name="Lyric offset in seconds"/>
+    <TextBlock Text="Positive = show lyrics later" Foreground="#8397B8" FontSize="12" Margin="0,0,0,18"/>
+    <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="90"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <StackPanel Margin="0,0,10,0"><TextBlock Text="OSC host" Margin="0,0,0,5"/><TextBox x:Name="HostBox" Text="127.0.0.1" AutomationProperties.Name="OSC host"/></StackPanel>
+      <StackPanel Grid.Column="1" Margin="0,0,10,0"><TextBlock Text="Port" Margin="0,0,0,5"/><TextBox x:Name="PortBox" Text="9000" AutomationProperties.Name="OSC port"/></StackPanel>
+      <Button Grid.Column="2" Content="Apply" Click="ApplyOsc" VerticalAlignment="Bottom" Margin="0"/>
+    </Grid>
+    <TextBlock x:Name="OscText" Text="OSC ready · delivery unconfirmed" Foreground="#8397B8" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,16"/>
+    <WrapPanel><Button x:Name="ImportButton" Content="Use local LRC…" Click="ImportLrc"/><Button Content="Retry lyrics" Click="RetryLyrics"/><Button Content="Open data folder" Click="OpenData"/></WrapPanel>
+    <TextBlock x:Name="ErrorText" Foreground="#FFBF9B" TextWrapping="Wrap" Margin="0,12,0,0"/>
+  </StackPanel>
+  </ScrollViewer>
+</Window>
