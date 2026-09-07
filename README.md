@@ -4,7 +4,7 @@ A small Windows app that follows native Apple Music playback, finds synchronized
 
 ## Run
 
-Download the Windows x64 ZIP from [GitHub Releases](https://github.com/Teyocesu/LyricsChatbox/releases), extract it, and launch `win-x64/LyricsChatbox.exe`. The self-contained build does not require a separate .NET installation. Windows 10 version 2004 or newer is required; development validation uses Windows 11. This branch documents v0.2; v0.1 is the frozen initial release.
+Download the Windows x64 ZIP from [GitHub Releases](https://github.com/Teyocesu/LyricsChatbox/releases), extract it, and launch `win-x64/LyricsChatbox.exe`. The self-contained build does not require a separate .NET installation. Windows 10 version 2004 or newer is required; development validation uses Windows 11. This documentation describes v0.2; v0.1 is the frozen initial release.
 
 1. Open Apple Music for Windows and play a song.
 2. In VRChat, enable **OSC** from the Action Menu. Make your own Chatbox visible to check output. Stop other apps that send Chatbox messages to avoid competing output.
@@ -72,8 +72,8 @@ For explicit physical diagnostics:
 
 ```powershell
 dotnet run --project spikes/AppleMusicPlaybackSpike -- 60
-.\artifacts\win-x64\LyricsChatbox.exe --osc-test
-.\artifacts\win-x64\LyricsChatbox.exe --osc-burst
+.\artifacts\v0.2.0\win-x64\LyricsChatbox.exe --osc-test
+.\artifacts\v0.2.0\win-x64\LyricsChatbox.exe --osc-burst
 ```
 
 The playback spike reads metadata/timing/events and compares the production clock to Windows. Its optional `--exercise` flag changes playback through public GSMTC controls; on the tested Apple Music version, seek calls reported success without actually seeking. Use native player controls for real seek validation.
