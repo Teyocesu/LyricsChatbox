@@ -111,7 +111,14 @@ public class BoundaryTests
         Assert.Equal(",sTF", ReadString());
         Assert.Equal("日本語 🎵", ReadString());
         Assert.Equal(packet.Length, cursor);
+        foreach (var typing in new[] { true, false })
+        {
+            output.SendTyping(typing);
+            var signal = (await receiver.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(2))).Buffer;
+            Assert.Equal(typing ? "/chatbox/typing\0,T\0\0" : "/chatbox/typing\0,F\0\0", Encoding.UTF8.GetString(signal));
+        }
         receiver.Dispose();
         output.Send("receiver gone");
+        output.SendTyping(false);
     }
 }

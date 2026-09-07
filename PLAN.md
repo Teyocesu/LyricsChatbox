@@ -1,6 +1,6 @@
 # Execution state
 
-Updated 2026-09-06. Local MVP implementation, release packaging and available validation are complete, with explicit remaining manual acceptance gates. The earlier testing pause was explicitly lifted by the user.
+Historical MVP evidence (2026-09-06). The current v0.2 execution and publication state is recorded below. The earlier testing pause was explicitly lifted by the user.
 
 Environment: Windows 11 build 26200, .NET SDK 10.0.400 / runtime 10.0.11 x64, Apple Music 1.1540.23042.0. Local branch `codex/mvp`; origin is the user-supplied GitHub repository. No public operations authorized.
 
@@ -42,3 +42,36 @@ Environment: Windows 11 build 26200, .NET SDK 10.0.400 / runtime 10.0.11 x64, Ap
 - Native restart/previous check: ignored apple-restart-previous.local.jsonl records Backlight 37->0, 7->0, then The Mystic at position 0. Production WPF displayed the new track and advancing lyric. Both capture processes completed.
 - Distribution: artifacts/win-x64/LyricsChatbox.exe and artifacts/LyricsChatbox-0.1.0-win-x64.zip. Self-contained Windows x64 binaries, README, validation state and license texts included. Archive structure inspected. No credentials, normal lyric history, local settings or lyric cache included.
 - Git: implementation preserved as one coherent local MVP commit on codex/mvp. No tags, pushes or public releases.
+
+# v0.2.0 execution (2026-09-07)
+
+The new user goal explicitly authorizes publishing v0.1.0 and normal Git/GitHub work for v0.2.0. v0.2.0 final release requires critical physical checks including Compact/Floating confirmation.
+
+- v0.1.0 independently verified: clean source at 0bfdc91347f6c9642f70bc4f6057d15ff638540c, Release build 0 warnings/errors, 43 tests passed; regenerated Windows x64 package with licenses and no personal data/cache.
+- Published main at that SHA, annotated tag v0.1.0, public release https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.1.0. ZIP asset uploaded (71,807,050 bytes), GitHub digest matches local SHA256 8e7f6c6043d5bb101c56eb0ea1b544d37a13747172405bd44fea61a70d15f817. Checksum also attached. No project license invented.
+- Created codex/v0.2.0 directly from v0.1.0.
+
+| Phase | State | Next evidence |
+|---|---|---|
+| 0 Audit/publish | VALIDATED | Public release/source/tag/asset verified |
+| 1 LRCLIB coverage | IMPLEMENTED / TESTED | Invalid timed direct result falls through; usable search candidates; one album-narrowed request only at 20-result cap, preserving broad ambiguity |
+| 2 Secondary provider | BLOCKED BY TERMS | Official Musixmatch requirements conflict with approved no-tracking/clean display behavior; no scraper or fake integration |
+| 3 Composer | IMPLEMENTED / TESTED | Eight tokens, four presets, safe missing fields, single-pass replacement and settings migration |
+| 4 Manual/typing/live edit | PHYSICAL CHECK IN PROGRESS | One owner, eight-second hold after emission, current-state resume, idle/focus/shutdown typing clear; unit regressions passed |
+| 5 Compact/Floating | VISUAL CORE CONFIRMED | User confirmed normal -> compact -> normal with Japanese/emoji and clock; manual/long/lyric combinations pending |
+| 6 UI/settings | IMPLEMENTED / INSPECTED | Three WPF tabs, contrast fixed, preview and actual payload counter; settings survived Release restart |
+| 7 Release gate | IN PROGRESS | Release build 0 warnings/errors, full suite 61 passed; final diff/package and remaining physical checks pending |
+
+## v0.2 evidence
+- Live LRCLIB metadata-only probes covered Sweet Child O' Mine, Smack That (feature), Run It Up (features) and Said Sum. Structured feature metadata already returns plausible records; no feature/version/duration scoring was relaxed. Search can hit 20 results with conflicting durations. Probe is ignored under artifacts; provider lyrics are not committed.
+- A concrete resolver defect prevented fallback when a direct result contained nonempty text without parseable timestamps. New regression protects fallback to a usable synchronized candidate. Album narrowing is bounded to one extra request; combining broad/narrowed candidates preserves conflict rejection. HTTP failure, cooldown, positive cache and epoch behavior remain covered.
+- Musixmatch official docs checked 2026-09-07: https://docs.musixmatch.com/getting-started , https://docs.musixmatch.com/implementation-guidelines , https://docs.musixmatch.com/content-restrictions , https://docs.musixmatch.com/lyrics-views-tracking . Supported timed-lyrics APIs exist, but required usage tracking, copyright/branding/backlinks and territorial restrictions require an appropriate agreement before this no-telemetry desktop/VRChat integration. No key or applicable agreement is configured. The user explicitly allowed leaving this provider blocked; the current resolver boundary is retained without speculative provider classes.
+- Real v0.2 WPF sent `Floating test · 日本語 🎵` with local time in normal, compact, then normal mode. User answered "si" to confirmation of narrow opaque element, floating text, restored ordinary background and intact Japanese/emoji. This proves that visual combination only.
+- Release WPF restarted after contrast correction; tab labels and content are readable. Manual Send displayed the canned Unicode message and returned from Manual to Automatic after the eight-second hold, observed in app. Headset manual/typing/live-edit/long-text and current-song return are still pending.
+- Latest full command: `dotnet test tests/LyricsChatbox.Tests -c Release --no-build`: 61 passed, 0 failed/skipped. Latest Release build: 0 warnings/errors. No v0.2 tag or release yet.
+- Native v0.2 capture completed normally: `artifacts/apple-v02-validation.local.jsonl` (ignored). Hello Cotto pause lasted about 9.6s at position 169; resume was observed; dragging the native slider produced backward 201 -> 53 and forward 61 -> 133. Next changed to Malbec at zero. WPF observed Hello Cotto from cache, Malbec from LRCLIB, advancing lyrics and offset zero. Simple clicks on the thin progress bar did not seek and were not counted. This capture is production-clock/native-session evidence, not headset confirmation.
+- Actual WPF manual/live test sent Japanese/emoji, Live 1 then Live 2/FINAL, then a long compact draft capped at 144 total UTF-16 units. App returned to current lyrics after Send. Actual composer then showed Malbec/artist + current lyric, compact off, then Lyrics Only. Headset answers for these later combinations remain pending.
+- Focused audit strengthened the album-search regression: a broad-page conflicting synchronized record must remain ambiguous even when the narrowed page contains only the preferred record. Existing real UDP integration now receives both typing boolean states and verifies the exact OSC address/type tags. Three affected cases passed in Release.
+- User answered "si todo bien" to the real-song sequence: compact lyrics -> Malbec/title/artist + current lyric -> ordinary background -> Lyrics Only, including pause/resume, seeks and track change. These combinations are now visually confirmed. Separate manual/typing/live-edit/long compact confirmation remains pending.
+- Final Release build and complete suite after test strengthening passed: 0 warnings/errors and 61 tests. Initial v0.2 package built successfully (410 entries), with all five license texts matching source copies; no settings, cache, LRC files, credentials or diagnostic captures are bundled. `System.Transactions.Local.dll` is a runtime assembly, not personal local data. Final artifact is rebuilt after committing so its embedded source revision identifies the feature commit.
+- Diff reviewed against v0.1.0: unchanged playback clock/engine and matching policy; dispatcher-owned manual state; epoch guard retained before scheduling and async completion; one paced final desired payload; safe Unicode and compact budgets; settings optional defaults; bounded sequential provider fallback. Source scan found no credentials/keys. README now describes implemented behavior and blocked Musixmatch accurately. Final release is still withheld for remaining physical gates (manual matrix, lookup-in-flight track change and representative no-lyrics runtime state).

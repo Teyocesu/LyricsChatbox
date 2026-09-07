@@ -4,11 +4,14 @@ using System.Text.Json;
 
 namespace LyricsChatbox;
 
-public record AppSettings(bool Enabled = false, double Offset = 0, string Host = "127.0.0.1", int Port = 9000)
+public record AppSettings(bool Enabled = false, double Offset = 0, string Host = "127.0.0.1", int Port = 9000,
+    string Preset = "Lyrics Only", string CustomTemplate = "{lyrics}", string Message = "",
+    bool Compact = false, bool TypingIndicator = false, bool LiveEdit = false)
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => double.IsFinite(Offset) && Offset is >= -5 and <= 5 && Port is >= 1 and <= 65535 &&
-        (Host == "localhost" || IPAddress.TryParse(Host, out _));
+        (Host == "localhost" || IPAddress.TryParse(Host, out _)) && ChatboxComposer.Presets.Contains(Preset) &&
+        CustomTemplate is { Length: <= 512 } && Message is { Length: <= 512 };
 }
 
 public sealed class LocalData(string root)

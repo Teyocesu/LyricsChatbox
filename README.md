@@ -4,11 +4,11 @@ A small Windows app that follows native Apple Music playback, finds synchronized
 
 ## Run
 
-Use the local Windows x64 distribution under `artifacts/win-x64` when supplied, and launch `LyricsChatbox.exe`. The self-contained build does not require a separate .NET installation. Windows 10 version 2004 or newer is required; development validation uses Windows 11.
+Download the Windows x64 ZIP from [GitHub Releases](https://github.com/Teyocesu/LyricsChatbox/releases), extract it, and launch `win-x64/LyricsChatbox.exe`. The self-contained build does not require a separate .NET installation. Windows 10 version 2004 or newer is required; development validation uses Windows 11. This branch documents v0.2; v0.1 is the frozen initial release.
 
 1. Open Apple Music for Windows and play a song.
 2. In VRChat, enable **OSC** from the Action Menu. Make your own Chatbox visible to check output. Stop other apps that send Chatbox messages to avoid competing output.
-3. Open LyricsChatbox and select **Send lyrics to VRChat**. The first launch starts with sending off; this setting is remembered.
+3. Open LyricsChatbox and select **Enable Chatbox output**. The first launch starts with sending off; this setting is remembered. **Lyrics Only** is the default, with no forced song title or prefix.
 
 Default OSC destination: `127.0.0.1:9000`. **Apply** accepts an IP address (IPv4/IPv6) or `localhost`, and a port from 1 to 65535. UDP has no delivery acknowledgement; “sent” does not prove that VRChat displayed a message. No inbound server is needed.
 
@@ -21,6 +21,20 @@ Lyrics are resolved in this order: an imported local LRC for the recording, a va
 **Use local LRC…** associates a UTF-8 `.lrc` file with the currently detected recording. Common minute/second timestamps, fractional seconds, repeated timestamp tags and LRC offset metadata are supported. The app clears its current line after a 10-second hold or an explicit blank LRC line. This can end an unusually long sung line early.
 
 The **Lyric offset** control is optional and ranges from −5 to +5 seconds in 0.1-second steps. Positive means *later*: +1.0 s delays the displayed lyrics by one second. The playback clock automatically corrects its own anchors; it does not analyze audio or automatically repair inaccurate timestamps supplied by a lyrics file.
+
+## Display and manual chat
+
+The **Display** tab offers **Lyrics Only**, **Song + Lyrics**, **Status / Time** and **Custom** presets. Custom templates support `{lyrics}`, `{title}`, `{artist}`, `{album}`, `{time}`, `{message}`, `{elapsed}` and `{duration}`. The clock uses local 24-hour time; playback times use minutes and seconds (hours when needed). `{message}` is your saved custom status. Missing fields and unknown tokens are omitted; text inserted through a token is never interpreted as another template. Templates and status text accept up to 512 characters.
+
+The **Manual** tab takes priority while composing. With live edit off, a draft stays local until **Send**. With live edit on, the newest draft updates at the existing 1.05-second send cadence; old keystrokes never queue. **Send** holds the final message for eight seconds after emission, then resumes the current automatic display. **Resume Automatic** returns immediately; **Clear** sends an empty message and holds the empty state for eight seconds. Drafts are not saved. Optional **Typing indicator** sends VRChat's typing state while actively editing, and clears on three seconds of inactivity, focus loss, Send, Clear, resume, output disable or shutdown (best effort over UDP).
+
+**Compact / Floating Chatbox** is opt-in and applies to automatic and manual output. It appends U+0003 followed by U+001F to non-empty payloads, using current VRChat rendering behavior to make the opaque background narrow while text appears to float. This is not an official background-width API and may change after VRChat updates. Toggling it resends the current text at the normal cadence. Empty clears remain empty. The preview hides the suffix, while its character counter includes those two UTF-16 units: compact mode has up to 142 visible units. Both modes preserve whole Unicode grapheme clusters during truncation.
+
+## Lyrics coverage and optional providers
+
+LRCLIB remains the only remote provider. An unusable direct result now falls through to synchronized search candidates. If the search reaches LRCLIB's 20-result cap without a confident match, one additional album-filtered request may expose the missing recording. Broad and narrowed candidates still pass the same strict duration, artist, recording-version and ambiguity checks. There are at most three sequential requests per lookup; the ordinary successful path adds none.
+
+An official Musixmatch integration was evaluated but is **not implemented**. Its current [implementation guidelines](https://docs.musixmatch.com/implementation-guidelines) and [lyrics view requirements](https://docs.musixmatch.com/lyrics-views-tracking) require attribution/branding and usage tracking that do not fit this app's approved clean Chatbox and no-telemetry behavior without a suitable agreement. No scraper, API key setting or hidden tracking is included. Local LRC import remains available when LRCLIB has no confident timed match.
 
 ## Local data and privacy
 
@@ -49,10 +63,10 @@ dotnet restore LyricsChatbox.slnx
 dotnet build LyricsChatbox.slnx -c Release --no-restore
 dotnet test tests/LyricsChatbox.Tests -c Release --no-build
 dotnet run --project src/LyricsChatbox
-dotnet publish src/LyricsChatbox -c Release -r win-x64 --self-contained true -o artifacts/win-x64
+.\scripts\Publish.ps1
 ```
 
-The regression suite covers timeline boundaries, offsets/gaps, pause/resume/seeks, stale lookup epochs, conservative matching, Unicode, OSC coalescing/UDP decoding, provider failures/cancellation/rate limiting, and local persistence corruption. It does not access Apple Music, LRCLIB or VRChat during normal test execution.
+The publish script produces `artifacts/v0.2.0/win-x64`, a ZIP and SHA256 file, including documentation and third-party license texts. The regression suite covers timeline boundaries, offsets/gaps, pause/resume/seeks, stale lookup epochs, conservative matching, provider failures/cancellation/rate limiting, local persistence corruption and migration, composer tokens, manual ownership, typing lifecycle, latest-draft coalescing and compact Unicode budgets. It does not access Apple Music, LRCLIB or VRChat during normal test execution.
 
 For explicit physical diagnostics:
 

@@ -156,6 +156,44 @@ public sealed class ProviderTests : IDisposable
     }
 
     [Fact]
+    public async Task UnusableDirectTimestampsDoNotHideUsableSearchResult()
+    {
+        using var handler = new Handler((request, _) => Task.FromResult(request.RequestUri!.AbsolutePath.EndsWith("get")
+            ? Json(Record with { SyncedLyrics = "timestamp-free provider placeholder" })
+            : Json(new[] { Record with { AlbumName = "Other album", SyncedLyrics = null }, Record })));
+        using var http = new HttpClient(handler);
+        using var resolver = new LyricsResolver(http, Data);
+        Assert.NotNull((await resolver.ResolveAsync(CoreTests.Track, default)).Timeline);
+        Assert.Equal(2, handler.Calls);
+        Assert.NotNull(Data.ReadCache(CoreTests.Track));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FullSearchPageUsesOneAlbumQueryAndStillRejectsConflictingContent(bool ambiguous)
+    {
+        using var handler = new Handler((request, _) =>
+        {
+            if (request.RequestUri!.AbsolutePath.EndsWith("get")) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+            if (request.RequestUri.Query.Contains("album_name=")) return Task.FromResult(Json(new[] { Record }));
+            var broad = Enumerable.Range(1, 20).Select(id => Record with { Id = id, ArtistName = "Wrong artist" }).ToArray();
+            if (ambiguous)
+            {
+                broad[0] = Record;
+                broad[1] = Record with { Id = 2, SyncedLyrics = "[00:01]conflict" };
+            }
+            return Task.FromResult(Json(broad));
+        });
+        using var http = new HttpClient(handler);
+        using var resolver = new LyricsResolver(http, Data);
+        var result = await resolver.ResolveAsync(CoreTests.Track, default);
+        Assert.Equal(!ambiguous, result.Timeline is not null);
+        Assert.Equal(3, handler.Calls);
+        Assert.Equal(!ambiguous, Data.ReadCache(CoreTests.Track) is not null);
+    }
+
+    [Fact]
     public void SettingsAndCacheRecoverFromCorruptionAndPersistUnicode()
     {
         Directory.CreateDirectory(root);

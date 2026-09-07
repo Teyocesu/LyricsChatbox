@@ -1,7 +1,7 @@
 # Current handoff
 
-Read SPEC.md and PLAN.md. The local MVP is implemented, packaged and validated to the available physical boundary. Release suite: 43 passing tests. The user confirmed no lyric flicker, good synchronization at offset zero and improved real Chatbox track changes after 1.05s pacing. Native Apple Music close/reopen, same-song restart and previous were also observed.
+Read SPEC.md and PLAN.md. v0.1.0 is published at commit 0bfdc91347f6c9642f70bc4f6057d15ff638540c with public main/tag/release and verified Windows x64 ZIP. The current goal is v0.2.0 on codex/v0.2.0, branched directly from that release.
 
-Run artifacts/win-x64/LyricsChatbox.exe or extract artifacts/LyricsChatbox-0.1.0-win-x64.zip. Current app is running with sending enabled and offset zero. PLAN contains precise evidence and remaining manual acceptance items; next highest-value physical check is VRChat close/reopen with the app left running. Audio alignment remains outside this MVP.
+Composer, manual ownership/typing/live edit, compact formatting, settings migration and bounded LRCLIB improvements are implemented. Release build has zero warnings/errors; 61 tests pass. The user confirmed normal/compact/normal rendering with Japanese/emoji and clock in the real headset. Remaining physical combinations and representative Apple Music transitions are in progress; see PLAN for exact evidence. Musixmatch is blocked by official terms incompatible with approved scope; no scraper/key/tracking was added.
 
-Local source commit only. No push/tag/public release without explicit approval. No subagents authorized. Do not repeat already confirmed checks unless a relevant change or new failure justifies them.
+Normal feature commits/push are authorized. Final v0.2 main/tag/release is authorized only after critical physical gates. Do not publish that final release early or repeat confirmed checks without a relevant change. Use scripts/Publish.ps1 for the versioned Windows x64 ZIP and checksum. Audio alignment remains out of scope. No subagents authorized.
