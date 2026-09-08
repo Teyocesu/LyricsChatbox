@@ -17,7 +17,7 @@ public static class ChatboxComposer
         ? TimeSpan.FromSeconds(s).ToString(s >= 3600 ? @"h\:mm\:ss" : @"m\:ss", CultureInfo.InvariantCulture) : "";
 
     public static string Compose(string? template, TrackIdentity? track, string lyrics, string message,
-        DateTimeOffset localTime, double? position)
+        DateTimeOffset localTime, double? position, bool preserveLayout = false)
     {
         if (template is null || template.Length > 512) return "";
         var values = new Dictionary<string, string>
@@ -47,8 +47,9 @@ public static class ChatboxComposer
                 rendered = Regex.Replace(rendered, @"([—–|·:/-])\s*([—–|·:/-])", "$1");
                 rendered = rendered.Trim().Trim(' ', '—', '–', '|', '·', ':', '/', '-', '♫').Trim();
             }
-            if (!string.IsNullOrWhiteSpace(rendered)) lines.Add(rendered.Trim());
+            if (!string.IsNullOrWhiteSpace(rendered)) lines.Add(preserveLayout ? rendered : rendered.Trim());
+            else if (preserveLayout && !hadToken) lines.Add("");
         }
-        return string.Join("\n", lines);
+        return string.Join("\n", lines).Trim('\n');
     }
 }

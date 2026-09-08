@@ -13,4 +13,4 @@ The distribution's `licenses` folder contains the .NET license and third-party n
 
 Development/test-only dependencies are not included in the runnable distribution: xUnit 2.9.3, xUnit analyzers 1.18.0 and Visual Studio runner 3.1.4 (Apache-2.0); Microsoft.NET.Test.Sdk, TestHost, ObjectModel and CodeCoverage 17.14.1 (MIT); Newtonsoft.Json 13.0.3 (MIT). Package license metadata was checked in the restored NuGet packages.
 
-LRCLIB is an external HTTPS service, not bundled implementation code. Cached/imported lyrics remain in the user's local application-data directory; no provider lyric corpus is part of this repository or distribution. No MagicChatBox code was copied.
+LRCLIB and NetEase are external HTTPS services, not bundled implementation code. NetEase uses an independently written community REST adapter; this does not assert an official developer agreement, availability guarantee or lyric redistribution license. Current full service terms could not be verified during RC evaluation. Cached/imported lyrics remain in the user's local application-data directory; no provider lyric corpus is part of this repository or distribution. No MagicChatBox code was copied.

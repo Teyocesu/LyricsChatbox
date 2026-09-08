@@ -5,32 +5,77 @@ using System.Text.Json;
 
 namespace LyricsChatbox;
 
-public record LyricsResolution(LyricTimeline? Timeline, string Status, DateTimeOffset? RetryAt = null);
+public record LyricsResolution(LyricTimeline? Timeline, string Status, DateTimeOffset? RetryAt = null,
+    string? Provider = null, LyricsOutcome Outcome = LyricsOutcome.Unavailable);
 
-public sealed class LyricsResolver(HttpClient http, LocalData data) : IDisposable
+public sealed class LyricsResolver(HttpClient http, LocalData data, ISyncedLyricsProvider? secondary = null) : IDisposable
 {
     private readonly SemaphoreSlim network = new(1, 1);
     private DateTimeOffset nextRequest;
     private DateTimeOffset cooldown;
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
-    public async Task<LyricsResolution> ResolveAsync(TrackIdentity track, CancellationToken token)
+    public static readonly TimeSpan PrimaryDeadline = TimeSpan.FromSeconds(5);
+
+    public async Task<LyricsResolution> ResolveAsync(TrackIdentity track, CancellationToken token,
+        Action<string>? progress = null)
+    {
+        LyricsResolution primary;
+        using (var deadline = CancellationTokenSource.CreateLinkedTokenSource(token))
+        {
+            deadline.CancelAfter(PrimaryDeadline);
+            try { primary = await ResolvePrimaryAsync(track, deadline.Token); }
+            catch (OperationCanceledException) when (!token.IsCancellationRequested)
+            { primary = new(null, "Lyrics provider timed out", DateTimeOffset.UtcNow.AddSeconds(60), "LRCLIB", LyricsOutcome.Timeout); }
+        }
+        token.ThrowIfCancellationRequested();
+        if (secondary is null || primary.Timeline is not null || primary.Outcome is LyricsOutcome.Instrumental or LyricsOutcome.Rejected)
+            return primary;
+        progress?.Invoke("Searching another source…");
+        var fallback = await secondary.FindAsync(track, token);
+        token.ThrowIfCancellationRequested();
+        // Revalidate the boundary before parsing or caching, even if a future adapter is defective.
+        if (fallback.Outcome == LyricsOutcome.Found && fallback.Record is { } record && LyricsMatching.Score(track, record).HasValue)
+        {
+            var resolved = Convert(record, secondary.Name);
+            if (resolved.Timeline is not null)
+            {
+                token.ThrowIfCancellationRequested();
+                data.SaveCache(track, record, secondary.Name);
+                return resolved;
+            }
+        }
+        if (fallback.Outcome == LyricsOutcome.Found) fallback = new(LyricsOutcome.Rejected);
+        var retry = new[] { primary.RetryAt, fallback.RetryAt }.Where(t => t.HasValue).Min();
+        var status = fallback.Outcome switch
+        {
+            LyricsOutcome.Ambiguous => "No confident lyrics match",
+            LyricsOutcome.RateLimited => "Another source is busy · retrying later",
+            LyricsOutcome.Timeout => "Another source timed out · retrying later",
+            LyricsOutcome.Unavailable => "Another source is unavailable · retrying later",
+            _ => "No synchronized lyrics · import a local LRC"
+        };
+        return new(null, status, retry, secondary.Name, fallback.Outcome);
+    }
+
+    private async Task<LyricsResolution> ResolvePrimaryAsync(TrackIdentity track, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
         var local = data.ReadLocal(track);
         if (local is not null)
         {
             var parsed = LrcParser.Parse(local);
-            if (parsed.Lines.Count > 0) return new(parsed, "Synced lyrics loaded · local LRC");
+            if (parsed.Lines.Count > 0) return new(parsed, "Synced lyrics loaded · local LRC", Provider: "Local LRC", Outcome: LyricsOutcome.Found);
         }
-        var cached = data.ReadCache(track);
+        var cachedEntry = data.ReadCachedLyrics(track);
+        var cached = cachedEntry?.Record;
         if (cached is not null)
         {
-            var result = Convert(cached, "cache");
-            if (result.Timeline is not null || cached.Instrumental) return result;
+            var result = Convert(cached, cachedEntry!.Provider) with { Status = "Synced lyrics loaded · cache · " + cachedEntry.Provider };
+            if (result.Timeline is not null || cached.Instrumental) return cached.Instrumental ? result with { Status = "Instrumental" } : result;
         }
         if (string.IsNullOrWhiteSpace(track.Title) || string.IsNullOrWhiteSpace(track.Artist) || !double.IsFinite(track.Duration) || track.Duration is < 1 or > 3600)
-            return new(null, "Insufficient track metadata for safe matching");
+            return new(null, "Insufficient track metadata for safe matching", Outcome: LyricsOutcome.Rejected);
         try
         {
             var query = "track_name=" + Uri.EscapeDataString(track.Title) + "&artist_name=" + Uri.EscapeDataString(track.Artist);
@@ -48,19 +93,19 @@ public sealed class LyricsResolver(HttpClient http, LocalData data) : IDisposabl
                     var narrowed = await GetAsync<LyricsRecord[]>("search?" + query + "&album_name=" + Uri.EscapeDataString(track.Album), token) ?? [];
                     match = LyricsMatching.Choose(track, candidates.Concat(narrowed).Where(Usable));
                 }
-                if (match.Ambiguous) return new(null, "Ambiguous lyrics match");
+                if (match.Ambiguous) return new(null, "Ambiguous lyrics match", Provider: "LRCLIB", Outcome: LyricsOutcome.Ambiguous);
                 record = match.Record;
             }
             token.ThrowIfCancellationRequested();
-            if (record is null) return new(null, "No synchronized lyrics");
+            if (record is null) return new(null, "No synchronized lyrics", Provider: "LRCLIB", Outcome: LyricsOutcome.NotFound);
             var resolved = Convert(record, "LRCLIB");
             if (resolved.Timeline is not null || record.Instrumental) data.SaveCache(track, record);
             return resolved;
         }
-        catch (ProviderCooldown ex) { return new(null, "Lyrics provider rate limited", ex.Until); }
+        catch (ProviderCooldown ex) { return new(null, "Lyrics provider rate limited", ex.Until, "LRCLIB", LyricsOutcome.RateLimited); }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is HttpRequestException or IOException or JsonException or OperationCanceledException or ArgumentException)
-        { return new(null, "Lyrics provider unavailable", DateTimeOffset.UtcNow.AddSeconds(60)); }
+        { return new(null, "Lyrics provider unavailable", DateTimeOffset.UtcNow.AddSeconds(60), "LRCLIB", LyricsOutcome.Unavailable); }
     }
 
     private static bool Usable(LyricsRecord? record) => record is not null &&
@@ -68,9 +113,9 @@ public sealed class LyricsResolver(HttpClient http, LocalData data) : IDisposabl
 
     private static LyricsResolution Convert(LyricsRecord record, string source)
     {
-        if (record.Instrumental) return new(null, "Instrumental");
+        if (record.Instrumental) return new(null, "Instrumental", Provider: source, Outcome: LyricsOutcome.Instrumental);
         var timeline = LrcParser.Parse(record.SyncedLyrics);
-        return timeline.Lines.Count == 0 ? new(null, "No synchronized lyrics") : new(timeline, "Synced lyrics loaded · " + source);
+        return timeline.Lines.Count == 0 ? new(null, "No synchronized lyrics", Provider: "LRCLIB", Outcome: LyricsOutcome.NotFound) : new(timeline, "Synced lyrics loaded · " + source, Provider: source, Outcome: LyricsOutcome.Found);
     }
 
     private async Task<T?> GetAsync<T>(string path, CancellationToken token)
@@ -82,7 +127,7 @@ public sealed class LyricsResolver(HttpClient http, LocalData data) : IDisposabl
             var delay = nextRequest - DateTimeOffset.UtcNow;
             if (delay > TimeSpan.Zero) await Task.Delay(delay, token);
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
-            timeout.CancelAfter(TimeSpan.FromSeconds(12));
+            timeout.CancelAfter(PrimaryDeadline);
             using var request = new HttpRequestMessage(HttpMethod.Get, "https://lrclib.net/api/" + path);
             request.Headers.UserAgent.ParseAdd($"LyricsChatbox/{typeof(LyricsResolver).Assembly.GetName().Version?.ToString(3)} (+https://github.com/Teyocesu/LyricsChatbox)");
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);

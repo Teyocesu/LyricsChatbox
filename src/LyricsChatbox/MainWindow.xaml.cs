@@ -4,6 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Win32;
 
@@ -11,8 +13,9 @@ namespace LyricsChatbox;
 
 public partial class MainWindow : Window
 {
+    private static readonly System.Windows.Media.FontFamily TextFont = new("Segoe UI"), LayoutFont = new("Consolas");
     private readonly LocalData data = new(LocalData.DefaultRoot);
-    private readonly HttpClient http = new();
+    private readonly HttpClient http = new(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false });
     private readonly AppleMusicPlayback playback = new();
     private readonly SynchronizationEngine engine = new();
     private readonly ChatboxScheduler scheduler = new();
@@ -22,6 +25,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(50) };
     private readonly DispatcherTimer saveTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
     private readonly LyricsResolver resolver;
+    private readonly NetEaseLyricsProvider secondary;
     private readonly Dictionary<string, LyricsResolution> loaded = new();
     private readonly HashSet<Task> pending = new();
     private CancellationTokenSource? lookup;
@@ -33,14 +37,21 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        resolver = new(http, data);
+        secondary = new(http);
+        resolver = new(http, data, secondary);
         settings = data.ReadSettings();
         InitializeComponent();
         engine.Enabled = settings.Enabled; engine.Offset = settings.Offset;
         EnabledBox.IsChecked = settings.Enabled; OffsetSlider.Value = settings.Offset;
         HostBox.Text = settings.Host; PortBox.Text = settings.Port.ToString(CultureInfo.InvariantCulture);
         PresetBox.ItemsSource = ChatboxComposer.Presets; PresetBox.SelectedItem = settings.Preset;
+        CustomAlignmentBox.ItemsSource = ManualAlignmentBox.ItemsSource = MessageLayout.Alignments;
+        CustomAlignmentBox.SelectedItem = settings.CustomAlignment; ManualAlignmentBox.SelectedItem = settings.ManualAlignment;
+        CustomAsciiBox.ItemsSource = ManualAsciiBox.ItemsSource = StatusAsciiBox.ItemsSource = MessageLayout.Templates;
+        CustomAsciiBox.SelectedIndex = ManualAsciiBox.SelectedIndex = StatusAsciiBox.SelectedIndex = 0;
         TemplateBox.Text = settings.CustomTemplate; TemplateBox.IsEnabled = settings.Preset == "Custom";
+        CustomPanel.Visibility = settings.Preset == "Custom" ? Visibility.Visible : Visibility.Collapsed;
+        StatusPanel.Visibility = settings.Preset is "Custom" or "Status / Time" ? Visibility.Visible : Visibility.Collapsed;
         MessageBox.Text = settings.Message; CompactBox.IsChecked = settings.Compact;
         TypingBox.IsChecked = settings.TypingIndicator; LiveBox.IsChecked = settings.LiveEdit;
         OffsetText.Text = settings.Offset.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
@@ -60,7 +71,7 @@ public partial class MainWindow : Window
         {
             if (closing || revision != playback.Revision) return;
             acceptedPlaybackRevision = revision;
-            SourceText.Text = status;
+            SourceText.Text = snapshot is null ? "Apple Music · not detected" : "Apple Music · " + snapshot.State.ToString().ToLowerInvariant();
             if (engine.Observe(snapshot))
             {
                 lookup?.Cancel();
@@ -89,7 +100,11 @@ public partial class MainWindow : Window
         try
         {
             // Disk parsing and HTTP run off the dispatcher; completion returns to the dispatcher.
-            var result = await Task.Run(() => resolver.ResolveAsync(track, token), token);
+            var result = await Task.Run(() => resolver.ResolveAsync(track, token, status =>
+                _ = Dispatcher.InvokeAsync(() =>
+                {
+                    if (!closing && !token.IsCancellationRequested && engine.ReportProgress(epoch, status)) Tick();
+                })), token);
             if (closing || token.IsCancellationRequested || !engine.Complete(epoch, result)) return;
             if (result.RetryAt is null)
             {
@@ -129,31 +144,65 @@ public partial class MainWindow : Window
         }
         if (engine.RetryAt is { } retry && retry <= DateTimeOffset.UtcNow) StartLookup(true);
         var lyric = engine.Current(now);
-        TrackText.Text = engine.Track?.Title ?? "Waiting for a track";
+        TrackText.Text = string.IsNullOrWhiteSpace(engine.Track?.Title) ? "No track playing" : engine.Track.Title;
         ArtistText.Text = engine.Track?.Artist ?? "";
+        AlbumText.Text = engine.Track?.Album ?? "";
         LyricText.Text = lyric.Length > 0 ? lyric : "—";
-        LyricsStatusText.Text = engine.LyricsStatus;
+        LyricsStatusText.Text = engine.LyricsStatus.Replace("Synced lyrics loaded ·", "Synced ·").Replace("Looking up synced lyrics", "Finding lyrics…")
+            .Replace("Insufficient track metadata for safe matching", "Play a song in Apple Music");
         var position = engine.Position(now);
-        PositionText.Text = position.HasValue ? $"{TimeSpan.FromSeconds(position.Value):m\\:ss} / {TimeSpan.FromSeconds(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400)):m\\:ss}" : "Waiting for a fresh playback timeline";
-        ImportButton.IsEnabled = engine.Track is not null;
+        PositionProgress.Value = engine.Track?.Duration > 0 && position.HasValue ? Math.Clamp(position.Value / engine.Track.Duration, 0, 1) : 0;
+        PositionText.Text = position.HasValue ? $"{TimeSpan.FromSeconds(position.Value):m\\:ss} / {TimeSpan.FromSeconds(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400)):m\\:ss}" : "No playback position";
+        ImportButton.IsEnabled = !string.IsNullOrWhiteSpace(engine.Track?.Title);
         var automatic = ChatboxComposer.Compose(ChatboxComposer.Template(settings.Preset, settings.CustomTemplate),
-            engine.Track, lyric, settings.Message, DateTimeOffset.Now, position);
+            engine.Track, lyric, settings.Message, DateTimeOffset.Now, position, settings.Preset is "Custom" or "Status / Time");
         var desired = manual.Desired(automatic, now);
-        var payload = ChatboxFormatter.Format(desired ?? manual.Draft, settings.Compact);
+        var preserveLayout = manual.IsManual || settings.Preset is "Custom" or "Status / Time";
+        var alignment = manual.IsManual ? settings.ManualAlignment : settings.CustomAlignment;
+        if (desired is not null && preserveLayout) desired = MessageLayout.Align(desired, alignment);
+        var payload = ChatboxFormatter.Format(desired ?? MessageLayout.Align(manual.Draft, settings.ManualAlignment), settings.Compact, preserveLayout);
         var visible = ChatboxFormatter.Visible(payload);
         PreviewText.Text = visible.Length > 0 ? visible : "—";
+        PreviewText.FontFamily = preserveLayout ? LayoutFont : TextFont;
         BudgetText.Text = payload.Length + " / 144";
+        PreviewLabel.Text = settings.Compact ? "CHATBOX PREVIEW · FLOATING" : "CHATBOX PREVIEW";
+        PreviewBubble.Background = settings.Compact ? System.Windows.Media.Brushes.Transparent : (System.Windows.Media.Brush)FindResource("RaisedBrush");
+        PreviewBubble.Padding = settings.Compact ? new Thickness(0, 4, 0, 4) : new Thickness(12, 8, 12, 8);
         OwnerText.Text = !engine.Enabled ? "Output off · preview" : manual.IsManual
             ? desired is null ? "Manual · unsent draft" : "Manual · preview" : "Automatic · preview";
+        var manualLayout = MessageLayout.Align(manual.Draft, settings.ManualAlignment);
+        var manualPayload = ChatboxFormatter.Format(manualLayout, settings.Compact, true);
+        ManualBudgetText.Text = manualPayload.Length + " / 144" +
+            (ChatboxFormatter.Visible(manualPayload).Length < manualLayout.Trim('\r', '\n').Length ? " · trimmed" : "");
+        ManualStateText.Text = manual.RemainingHold(now) is double remaining
+            ? $"Sent · automatic resumes in {Math.Ceiling(remaining):0} s"
+            : manual.IsManual ? manual.PendingSend ? "Sending your message…" : "Manual owns the Chatbox · automatic lyrics are paused"
+            : "Automatic mode · editing a draft takes priority";
+        ConnectionSummary.Text = engine.Enabled ? "Output enabled · OSC" : "Output off";
         SendButton.IsEnabled = ClearButton.IsEnabled = engine.Enabled;
-        scheduler.Set(engine.Epoch, desired ?? "", engine.Enabled && desired is not null, settings.Compact, manual.PendingSend);
+        scheduler.Set(engine.Epoch, desired ?? "", engine.Enabled && desired is not null, settings.Compact, manual.PendingSend, preserveLayout);
         if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && engine.Enabled)
         {
             output.Send(packet.Text); manual.Sent(now);
         }
         if (typing.Take(engine.Enabled && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
             output.SendTyping(typingState);
-        OscText.Text = output.Status;
+        OscText.Text = !engine.Enabled ? "Output paused" : output.Status.StartsWith("OSC unavailable") ? "OSC unavailable · check Settings" : "OSC ready · no delivery receipt";
+    }
+
+    private void Navigate(object sender, RoutedEventArgs e)
+    {
+        if (!ready || sender is not RadioButton { Tag: string page }) return;
+        HomePage.Visibility = page == "Home" ? Visibility.Visible : Visibility.Collapsed;
+        DisplayPage.Visibility = page == "Display" ? Visibility.Visible : Visibility.Collapsed;
+        ManualPage.Visibility = page == "Manual" ? Visibility.Visible : Visibility.Collapsed;
+        SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        PageTitle.Text = page;
+    }
+    private void DraftKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control && engine.Enabled)
+        { manual.Send(); Tick(); e.Handled = true; }
     }
 
     private void Save()
@@ -173,8 +222,11 @@ public partial class MainWindow : Window
         if (!ready) return;
         settings = settings with { Preset = PresetBox.SelectedItem as string ?? "Lyrics Only", CustomTemplate = TemplateBox.Text,
             Message = MessageBox.Text, Compact = CompactBox.IsChecked == true, TypingIndicator = TypingBox.IsChecked == true,
-            LiveEdit = LiveBox.IsChecked == true };
+            LiveEdit = LiveBox.IsChecked == true, CustomAlignment = CustomAlignmentBox.SelectedItem as string ?? "Left",
+            ManualAlignment = ManualAlignmentBox.SelectedItem as string ?? "Left" };
         TemplateBox.IsEnabled = settings.Preset == "Custom";
+        CustomPanel.Visibility = settings.Preset == "Custom" ? Visibility.Visible : Visibility.Collapsed;
+        StatusPanel.Visibility = settings.Preset is "Custom" or "Status / Time" ? Visibility.Visible : Visibility.Collapsed;
         saveTimer.Stop(); saveTimer.Start(); Tick();
     }
     private void DraftFocused(object sender, RoutedEventArgs e) { if (ready) { manual.Focus(true); Tick(); } }
@@ -191,6 +243,19 @@ public partial class MainWindow : Window
         manual.LiveChanged(LiveBox.IsChecked == true); DisplayChanged(sender, e);
     }
     private void SendManual(object sender, RoutedEventArgs e) { manual.Send(); Tick(); }
+    private void InsertAscii(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string target }) return;
+        var box = target == "Manual" ? DraftBox : target == "Custom" ? TemplateBox : MessageBox;
+        var selector = target == "Manual" ? ManualAsciiBox : target == "Custom" ? CustomAsciiBox : StatusAsciiBox;
+        if (selector.SelectedItem is not AsciiTemplate template) return;
+        var text = target == "Custom" ? template.Custom : template.Manual;
+        var available = box.MaxLength - (box.Text.Length - box.SelectionLength);
+        if (text.Length > available) { ErrorText.Text = "Not enough editor space for this template. Select text to replace it."; return; }
+        box.SelectedText = text;
+        ErrorText.Text = "";
+        box.Focus();
+    }
     private void ClearManual(object sender, RoutedEventArgs e) { DraftBox.Clear(); manual.Edit("", settings.LiveEdit, MonotonicClock.Now); manual.Send(); Tick(); }
     private void ResumeAutomatic(object sender, RoutedEventArgs e) { manual.Resume(); Tick(); }
     private void OffsetChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -240,7 +305,7 @@ public partial class MainWindow : Window
         manual.Resume(); output.SendTyping(false);
         await playback.DisposeAsync();
         await Task.WhenAll(pending.ToArray());
-        lookup?.Dispose(); resolver.Dispose(); http.Dispose(); output.Dispose();
+        lookup?.Dispose(); resolver.Dispose(); secondary.Dispose(); http.Dispose(); output.Dispose();
         closed = true; Close();
     }
 }

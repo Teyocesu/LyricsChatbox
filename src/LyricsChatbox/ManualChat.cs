@@ -12,6 +12,7 @@ public sealed class ManualChat
     public bool PendingSend => pendingSend;
     private double lastEdit = double.NegativeInfinity;
     private double resumeAt = double.PositiveInfinity;
+    public double? RemainingHold(double now) => IsManual && double.IsFinite(resumeAt) ? Math.Max(0, resumeAt - now) : null;
 
     public void Focus(bool value)
     {

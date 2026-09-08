@@ -1,5 +1,68 @@
 # Execution state
 
+## v0.3.0 execution (2026-09-07)
+
+Current goal: two mandatory pillars, substantial UI/UX redesign and a useful measured secondary synchronized-lyrics provider. Branch `codex/v0.3.0` starts at post-v0.2 main `5689c8e`; fetched origin has no intervening change. Existing release is untouched.
+
+| Phase | State | Evidence / next gate |
+|---|---|---|
+| 0 Baseline audit | PASSED | Clean initial tree, canonical files/source/history reviewed; Release build and all 61 existing tests passed; real v0.2 window inspected while playing High |
+| 1 Provider research / benchmark | MEASURED | Four sources evaluated; 12 final-chain wins, 11 primary controls; terms limitation below |
+| 2 Secondary implementation | IMPLEMENTED / TESTED | NetEase REST fallback, typed outcomes, bounded deadlines, provenance, cancellation and cooldown |
+| 3 Information architecture / design | IMPLEMENTED / DIRECTION APPROVED | Native WPF design resources; Home/Display/Manual/Settings navigation and persistent output state |
+| 4 Views and interactions | IMPLEMENTED / INSPECTED | Now-playing emphasis, visual presets, manual hold feedback, separate technical settings |
+| 5 Integration / migration | AUTOMATED GATE PASSED | All 90 tests pass, old cache/settings preserved; physical gate pending |
+| 6 Visual / physical acceptance | PENDING | Inspect all states, iterate rendered UI, user visual acceptance |
+| 7 Release gate | PENDING | Full diff/build/tests/licenses/benchmark/package; no final release before acceptance |
+
+Observed baseline UX defects: the narrow 560px utility window forces scrolling even for common controls; technical import/cache/network actions share the playback view; lyric and preview repeat similar large cards without explaining their distinct roles; status strings are implementation-oriented; presets lack visual guidance; manual ownership offers no remaining-hold feedback. The redesign will use an approximately 940x720 window, persistent navigation and clearer content/preview hierarchy rather than just reskinning the existing tabs. No UI dependency is needed for this scope.
+
+Provider discovery evidence: evaluated four distinct sources. Musixmatch's official getting-started/implementation docs still require a personal key and usage/attribution compliance; no key is configured. NetEase web-search GET returns a region-marked encrypted result here, but its community-documented HTTPS POST `/api/cloudsearch/pc` returns normal track/artist/album/duration metadata, and `/api/song/lyric` returns timed LRC without auth. QQ's old search returned HTTP 500; its musicu POST search returned an empty list for Ado. Kugou lyrics searches returned empty candidates, including common-song controls; the mobile catalog TLS connection failed. These observations do not prove those catalogs lack the music. Protocol references: https://github.com/metowolf/Meting/tree/master/src/providers ; https://github.com/fooyin/fooyin/pull/1008 ; https://github.com/hxabcd/lyrics-merge/blob/main/docs/superpowers/specs/2026-08-06-lyrics-merge-design.md ; https://docs.musixmatch.com/getting-started . No upstream implementation was copied, no harvested cookies/keys, no HTML parsing in the app.
+
+Disposable discovery harness completed 64 distinct catalog recordings across Duki, Moneybagg Yo, Ado, 王菲, 宇多田ヒカル, Radiohead live and 梁静茹. The unchanged production LRCLIB resolver found 43; 21 had no usable result, of which 12 had timed NetEase LRC with matching catalog metadata. Examples: Hear It Back (59 timed lines), 好きでいて (44), a precisely labeled Ado live recording (66), Loca Remix (126), YaMeFui (56). Full metadata-only rows are ignored in `artifacts/provider-evaluation-v03.json`; no lyric bodies are logged/committed. One discovery request ended prematurely; harness now records transient errors and resumes without erasing earlier samples. These are **provisional discovery wins**, not final selected-provider coverage: track-specific search, central ambiguity handling and final-chain benchmarks must confirm them before selection/shipping.
+
+First redesigned WPF layout now compiles with zero warnings/errors: persistent left navigation, Home now-playing card/quick controls, visual preset list, deliberate manual compose area with Ctrl+Enter and remaining-hold text, separate Settings and persistent final-output preview. Native shared theme resources add coherent surfaces, focused inputs, buttons/toggles and navigation states. Artwork is currently a local fallback icon; no external art lookup. Actual rendered inspection/iteration is next; this is not an accepted RC and no product version/release has been advanced.
+
+User steering: the redesign must look stylized using internet references. Selected references are Cider (https://cider.sh/ ; visual examples https://github.com/dracula/cider) for music-first hierarchy and Linear's March 2026 refresh (https://linear.app/now/behind-the-latest-design-refresh) for quieter navigation, predictable actions, reduced borders and restrained dark surfaces. Adapt the principles into independent native WPF: charcoal canvas, lavender accents, prominent song/lyric, compact secondary controls and a distinct final Chatbox preview. Do not copy branding, assets or code. First rendered inspection exposed a concrete WPF issue: the implicit base Window style did not apply to MainWindow, leaving a white canvas and dark text on cards. Explicitly applied the Window resource style; next build must be run after the existing preview exits, because the first rebuild encountered a locked apphost executable.
+
+Final provider confirmation: track-specific search with strict central matching accepted 12/12 provisional wins. Two additional timed results whose primary discovery requests were rate-limited were excluded from the coverage-win count. Final production-chain run used fresh isolated cache and confirmed all 12 wins again; 11 representative LRCLIB controls stayed primary-only. Metadata-only evidence remains in ignored `artifacts/provider-confirmation-v03.json` and `artifacts/provider-final-chain-v03.json`. No harvested secrets, scraped pages or provider lyric fixtures. All 77 tests pass (61 existing + 16 secondary cases), Release solution build has zero warnings/errors.
+
+| Confirmed incremental recording | Artist | Timed lines |
+|---|---|---:|
+| Hear It Back | Lil Durk & Moneybagg Yo | 59 |
+| 好きでいて | Ado | 44 |
+| 愛して愛して愛して | Ado | 32 |
+| Stay With Me (Live At Peacock Theater, Los Angeles, 2024) | Ado | 66 |
+| 人间 / 偿还 / 暧昧 | 王菲 | 36 / 50 / 84 |
+| Come Back To Me (Mike Rizzo Radio Edit) | 宇多田ヒカル | 68 |
+| 爱久见人心 / 失忆 | 梁静茹 | 70 / 72 |
+| Loca Remix | Duki & KHEA & Cazzu & Bad Bunny | 126 |
+| YaMeFui | Duki & Nicki Nicole & Bizarrap | 56 |
+
+Final-chain measured p50 / nearest-rank p95 (ms): primary hit n=11 278/898; primary miss n=12 942/2569; secondary n=12 1514/2197; total fallback n=12 2483/3992. The five-second whole-primary and six-second whole-secondary deadlines leave margin above these observed requests and replace potentially three consecutive 12-second primary waits. The suite tests primary timeout entering fallback, no fallback on a primary hit/instrumental, stale completion without cache write, stale progress, metadata/version/duration rejection, conflicting/too-many candidates, untimed/encrypted/unavailable data, bounded bodies, independent cooldown and old cache provenance migration.
+
+Actual visual inspection: Home/Display/Manual/Settings all rendered in the real WPF window. Root styling now works; native icons, lavender slider, dark combo/preset controls and floating-preview distinction added. Home's quick controls are visible at normal size. Minor caption overflow in Manual at normal height and minimum-window inspection remain to finish. User explicitly accepted the visual direction (“Me gusta esta dirección”) after reviewing the four-page preview; this is direction approval, not final physical v0.3 acceptance. No release/tag/push has occurred.
+
+Terms evaluation limitation: official public terms links returned only JavaScript shell/redirect HTML through read-only HTTP. Browser navigation to the official service-terms URL was blocked by site-safety; no workaround attempted after that denial. Full current terms remain unverified and no redistribution permission is claimed. Keep the community-source availability/licensing uncertainty explicit in RC docs.
+
+User follow-up: keep the accepted charcoal/lavender direction, add an application icon, and remove recurring slogans. Generated a transparent music/chat mark, converted it into a seven-size Windows ICO plus 256px PNG, and integrated executable/window/sidebar references. Removed tagline, promotional page titles/subtitles and decorative preset slogans; retained functional labels. Native rendered recheck is next.
+
+User-approved formatting extension (2026-09-08): added independent Custom/Status and Manual Left/Center/Right settings, ordinary-space alignment before final payload limits, preservation of ASCII indentation/blank lines, and four editable templates (Cat, AFK sign, Message divider, Music). Alignment is approximate in VRChat; no unsupported rich-text tags. Eight focused layout tests pass, covering unchanged ordinary lyrics, preserved layout through composer/formatter/scheduler, compact Unicode/line limits, ASCII templates and settings migration. New UI inspected with real template insertion and Left→Center preview/counter change. Corrected the custom ComboBox selection template after actual rendering exposed object metadata instead of the template name. Headset check of alignment is pending; current output was temporarily disabled for editor inspection.
+
+Latest provider suite: 81 total tests passed before this formatting extension, including added primary unusable/rate-limit fallback policy, malformed-response recovery and six-second secondary timeout. A persisted TRX is under ignored artifacts/test-results. The existing rc.1 ZIP predates the formatting extension and must be regenerated before delivery. Latest native Home idle-state inspection also corrected an empty track title and technical missing-metadata wording; no playback behavior changed.
+
+Latest physical evidence (2026-09-08): user explicitly confirmed the ASCII cat stayed recognizable and changed position in VRChat during Left → Center → Right, then automatic ownership resumed. The production app retrieved Stay With Me (Live At Peacock Theater, Los Angeles, 2024), Ado, directly from Apple Music metadata and displayed “Synced · NetEase”; playback position advanced in the actual WPF window. The user did not observe the voice/lyric alignment, so that physical synchronization check remains pending. Japanese title romanization differs between Apple Music and NetEase on another discovery example; matching was not weakened to conceal that limitation.
+
+Normal and minimum-size views were inspected; lower controls remain reachable by scroll, and Settings advanced host/port were verified visible after scrolling. Full high-DPI and final Custom workflow/headset regression gates remain open. The first latest test rebuild was blocked by the running app DLL; closed the app normally and reran. This was an operational lock, not a passing validation run.
+
+Final source validation for current RC: `dotnet test tests/LyricsChatbox.Tests -c Release` passed all 90 tests; `dotnet build LyricsChatbox.slnx -c Release --no-restore` passed with 0 warnings/errors. Persisted result: artifacts/test-results/v03-final.trx. Current RC includes icon, slogan cleanup and message formatting/ASCII, with final physical gates still pending.
+
+Current RC package verified: artifacts/v0.3.0-rc.1/LyricsChatbox-0.3.0-rc.1-win-x64.zip, 72,094,097 bytes, SHA256 92059a7a9c7f9bc5c1dfc91f36ff87ffaaf1e0ff3854afc7888ca801ddbbc7a9. ZIP CRC/integrity, executable/licenses, absence of settings/LRC/history/cache checked. Packaged executable launched successfully. Display Custom panel, alignment selector, template selector, editable token text and full token reference were inspected after scrolling; restored Lyrics Only. No-result state observed for Show (Live At Peacock Theater, Los Angeles, 2024), with playback still advancing. Source credential-pattern scan found no matches; diff whitespace check passed (only Git CRLF conversion notices). No v0.3 commit/public operation yet; final physical acceptance remains pending.
+
+Final local diff review completed for provider boundaries, epoch/progress guards, formatting and settings migration. Preparing a coherent local RC commit. User requested upload if everything is ready; final publication remains conditional on the outstanding physical acceptance, since the NetEase voice-alignment test was explicitly not observed. Current code/package checks remain passing; no source behavior changed during this final review.
+
+Earlier v0.1/v0.2 evidence below is historical and remains unchanged.
+
 Historical MVP evidence (2026-09-06). The current v0.2 execution and publication state is recorded below. The earlier testing pause was explicitly lifted by the user.
 
 Environment: Windows 11 build 26200, .NET SDK 10.0.400 / runtime 10.0.11 x64, Apple Music 1.1540.23042.0. Local branch `codex/mvp`; origin is the user-supplied GitHub repository. No public operations authorized.

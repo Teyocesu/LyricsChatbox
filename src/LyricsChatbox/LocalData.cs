@@ -6,12 +6,14 @@ namespace LyricsChatbox;
 
 public record AppSettings(bool Enabled = false, double Offset = 0, string Host = "127.0.0.1", int Port = 9000,
     string Preset = "Lyrics Only", string CustomTemplate = "{lyrics}", string Message = "",
-    bool Compact = false, bool TypingIndicator = false, bool LiveEdit = false)
+    bool Compact = false, bool TypingIndicator = false, bool LiveEdit = false,
+    string CustomAlignment = "Left", string ManualAlignment = "Left")
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => double.IsFinite(Offset) && Offset is >= -5 and <= 5 && Port is >= 1 and <= 65535 &&
         (Host == "localhost" || IPAddress.TryParse(Host, out _)) && ChatboxComposer.Presets.Contains(Preset) &&
-        CustomTemplate is { Length: <= 512 } && Message is { Length: <= 512 };
+        CustomTemplate is { Length: <= 512 } && Message is { Length: <= 512 } &&
+        MessageLayout.Alignments.Contains(CustomAlignment) && MessageLayout.Alignments.Contains(ManualAlignment);
 }
 
 public sealed class LocalData(string root)
@@ -30,15 +32,17 @@ public sealed class LocalData(string root)
     public bool SaveSettings(AppSettings settings) => settings.IsValid && Write(Path.Combine(Root, "settings.json"), JsonSerializer.Serialize(settings, Json));
     public string? ReadLocal(TrackIdentity track) => ReadText(LocalLrcPath(track), LrcParser.MaxCharacters * 4);
     public bool SaveLocal(TrackIdentity track, string lrc) => LrcParser.Parse(lrc).Lines.Count > 0 && Write(LocalLrcPath(track), lrc);
-    public LyricsRecord? ReadCache(TrackIdentity track)
+    public LyricsRecord? ReadCache(TrackIdentity track) => ReadCachedLyrics(track)?.Record;
+    public CachedLyrics? ReadCachedLyrics(TrackIdentity track)
     {
         var entry = Read<CacheEntry>(CachePath(track), 2_100_000);
         return entry is { Version: 1, Record: not null } && entry.TrackKey == track.Key &&
             entry.StoredUtc <= DateTimeOffset.UtcNow.AddMinutes(5) && entry.StoredUtc > DateTimeOffset.UtcNow.AddDays(-30) &&
-            LyricsMatching.Score(track, entry.Record).HasValue ? entry.Record : null;
+            LyricsMatching.Score(track, entry.Record).HasValue && entry.Provider is "LRCLIB" or "NetEase"
+            ? new(entry.Record, entry.Provider) : null;
     }
-    public void SaveCache(TrackIdentity track, LyricsRecord record) => Write(CachePath(track),
-        JsonSerializer.Serialize(new CacheEntry(1, track.Key, DateTimeOffset.UtcNow, record), Json));
+    public void SaveCache(TrackIdentity track, LyricsRecord record, string provider = "LRCLIB") => Write(CachePath(track),
+        JsonSerializer.Serialize(new CacheEntry(1, track.Key, DateTimeOffset.UtcNow, record, provider), Json));
 
     private static T? Read<T>(string path, int max)
     {
@@ -71,5 +75,6 @@ public sealed class LocalData(string root)
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
         finally { try { if (File.Exists(temp)) File.Delete(temp); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
     }
-    private record CacheEntry(int Version, string TrackKey, DateTimeOffset StoredUtc, LyricsRecord Record);
+    private record CacheEntry(int Version, string TrackKey, DateTimeOffset StoredUtc, LyricsRecord Record, string Provider = "LRCLIB");
+    public record CachedLyrics(LyricsRecord Record, string Provider);
 }

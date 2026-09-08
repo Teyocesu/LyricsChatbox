@@ -8,7 +8,7 @@ namespace LyricsChatbox;
 public static class ChatboxFormatter
 {
     public const string CompactSuffix = "\u0003\u001F";
-    public static string Format(string input, bool compact = false)
+    public static string Format(string input, bool compact = false, bool preserveLayout = false)
     {
         // Replacing invalid UTF-16 before grapheme enumeration also prevents invalid UTF-8 on the wire.
         input = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(input)).Replace("\r\n", "\n").Replace('\r', '\n');
@@ -23,7 +23,8 @@ public static class ChatboxFormatter
             if (result.Length + element.Length > (compact ? 142 : 144) || element == "\n" && ++lines > 9) break;
             result.Append(element);
         }
-        var visible = result.ToString().Trim();
+        var visible = preserveLayout ? result.ToString().Trim('\r', '\n') : result.ToString().Trim();
+        if (string.IsNullOrWhiteSpace(visible)) visible = "";
         return compact && visible.Length > 0 ? visible + CompactSuffix : visible;
     }
 
@@ -60,9 +61,9 @@ public sealed class ChatboxScheduler
     private double next;
     private bool enabled;
     private bool force;
-    public void Set(long activeEpoch, string text, bool isEnabled, bool compact = false, bool forceSend = false)
+    public void Set(long activeEpoch, string text, bool isEnabled, bool compact = false, bool forceSend = false, bool preserveLayout = false)
     {
-        epoch = activeEpoch; desired = ChatboxFormatter.Format(text, compact); enabled = isEnabled;
+        epoch = activeEpoch; desired = ChatboxFormatter.Format(text, compact, preserveLayout); enabled = isEnabled;
         force = forceSend;
     }
     public void ReceiverChanged() => last = null;

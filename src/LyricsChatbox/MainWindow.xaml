@@ -1,65 +1,256 @@
-<Window x:Class="LyricsChatbox.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="LyricsChatbox" Width="560" Height="760" MinWidth="510" MinHeight="650" Background="#10151F" Foreground="#EBF0F7" FontFamily="Segoe UI" FontSize="14" WindowStartupLocation="CenterScreen">
-  <Window.Resources>
-    <Style TargetType="Button"><Setter Property="Padding" Value="11,7"/><Setter Property="Margin" Value="0,0,8,0"/><Setter Property="Background" Value="#DFE8FA"/><Setter Property="Foreground" Value="#182234"/></Style>
-    <Style TargetType="TextBox"><Setter Property="Padding" Value="8,6"/><Setter Property="Background" Value="#232D3E"/><Setter Property="Foreground" Value="#FFFFFF"/><Setter Property="BorderBrush" Value="#53617A"/></Style>
-    <Style TargetType="CheckBox"><Setter Property="Foreground" Value="#EBF0F7"/></Style>
-    <Style TargetType="TabItem">
-      <Setter Property="Foreground" Value="#EBF0F7"/>
-      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem"><Border x:Name="TabBorder" Background="#1D283B" Padding="16,9" Margin="0,0,3,0" CornerRadius="5,5,0,0"><ContentPresenter ContentSource="Header"/></Border><ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="TabBorder" Property="Background" Value="#375273"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
-    </Style>
-  </Window.Resources>
-  <Grid Margin="22">
-    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <StackPanel>
-      <DockPanel Margin="0,0,0,16"><TextBlock Text="LyricsChatbox" FontSize="27" FontWeight="SemiBold"/><TextBlock Text="LOCAL · v0.2" Foreground="#98AAC7" HorizontalAlignment="Right" VerticalAlignment="Center"/></DockPanel>
-      <CheckBox x:Name="EnabledBox" Content="Enable Chatbox output" FontSize="16" Checked="EnabledChanged" Unchecked="EnabledChanged" Margin="0,0,0,12"/>
-      <CheckBox x:Name="CompactBox" Content="Compact / Floating Chatbox" Checked="DisplayChanged" Unchecked="DisplayChanged" Margin="0,0,0,16" ToolTip="Uses VRChat's current Chatbox rendering behavior and may change after VRChat updates."/>
-    </StackPanel>
-    <TabControl x:Name="ModeTabs" Grid.Row="1" Background="Transparent" BorderThickness="0" Foreground="#EBF0F7">
-      <TabItem Header="Playback"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,6,6">
-        <TextBlock x:Name="SourceText" Text="Connecting to Apple Music…" Foreground="#A4B9DB" Margin="0,0,0,10"/>
-        <TextBlock x:Name="TrackText" Text="Waiting for a track" FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap"/>
-        <TextBlock x:Name="ArtistText" Foreground="#A4B9DB" Margin="0,5,0,12" TextWrapping="Wrap"/>
-        <Border Background="#1D283B" CornerRadius="8" Padding="14" MinHeight="80"><TextBlock x:Name="LyricText" Text="—" FontSize="19" TextWrapping="Wrap" VerticalAlignment="Center"/></Border>
-        <TextBlock x:Name="LyricsStatusText" Text="Waiting for a track" Foreground="#A4B9DB" Margin="0,9,0,4" TextWrapping="Wrap"/>
-        <TextBlock x:Name="PositionText" Foreground="#8397B8" FontSize="12" Margin="0,0,0,14"/>
-        <DockPanel><TextBlock Text="Lyric offset"/><TextBlock x:Name="OffsetText" Text="0.0 s" HorizontalAlignment="Right"/></DockPanel>
-        <Slider x:Name="OffsetSlider" Minimum="-5" Maximum="5" TickFrequency="0.1" SmallChange="0.1" LargeChange="0.5" IsSnapToTickEnabled="True" ValueChanged="OffsetChanged" Margin="0,8,0,2" AutomationProperties.Name="Lyric offset in seconds"/>
-        <TextBlock Text="Positive = show lyrics later" Foreground="#8397B8" FontSize="12" Margin="0,0,0,14"/>
-        <WrapPanel><Button x:Name="ImportButton" Content="Use local LRC…" Click="ImportLrc"/><Button Content="Retry lyrics" Click="RetryLyrics"/><Button Content="Open data folder" Click="OpenData"/></WrapPanel>
-        <Expander Header="OSC destination" Foreground="#A4B9DB" Margin="0,16,0,0"><Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="90"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-          <StackPanel Margin="0,0,10,0"><TextBlock Text="Host"/><TextBox x:Name="HostBox" Text="127.0.0.1" AutomationProperties.Name="OSC host"/></StackPanel>
-          <StackPanel Grid.Column="1" Margin="0,0,10,0"><TextBlock Text="Port"/><TextBox x:Name="PortBox" Text="9000" AutomationProperties.Name="OSC port"/></StackPanel>
-          <Button Grid.Column="2" Content="Apply" Click="ApplyOsc" VerticalAlignment="Bottom" Margin="0"/>
-        </Grid></Expander>
-      </StackPanel></ScrollViewer></TabItem>
-      <TabItem Header="Display"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,6,6">
-        <TextBlock Text="Automatic display" FontSize="19" FontWeight="SemiBold" Margin="0,0,0,12"/>
-        <TextBlock Text="Preset" Margin="0,0,0,5"/>
-        <ComboBox x:Name="PresetBox" SelectionChanged="DisplayChanged" Foreground="#182234" Padding="7" Margin="0,0,0,14" AutomationProperties.Name="Display preset"/>
-        <TextBlock Text="Custom template" Margin="0,0,0,5"/>
-        <TextBox x:Name="TemplateBox" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="90" VerticalScrollBarVisibility="Auto" TextChanged="DisplayChanged" AutomationProperties.Name="Custom template"/>
-        <TextBlock Text="{}{lyrics}  {title}  {artist}  {album}  {time}&#10;{message}  {elapsed}  {duration}" Foreground="#98AAC7" FontSize="12" TextWrapping="Wrap" Margin="0,7,0,14"/>
-        <TextBlock Text="Custom status · {message}" Margin="0,0,0,5"/>
-        <TextBox x:Name="MessageBox" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="70" TextChanged="DisplayChanged" AutomationProperties.Name="Custom status"/>
-        <TextBlock Text="Time uses your local clock. Missing fields and unknown tokens are omitted. Your status and template are saved locally." Foreground="#98AAC7" TextWrapping="Wrap" FontSize="12" Margin="0,12,0,0"/>
-      </StackPanel></ScrollViewer></TabItem>
-      <TabItem Header="Manual"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,6,6">
-        <TextBlock Text="Manual Chatbox" FontSize="19" FontWeight="SemiBold"/>
-        <TextBlock Text="Editing takes priority over automatic lyrics. Send holds your message for 8 seconds, then resumes automatic display." Foreground="#A4B9DB" TextWrapping="Wrap" Margin="0,8,0,12"/>
-        <TextBox x:Name="DraftBox" MaxLength="2048" AcceptsReturn="True" TextWrapping="Wrap" Height="130" VerticalScrollBarVisibility="Auto" TextChanged="DraftChanged" GotKeyboardFocus="DraftFocused" LostKeyboardFocus="DraftUnfocused" AutomationProperties.Name="Manual message"/>
-        <WrapPanel Margin="0,12,0,14"><Button x:Name="SendButton" Content="Send" Click="SendManual"/><Button x:Name="ClearButton" Content="Clear" Click="ClearManual"/><Button Content="Resume Automatic" Click="ResumeAutomatic"/></WrapPanel>
-        <CheckBox x:Name="TypingBox" Content="Typing indicator" Checked="DisplayChanged" Unchecked="DisplayChanged" Margin="0,0,0,12"/>
-        <CheckBox x:Name="LiveBox" Content="Live edit · show draft while typing" Checked="LiveChanged" Unchecked="LiveChanged"/>
-        <TextBlock Text="Drafts are not saved. Live edit sends only the latest draft at the normal Chatbox cadence. Resume Automatic releases manual control immediately." Foreground="#98AAC7" TextWrapping="Wrap" FontSize="12" Margin="0,14,0,0"/>
-      </StackPanel></ScrollViewer></TabItem>
-    </TabControl>
-    <StackPanel Grid.Row="2" Margin="0,12,0,0">
-      <DockPanel Margin="0,0,0,5"><TextBlock x:Name="OwnerText" Text="Automatic · preview" Foreground="#A4B9DB"/><TextBlock x:Name="BudgetText" Text="0 / 144" HorizontalAlignment="Right" Foreground="#98AAC7"/></DockPanel>
-      <Border Background="#1D283B" CornerRadius="8" Padding="12"><ScrollViewer MaxHeight="90" VerticalScrollBarVisibility="Auto"><TextBlock x:Name="PreviewText" Text="—" TextWrapping="Wrap" FontSize="17"/></ScrollViewer></Border>
-      <TextBlock x:Name="OscText" Text="OSC ready · delivery unconfirmed" Foreground="#8397B8" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
-    </StackPanel>
-    <TextBlock Grid.Row="3" x:Name="ErrorText" Foreground="#FFBF9B" TextWrapping="Wrap" Margin="0,8,0,0"/>
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="LyricsChatbox.MainWindow" Title="LyricsChatbox" Icon="Assets/AppIcon.ico" Width="960" Height="760" MinWidth="820" MinHeight="650" WindowStartupLocation="CenterScreen" Style="{StaticResource {x:Type Window}}">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="172"/>
+      <ColumnDefinition/>
+    </Grid.ColumnDefinitions>
+    <Border Background="{StaticResource SidebarBrush}" Padding="16,28,16,20">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,32">
+          <StackPanel Orientation="Horizontal">
+            <Image Source="Assets/AppIcon.png" Width="28" Height="28" Margin="0,0,8,0"/>
+            <TextBlock Text="LyricsChatbox" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+          </StackPanel>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom">
+          <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="10,12" Margin="0,0,0,12">
+            <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output">
+              <TextBlock Text="Output" FontSize="12"/>
+            </CheckBox>
+          </Border>
+          <TextBlock x:Name="ConnectionSummary" Text="OSC ready" Style="{StaticResource Caption}"/>
+          <TextBlock Text="LOCAL · v0.3 preview" Style="{StaticResource Caption}" Margin="0,16,0,0"/>
+        </StackPanel>
+        <StackPanel>
+          <RadioButton Tag="Home" AutomationProperties.Name="Home" GroupName="Navigation" IsChecked="True" Checked="Navigate" Style="{StaticResource NavigationItem}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Home"/>
+            </StackPanel>
+          </RadioButton>
+          <RadioButton Tag="Display" AutomationProperties.Name="Display" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Display"/>
+            </StackPanel>
+          </RadioButton>
+          <RadioButton Tag="Manual" AutomationProperties.Name="Manual" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Manual"/>
+            </StackPanel>
+          </RadioButton>
+          <RadioButton Tag="Settings" AutomationProperties.Name="Settings" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Settings"/>
+            </StackPanel>
+          </RadioButton>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+    <Grid Grid.Column="1" Margin="28,24,28,20">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <StackPanel Margin="0,0,0,20">
+        <TextBlock x:Name="PageTitle" Text="Home" FontSize="28" FontWeight="SemiBold"/>
+      </StackPanel>
+      <ScrollViewer x:Name="HomePage" Grid.Row="1" Visibility="Visible" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <DockPanel>
+                <TextBlock Text="NOW PLAYING" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
+                <TextBlock x:Name="SourceText" Foreground="{StaticResource SuccessBrush}" FontSize="12" HorizontalAlignment="Right"/>
+              </DockPanel>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="76"/>
+                  <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Border Width="60" Height="60" CornerRadius="10" Background="#30394E" HorizontalAlignment="Left">
+                  <TextBlock Text="♫" FontSize="36" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1">
+                  <TextBlock x:Name="TrackText" Text="Waiting for a track" FontSize="23" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="ArtistText" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0"/>
+                  <TextBlock x:Name="AlbumText" Style="{StaticResource Caption}" Margin="0,5,0,0"/>
+                </StackPanel>
+              </Grid>
+              <ProgressBar x:Name="PositionProgress" Maximum="1" Height="3" Margin="0,12,0,6" BorderThickness="0" Background="{StaticResource RaisedBrush}" Foreground="{StaticResource AccentBrush}" AutomationProperties.Name="Playback progress"/>
+              <TextBlock x:Name="PositionText" Style="{StaticResource Caption}"/>
+              <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Margin="0,12,0,0" Padding="0,12,0,0">
+                <StackPanel>
+                  <TextBlock x:Name="LyricsStatusText" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
+                  <TextBlock x:Name="LyricText" Text="No track playing" FontSize="23" MinHeight="48"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition/>
+                  <ColumnDefinition Width="24"/>
+                  <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="DISPLAY" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                  <CheckBox x:Name="CompactBox" Content="Floating text" Checked="DisplayChanged" Unchecked="DisplayChanged" ToolTip="Uses VRChat's current Chatbox rendering behavior and may change after VRChat updates."/>
+                  <ComboBox Margin="0,8,0,0" ItemsSource="{Binding ItemsSource, ElementName=PresetBox}" SelectedItem="{Binding SelectedItem, ElementName=PresetBox, Mode=TwoWay}" Padding="7" AutomationProperties.Name="Quick display preset"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <DockPanel>
+                    <TextBlock Text="LYRIC TIMING" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="OffsetText" Text="0.0 s" HorizontalAlignment="Right" Foreground="{StaticResource AccentBrush}"/>
+                  </DockPanel>
+                  <Slider x:Name="OffsetSlider" ToolTip="Positive timing values show lyrics later." Minimum="-5" Maximum="5" TickFrequency="0.1" SmallChange="0.1" LargeChange="0.5" IsSnapToTickEnabled="True" ValueChanged="OffsetChanged" AutomationProperties.Name="Lyric offset in seconds"/>
+                  <Button Content="Retry lyrics" Click="RetryLyrics" Padding="12,5" MinHeight="32" Margin="0,8,0,0" ToolTip="Search for lyrics for the current recording again."/>
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+      <ScrollViewer x:Name="DisplayPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Display preset" Style="{StaticResource SectionTitle}"/>
+              <ListBox x:Name="PresetBox" SelectionChanged="DisplayChanged" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Display preset">
+                <ListBox.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <UniformGrid Columns="2"/>
+                  </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                  <StaticResource ResourceKey="PresetItem"/>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel>
+                      <TextBlock Text="{Binding}" FontWeight="SemiBold"/>
+                      <TextBlock x:Name="Example" Style="{StaticResource Caption}" Margin="0,8,0,0" Text="Current lyric"/>
+                    </StackPanel>
+                    <DataTemplate.Triggers>
+                      <DataTrigger Binding="{Binding}" Value="Song + Lyrics">
+                        <Setter TargetName="Example" Property="Text" Value="Song — Artist&#10;Current lyric"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding}" Value="Status / Time">
+                        <Setter TargetName="Example" Property="Text" Value="Your status&#10;21:30"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding}" Value="Custom">
+                        <Setter TargetName="Example" Property="Text" Value="Custom text and tokens"/>
+                      </DataTrigger>
+                    </DataTemplate.Triggers>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+              <TextBlock Text="Choose a layout. The live preview below shows your actual output." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
+              <CheckBox Content="Floating text" IsChecked="{Binding IsChecked, ElementName=CompactBox, Mode=TwoWay}" Margin="0,0,0,12"/>
+<StackPanel x:Name="StatusPanel">              <TextBlock Text="Status message" Style="{StaticResource SectionTitle}"/>
+<WrapPanel Margin="0,0,0,8"><ComboBox x:Name="CustomAlignmentBox" Width="110" SelectionChanged="DisplayChanged" AutomationProperties.Name="Custom and status alignment" Margin="0,0,8,8"/><ComboBox x:Name="StatusAsciiBox" Width="150" DisplayMemberPath="Name" AutomationProperties.Name="Status ASCII template" Margin="0,0,8,8"/><Button Content="Insert ASCII" Tag="Status" Click="InsertAscii" Margin="0,0,0,8"/></WrapPanel>
+              <TextBox x:Name="MessageBox" FontFamily="Consolas" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="76" TextChanged="DisplayChanged" AutomationProperties.Name="Custom status"/>
+              <TextBlock Text="Saved locally. Used by Status / Time and the message token." Style="{StaticResource Caption}" Margin="0,6,0,12"/><TextBlock Text="Alignment applies to Status / Time and Custom. Spaces approximate 24–48 columns; VRChat spacing can differ." Style="{StaticResource Caption}"/></StackPanel>
+            </StackPanel>
+          </Border>
+          <Border x:Name="CustomPanel" Style="{StaticResource Card}" Margin="0,0,8,16" Visibility="Collapsed">
+            <StackPanel>
+              <TextBlock Text="Custom composition" Style="{StaticResource SectionTitle}"/>
+              <WrapPanel Margin="0,0,0,8"><ComboBox Width="110" ItemsSource="{Binding ItemsSource, ElementName=CustomAlignmentBox}" SelectedItem="{Binding SelectedItem, ElementName=CustomAlignmentBox, Mode=TwoWay}" AutomationProperties.Name="Custom template alignment" Margin="0,0,8,8"/><ComboBox x:Name="CustomAsciiBox" Width="150" DisplayMemberPath="Name" AutomationProperties.Name="Custom ASCII template" Margin="0,0,8,8"/><Button Content="Insert ASCII" Tag="Custom" Click="InsertAscii" Margin="0,0,0,8"/></WrapPanel>
+              <TextBox x:Name="TemplateBox" FontFamily="Consolas" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="90" VerticalScrollBarVisibility="Auto" TextChanged="DisplayChanged" AutomationProperties.Name="Custom template"/>
+              <TextBlock Text="{}{lyrics}  {title}  {artist}  {album}  {time}&#10;{message}  {elapsed}  {duration}" Style="{StaticResource Caption}" Margin="0,10,0,16"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+      <ScrollViewer x:Name="ManualPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <DockPanel>
+                <TextBlock Text="Manual message" Style="{StaticResource SectionTitle}"/>
+                <TextBlock x:Name="ManualBudgetText" Text="0 characters" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
+              </DockPanel>
+              <TextBlock x:Name="ManualStateText" Text="Your draft takes priority over automatic lyrics." Foreground="{StaticResource AccentBrush}" Margin="0,0,0,16"/>
+<WrapPanel Margin="0,0,0,8"><ComboBox x:Name="ManualAlignmentBox" Width="110" SelectionChanged="DisplayChanged" AutomationProperties.Name="Manual alignment" Margin="0,0,8,8"/><ComboBox x:Name="ManualAsciiBox" Width="150" DisplayMemberPath="Name" AutomationProperties.Name="Manual ASCII template" Margin="0,0,8,8"/><Button Content="Insert ASCII" Tag="Manual" Click="InsertAscii" Margin="0,0,0,8"/></WrapPanel>
+<TextBox x:Name="DraftBox" FontFamily="Consolas" MaxLength="2048" AcceptsReturn="True" TextWrapping="Wrap" Height="144" VerticalScrollBarVisibility="Auto" TextChanged="DraftChanged" GotKeyboardFocus="DraftFocused" LostKeyboardFocus="DraftUnfocused" PreviewKeyDown="DraftKeyDown" AutomationProperties.Name="Manual message"/>
+              <WrapPanel Margin="0,16,0,16">
+                <Button x:Name="SendButton" Content="Send · Ctrl+Enter" Style="{StaticResource PrimaryButton}" Click="SendManual" Margin="0,0,8,8"/>
+                <Button x:Name="ClearButton" Content="Clear" Click="ClearManual" Margin="0,0,8,8"/>
+                <Button Content="Resume Automatic" Click="ResumeAutomatic" Margin="0,0,8,8"/>
+              </WrapPanel>
+              <CheckBox x:Name="TypingBox" Content="Show typing indicator" Checked="DisplayChanged" Unchecked="DisplayChanged" Margin="0,0,0,12"/>
+              <CheckBox x:Name="LiveBox" Content="Live edit" Checked="LiveChanged" Unchecked="LiveChanged"/>
+              <TextBlock Text="Alignment uses spaces and may differ in VRChat. ASCII spacing is preserved. Send holds the message for eight seconds; drafts are not saved." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+      <ScrollViewer x:Name="SettingsPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Lyrics sources" Style="{StaticResource SectionTitle}"/>
+              <TextBlock Text="Local LRC → cache → LRCLIB → NetEase" Foreground="{StaticResource AccentBrush}"/>
+              <TextBlock Text="NetEase is a best-effort fallback, searched only when LRCLIB cannot supply synchronized lyrics. No account or key is needed." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
+              <WrapPanel>
+                <Button x:Name="ImportButton" Content="Import local LRC…" Click="ImportLrc" Margin="0,0,8,8"/>
+                <Button Content="Open data folder" Click="OpenData" Margin="0,0,8,8"/>
+                <Button Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,8,8"/>
+              </WrapPanel>
+              <TextBlock Text="Searches send song metadata to the lyrics source. Settings and cached lyrics stay on this computer. Community endpoints may change or be unavailable in some regions." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="VRChat OSC" Style="{StaticResource SectionTitle}"/>
+              <TextBlock Text="Enable OSC in VRChat and stop competing Chatbox senders. UDP cannot confirm that a message was displayed." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
+              <Expander Header="Advanced destination">
+                <Grid Margin="0,16,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="96"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Margin="0,0,12,0">
+                    <TextBlock Text="Host" Style="{StaticResource Caption}" Margin="0,6,0,12"/>
+                    <TextBox x:Name="HostBox" AutomationProperties.Name="OSC host"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                    <TextBlock Text="Port" Style="{StaticResource Caption}" Margin="0,6,0,12"/>
+                    <TextBox x:Name="PortBox" AutomationProperties.Name="OSC port"/>
+                  </StackPanel>
+                  <Button Grid.Column="2" Content="Apply" Click="ApplyOsc" VerticalAlignment="Bottom"/>
+                </Grid>
+              </Expander>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+      <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,16,0,0" Padding="16">
+        <StackPanel>
+          <DockPanel Margin="0,0,0,8">
+            <TextBlock x:Name="PreviewLabel" Text="CHATBOX PREVIEW" Style="{StaticResource Caption}"/>
+            <TextBlock x:Name="BudgetText" Text="0 / 144" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
+          </DockPanel>
+          <Border x:Name="PreviewBubble" Background="{StaticResource RaisedBrush}" CornerRadius="8" Padding="12,8">
+            <ScrollViewer MaxHeight="72" VerticalScrollBarVisibility="Auto">
+              <TextBlock x:Name="PreviewText" Text="Nothing to send yet" FontSize="17"/>
+            </ScrollViewer>
+          </Border>
+          <DockPanel Margin="0,10,0,0">
+            <TextBlock x:Name="OwnerText" Text="Automatic" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+            <TextBlock x:Name="OscText" Text="OSC ready" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
+          </DockPanel>
+        </StackPanel>
+      </Border>
+      <TextBlock Grid.Row="3" x:Name="ErrorText" Foreground="{StaticResource WarningBrush}" Margin="0,8,0,0"/>
+    </Grid>
   </Grid>
 </Window>

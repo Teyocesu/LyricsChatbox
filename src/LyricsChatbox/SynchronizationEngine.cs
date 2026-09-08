@@ -34,6 +34,12 @@ public sealed class SynchronizationEngine
         return true;
     }
     public void BeginRetry() { RetryAt = null; LyricsStatus = "Looking up synced lyrics"; }
+    public bool ReportProgress(long epoch, string status)
+    {
+        if (epoch != Epoch || Track is null) return false;
+        LyricsStatus = status;
+        return true;
+    }
     public double? Position(double now) => clock.Position(now);
     public string Current(double now) => Position(now) is double position ? Timeline?.Current(position, Offset) ?? "" : "";
     public string Output(double now) => Enabled ? Current(now) : "";
