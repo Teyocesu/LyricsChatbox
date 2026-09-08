@@ -1,6 +1,7 @@
 # Execution state
 
 ## v0.3.0 execution (2026-09-07)
+Publication verified (2026-09-08): https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.3.0 is public and stable. Main and the annotated v0.3.0 tag resolve to release commit 133a278260fc607447a08b2003169d44ec075436. Windows x64 ZIP: 72,094,707 bytes; SHA256 bbc4c5fd807ac302f331205647c84ced368f1a5d0f5e34b871aa8bbc689ad369, matching GitHub's asset digest. ZIP and checksum attached. Executable product version includes the exact release commit. Old releases/tags untouched. This publication record is a subsequent documentation-only commit; release files remain immutable.
 
 Release acceptance (2026-09-08): user confirmed “esta perfecto como esta stay with me” after the pending NetEase headset check. This confirms the observed recording's synchronization and accepts the current candidate, alongside earlier accepted UI direction and physical ASCII alignment. The prior instruction “subelo si ya esta todo” authorizes publication after this acceptance. It does not supply new evidence for every pause/seek/restart scenario: those retain the existing core automated and v0.2 physical evidence; exhaustive v0.3 headset transitions and high-DPI inspection remain unverified limitations. Final release preparation changes version/labels/documentation only, preserving the accepted behavior.
 
@@ -15,7 +16,7 @@ Current goal: two mandatory pillars, substantial UI/UX redesign and a useful mea
 | 4 Views and interactions | IMPLEMENTED / INSPECTED | Now-playing emphasis, visual presets, manual hold feedback, separate technical settings |
 | 5 Integration / migration | PASSED | All 90 tests pass; old cache/settings preserved |
 | 6 Visual / physical acceptance | ACCEPTED WITH LIMITATIONS | Accepted UI and ASCII; user confirmed NetEase Stay With Me. Exhaustive transitions/high-DPI not newly verified |
-| 7 Release gate | PUBLICATION IN PROGRESS | Final 0.3.0 build: 90 tests, zero warnings/errors; accepted behavior unchanged |
+| 7 Release gate | PUBLISHED | v0.3.0 at 133a278; 90 tests, zero warnings/errors; GitHub ZIP/checksum verified |
 
 Observed baseline UX defects: the narrow 560px utility window forces scrolling even for common controls; technical import/cache/network actions share the playback view; lyric and preview repeat similar large cards without explaining their distinct roles; status strings are implementation-oriented; presets lack visual guidance; manual ownership offers no remaining-hold feedback. The redesign will use an approximately 940x720 window, persistent navigation and clearer content/preview hierarchy rather than just reskinning the existing tabs. No UI dependency is needed for this scope.
 
