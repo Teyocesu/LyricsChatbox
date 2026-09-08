@@ -2,6 +2,8 @@
 
 ## v0.3.0 execution (2026-09-07)
 
+Release acceptance (2026-09-08): user confirmed “esta perfecto como esta stay with me” after the pending NetEase headset check. This confirms the observed recording's synchronization and accepts the current candidate, alongside earlier accepted UI direction and physical ASCII alignment. The prior instruction “subelo si ya esta todo” authorizes publication after this acceptance. It does not supply new evidence for every pause/seek/restart scenario: those retain the existing core automated and v0.2 physical evidence; exhaustive v0.3 headset transitions and high-DPI inspection remain unverified limitations. Final release preparation changes version/labels/documentation only, preserving the accepted behavior.
+
 Current goal: two mandatory pillars, substantial UI/UX redesign and a useful measured secondary synchronized-lyrics provider. Branch `codex/v0.3.0` starts at post-v0.2 main `5689c8e`; fetched origin has no intervening change. Existing release is untouched.
 
 | Phase | State | Evidence / next gate |
@@ -11,9 +13,9 @@ Current goal: two mandatory pillars, substantial UI/UX redesign and a useful mea
 | 2 Secondary implementation | IMPLEMENTED / TESTED | NetEase REST fallback, typed outcomes, bounded deadlines, provenance, cancellation and cooldown |
 | 3 Information architecture / design | IMPLEMENTED / DIRECTION APPROVED | Native WPF design resources; Home/Display/Manual/Settings navigation and persistent output state |
 | 4 Views and interactions | IMPLEMENTED / INSPECTED | Now-playing emphasis, visual presets, manual hold feedback, separate technical settings |
-| 5 Integration / migration | AUTOMATED GATE PASSED | All 90 tests pass, old cache/settings preserved; physical gate pending |
-| 6 Visual / physical acceptance | PENDING | Inspect all states, iterate rendered UI, user visual acceptance |
-| 7 Release gate | PENDING | Full diff/build/tests/licenses/benchmark/package; no final release before acceptance |
+| 5 Integration / migration | PASSED | All 90 tests pass; old cache/settings preserved |
+| 6 Visual / physical acceptance | ACCEPTED WITH LIMITATIONS | Accepted UI and ASCII; user confirmed NetEase Stay With Me. Exhaustive transitions/high-DPI not newly verified |
+| 7 Release gate | PUBLICATION IN PROGRESS | Final 0.3.0 build: 90 tests, zero warnings/errors; accepted behavior unchanged |
 
 Observed baseline UX defects: the narrow 560px utility window forces scrolling even for common controls; technical import/cache/network actions share the playback view; lyric and preview repeat similar large cards without explaining their distinct roles; status strings are implementation-oriented; presets lack visual guidance; manual ownership offers no remaining-hold feedback. The redesign will use an approximately 940x720 window, persistent navigation and clearer content/preview hierarchy rather than just reskinning the existing tabs. No UI dependency is needed for this scope.
 

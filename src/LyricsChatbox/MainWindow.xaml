@@ -19,7 +19,7 @@
             </CheckBox>
           </Border>
           <TextBlock x:Name="ConnectionSummary" Text="OSC ready" Style="{StaticResource Caption}"/>
-          <TextBlock Text="LOCAL · v0.3 preview" Style="{StaticResource Caption}" Margin="0,16,0,0"/>
+          <TextBlock Text="LOCAL · v0.3.0" Style="{StaticResource Caption}" Margin="0,16,0,0"/>
         </StackPanel>
         <StackPanel>
           <RadioButton Tag="Home" AutomationProperties.Name="Home" GroupName="Navigation" IsChecked="True" Checked="Navigate" Style="{StaticResource NavigationItem}">
