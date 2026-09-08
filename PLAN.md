@@ -1,5 +1,28 @@
 # Execution state
 
+## v0.4.0 execution (2026-09-08)
+
+Baseline: clean post-v0.3 main 6d16acc, public stable/tag 133a278 verified. Fresh restore/Release build: zero warnings/errors; all 90 existing tests pass (artifacts/test-results/v04-baseline.trx). New branch codex/v0.4.0. No v0.4 public release authorization until required automatic/physical gates pass.
+
+| Phase | State | Next evidence |
+|---|---|---|
+| 0 Baseline | PASSED | Source/settings/provider/package audit; native baseline inspection |
+| 1 Lifecycle | IMPLEMENTED / PARTLY OBSERVED | One process after duplicate launch; HKCU startup toggle written/removed; tray matrix pending |
+| 2 Installer / updates | IMPLEMENTED / PARTLY OBSERVED | ZIP + Inno installer compile; real manual GitHub check passed; install/uninstall pending |
+| 3 Artwork | IMPLEMENTED / PARTLY OBSERVED | Real Backlight art displayed from GSMTC; malformed/oversized/cancel/stale tests passed |
+| 4 Corrections / manual match | IMPLEMENTED / TESTED | Exact override, reset, explicit mapping/cache/forget and late cancellation tested; real UI recovery pending |
+| 5 Diagnostics | IMPLEMENTED / TESTED | Whitelist export and 100-event ring; privacy tests pass; real export pending |
+| 6 CI | IMPLEMENTED | Windows pinned SDK restore/build/test; branch push/run pending |
+| 7 Recovery / DPI | IN PROGRESS | Resume invalidates anchors; per-monitor manifest/work-area fitting; expanded physical checks pending |
+| 8 Physical acceptance | NOT STARTED | Restore all temporary testing preferences; no forced sleep/reboot |
+| 9 Release | NOT STARTED | Accepted candidate, green CI, ZIP/installer/checksums |
+
+Initial approach: native Windows Forms NotifyIcon within WPF (part of Windows desktop runtime, no third-party UI library); named mutex plus local restore event before controller startup. Research: https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.notifyicon ; Inno per-user/non-admin option https://jrsoftware.org/ishelp/topic_setup_privilegesrequired.htm . Installer choice remains to compare/validate. All new lifecycle/update preferences default false. No subagents requested.
+
+Implementation checkpoint: integrated suite passed 114 tests, then two extreme-aspect artwork cases were added and all four artwork tests passed. Last full TRX: artifacts/test-results/v04-integrated.trx. Compiler Inno Setup 7.1.0 selected after comparing WiX's greater MSI authoring complexity and MSIX's signing/certificate requirement. Official compiler SHA256 0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f and Authenticode verified; installed as per-user build tooling under ignored artifacts/tools/InnoSetup. Upstream license reviewed. Installer compile succeeded; it does not enable startup, retains user data, and removes only its own matching startup command on uninstall. Current packages predate the latest source hardening and must be rebuilt before acceptance.
+
+Native evidence: v0.3 no-session baseline inspected, then v0.4 RC launched; real Backlight artwork and cache/LRCLIB lyrics observed. Duplicate executable launch left one process and restored the window. All lifecycle/update controls were visibly off. Enabled startup temporarily, verified exact quoted current executable in own HKCU Run value, disabled it and verified absence. Manual update request returned up-to-date against public v0.3.0. No reboot/sleep performed. Pre-test settings are saved in ignored artifacts/v04-validation/settings-before.json; restore original preferences after tests. Observed process CPU across a 932s mixed UI/playback interval: 18.42 CPU seconds (1.98% of one core, 0.12% machine), not a controlled idle baseline.
+
 ## v0.3.0 execution (2026-09-07)
 Publication verified (2026-09-08): https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.3.0 is public and stable. Main and the annotated v0.3.0 tag resolve to release commit 133a278260fc607447a08b2003169d44ec075436. Windows x64 ZIP: 72,094,707 bytes; SHA256 bbc4c5fd807ac302f331205647c84ced368f1a5d0f5e34b871aa8bbc689ad369, matching GitHub's asset digest. ZIP and checksum attached. Executable product version includes the exact release commit. Old releases/tags untouched. This publication record is a subsequent documentation-only commit; release files remain immutable.
 

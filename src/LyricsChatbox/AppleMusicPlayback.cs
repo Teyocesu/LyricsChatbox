@@ -13,10 +13,14 @@ public sealed class AppleMusicPlayback : IAsyncDisposable
     private long revision;
     private long sessionNumber;
     private double settleUntil;
+    private long artworkRevision = -1;
+    private string? artworkKey;
     public long Revision => Interlocked.Read(ref revision);
     public event Action<PlaybackSnapshot?, string, long>? Observed;
+    public event Action<TrackIdentity, long, Windows.Storage.Streams.IRandomAccessStreamReference?>? ArtworkAvailable;
 
     public void Start() => loop ??= Task.Run(RunAsync);
+    public void ReanchorAfterResume() => Invalidate("Refreshing playback after resume");
     private void Wake() { try { wake.Release(); } catch (SemaphoreFullException) { } catch (ObjectDisposedException) { } }
     private void Invalidate(string status)
     {
@@ -89,6 +93,11 @@ public sealed class AppleMusicPlayback : IAsyncDisposable
                             media.AlbumTitle, media.TrackNumber, timeline.StartTime.TotalSeconds, timeline.EndTime.TotalSeconds,
                             timeline.Position.TotalSeconds, timeline.LastUpdatedTime, state, playback.PlaybackRate ?? 1, now, mono);
                         Observed?.Invoke(snapshot, "Apple Music · " + state.ToString().ToLowerInvariant(), rev);
+                        if (artworkRevision != rev || artworkKey != track.Key)
+                        {
+                            artworkRevision = rev; artworkKey = track.Key;
+                            ArtworkAvailable?.Invoke(track, rev, media.Thumbnail);
+                        }
                     }
                 }
                 await wake.WaitAsync(TimeSpan.FromMilliseconds(250), stop.Token);

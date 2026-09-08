@@ -6,9 +6,12 @@ namespace LyricsChatbox;
 
 public partial class App : Application
 {
+    private SingleInstance? instance;
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        instance = new();
+        if (!instance.IsOwner) { Shutdown(); return; }
         if (e.Args.Contains("--osc-test") || e.Args.Contains("--osc-burst"))
         {
             using var output = new ChatboxOutput();
@@ -48,6 +51,12 @@ public partial class App : Application
             catch (UnauthorizedAccessException) { }
             Shutdown(); return;
         }
-        new MainWindow().Show();
+        var window = new MainWindow();
+        MainWindow = window;
+        instance.Listen(() => _ = Dispatcher.InvokeAsync(window.RestoreWindow));
+        SessionEnding += (_, _) => window.RequestExit();
+        window.Show();
+        window.ApplyInitialWindowState();
     }
+    protected override void OnExit(ExitEventArgs e) { instance?.Dispose(); base.OnExit(e); }
 }

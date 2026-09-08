@@ -1,0 +1,26 @@
+name: Windows CI
+on:
+  push:
+    branches: [main, 'codex/v0.4.0']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-test:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore LyricsChatbox.slnx --locked-mode
+      - name: Build
+        run: dotnet build LyricsChatbox.slnx -c Release --no-restore
+      - name: Test
+        run: dotnet test tests/LyricsChatbox.Tests -c Release --no-build --logger trx

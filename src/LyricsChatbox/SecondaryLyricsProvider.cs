@@ -11,10 +11,12 @@ public interface ISyncedLyricsProvider
 {
     string Name { get; }
     Task<ProviderResult> FindAsync(TrackIdentity track, CancellationToken token);
+    Task<IReadOnlyList<LyricsRecord>> SearchManualAsync(string query, CancellationToken token) => Task.FromResult<IReadOnlyList<LyricsRecord>>([]);
+    Task<ProviderResult> FetchManualAsync(LyricsRecord expected, CancellationToken token) => Task.FromResult(new ProviderResult(LyricsOutcome.Unavailable));
 }
 
 // Community REST endpoint, best effort: no cookies, login, HTML parsing or encrypted API emulation.
-public sealed class NetEaseLyricsProvider(HttpClient http) : ISyncedLyricsProvider, IDisposable
+public sealed partial class NetEaseLyricsProvider(HttpClient http) : ISyncedLyricsProvider, IDisposable
 {
     public string Name => "NetEase";
     public static readonly TimeSpan Deadline = TimeSpan.FromSeconds(6);

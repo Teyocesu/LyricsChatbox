@@ -19,7 +19,7 @@
             </CheckBox>
           </Border>
           <TextBlock x:Name="ConnectionSummary" Text="OSC ready" Style="{StaticResource Caption}"/>
-          <TextBlock Text="LOCAL · v0.3.0" Style="{StaticResource Caption}" Margin="0,16,0,0"/>
+          <TextBlock Text="LOCAL · v0.4 preview" Style="{StaticResource Caption}" Margin="0,16,0,0"/>
         </StackPanel>
         <StackPanel>
           <RadioButton Tag="Home" AutomationProperties.Name="Home" GroupName="Navigation" IsChecked="True" Checked="Navigate" Style="{StaticResource NavigationItem}">
@@ -69,11 +69,14 @@
               </DockPanel>
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="76"/>
+                  <ColumnDefinition Width="116"/>
                   <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <Border Width="60" Height="60" CornerRadius="10" Background="#30394E" HorizontalAlignment="Left">
-                  <TextBlock Text="♫" FontSize="36" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Width="100" Height="100" CornerRadius="10" Background="#30394E" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  <Grid>
+                    <Image x:Name="ArtImage" Stretch="UniformToFill" AutomationProperties.Name="Apple Music album artwork"/>
+                    <TextBlock x:Name="ArtFallback" Text="♫" FontSize="36" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  </Grid>
                 </Border>
                 <StackPanel Grid.Column="1">
                   <TextBlock x:Name="TrackText" Text="Waiting for a track" FontSize="23" FontWeight="SemiBold"/>
@@ -87,6 +90,16 @@
                 <StackPanel>
                   <TextBlock x:Name="LyricsStatusText" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
                   <TextBlock x:Name="LyricText" Text="No track playing" FontSize="23" MinHeight="48"/>
+                  <Button x:Name="ChooseMatchButton" Content="Choose another match…" Click="OpenMatches" HorizontalAlignment="Left" Visibility="Collapsed" Margin="0,8,0,0"/>
+                  <StackPanel x:Name="MatchPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                    <TextBox x:Name="MatchQuery" MaxLength="512" AutomationProperties.Name="Search lyrics candidates"/>
+                    <WrapPanel Margin="0,8,0,8"><Button x:Name="SearchMatchesButton" Content="Search" Click="SearchMatches" Margin="0,0,8,4"/><Button x:Name="UseMatchButton" Content="Use selected match" Click="UseMatch" Margin="0,0,8,4"/><Button Content="Cancel" Click="CloseMatches" Margin="0,0,0,4"/></WrapPanel>
+                    <TextBlock x:Name="MatchStatus" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                    <ListBox x:Name="MatchChoices" MaxHeight="220" Background="{StaticResource RaisedBrush}" Foreground="{StaticResource TextBrush}" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Candidate recordings">
+                      <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Display}" Margin="6" TextWrapping="Wrap"/></DataTemplate></ListBox.ItemTemplate>
+                      <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListBox.ItemContainerStyle>
+                    </ListBox>
+                  </StackPanel>
                 </StackPanel>
               </Border>
             </StackPanel>
@@ -110,6 +123,12 @@
                     <TextBlock x:Name="OffsetText" Text="0.0 s" HorizontalAlignment="Right" Foreground="{StaticResource AccentBrush}"/>
                   </DockPanel>
                   <Slider x:Name="OffsetSlider" ToolTip="Positive timing values show lyrics later." Minimum="-5" Maximum="5" TickFrequency="0.1" SmallChange="0.1" LargeChange="0.5" IsSnapToTickEnabled="True" ValueChanged="OffsetChanged" AutomationProperties.Name="Lyric offset in seconds"/>
+                  <TextBlock x:Name="CorrectionStatus" Style="{StaticResource Caption}" Margin="0,6,0,4"/>
+                  <WrapPanel>
+                    <Button x:Name="SaveSongButton" Content="Save for this song" Click="SaveSongCorrection" Padding="8,5" MinHeight="32" Margin="0,0,6,6"/>
+                    <Button x:Name="ResetSongButton" Content="Reset song" Click="ResetSongCorrection" Padding="8,5" MinHeight="32" Margin="0,0,6,6"/>
+                    <Button Content="Use globally" Click="UseGlobalCorrection" Padding="8,5" MinHeight="32" Margin="0,0,0,6"/>
+                  </WrapPanel>
                   <Button Content="Retry lyrics" Click="RetryLyrics" Padding="12,5" MinHeight="32" Margin="0,8,0,0" ToolTip="Search for lyrics for the current recording again."/>
                 </StackPanel>
               </Grid>
@@ -196,6 +215,28 @@
         <StackPanel>
           <Border Style="{StaticResource Card}" Margin="0,0,8,16">
             <StackPanel>
+              <TextBlock Text="Application behavior" Style="{StaticResource SectionTitle}"/>
+              <CheckBox x:Name="StartWindowsBox" Content="Start with Windows" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Margin="0,12,0,4"/>
+              <TextBlock Text="Launch when you sign in. If you move a portable copy, enable this again from its new location." Style="{StaticResource Caption}"/>
+              <CheckBox x:Name="StartMinimizedBox" Content="Start minimized" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Margin="0,12,0,4"/>
+              <TextBlock Text="Start without opening the main working view." Style="{StaticResource Caption}"/>
+              <CheckBox x:Name="MinimizeTrayBox" Content="Minimize to system tray" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Margin="0,12,0,4"/>
+              <TextBlock Text="Hide in the notification area when minimized." Style="{StaticResource Caption}"/>
+              <CheckBox x:Name="CloseTrayBox" Content="Close window to system tray" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Margin="0,12,0,4"/>
+              <TextBlock Text="Keep running when closed. Use Exit in the tray menu to quit." Style="{StaticResource Caption}"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Updates" Style="{StaticResource SectionTitle}"/>
+              <TextBlock x:Name="UpdateStatus" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
+              <WrapPanel><Button x:Name="CheckUpdatesButton" Content="Check now" Click="CheckUpdates" Margin="0,0,8,8"/><Button x:Name="ViewReleaseButton" Content="View release" Click="ViewRelease" Visibility="Collapsed" Margin="0,0,0,8"/></WrapPanel>
+              <CheckBox x:Name="AutoUpdateBox" Content="Check for updates at startup" Checked="AutomaticUpdatesChanged" Unchecked="AutomaticUpdatesChanged" Margin="0,8,0,8"/>
+              <TextBlock Text="Checks GitHub only when requested or enabled here. Updates are never downloaded or installed automatically." Style="{StaticResource Caption}"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
               <TextBlock Text="Lyrics sources" Style="{StaticResource SectionTitle}"/>
               <TextBlock Text="Local LRC → cache → LRCLIB → NetEase" Foreground="{StaticResource AccentBrush}"/>
               <TextBlock Text="NetEase is a best-effort fallback, searched only when LRCLIB cannot supply synchronized lyrics. No account or key is needed." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
@@ -203,8 +244,17 @@
                 <Button x:Name="ImportButton" Content="Import local LRC…" Click="ImportLrc" Margin="0,0,8,8"/>
                 <Button Content="Open data folder" Click="OpenData" Margin="0,0,8,8"/>
                 <Button Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,8,8"/>
+                <Button x:Name="ForgetMatchButton" Content="Forget manual match" Click="ForgetMatch" IsEnabled="False" Margin="0,0,8,8"/>
               </WrapPanel>
               <TextBlock Text="Searches send song metadata to the lyrics source. Settings and cached lyrics stay on this computer. Community endpoints may change or be unavailable in some regions." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Diagnostics" Style="{StaticResource SectionTitle}"/>
+              <TextBlock Text="Current playback, provider and output state. No lyrics or chat messages. Review before sharing." Style="{StaticResource Caption}" Margin="0,0,0,12"/>
+              <WrapPanel><Button Content="Copy diagnostics" Click="CopyDiagnostics" Margin="0,0,8,8"/><Button Content="Export diagnostics…" Click="ExportDiagnostics" Margin="0,0,0,8"/></WrapPanel>
+              <TextBlock x:Name="DiagnosticsStatus" Style="{StaticResource Caption}"/>
             </StackPanel>
           </Border>
           <Border Style="{StaticResource Card}" Margin="0,0,8,16">

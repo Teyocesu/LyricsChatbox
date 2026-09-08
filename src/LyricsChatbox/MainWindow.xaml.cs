@@ -57,10 +57,16 @@ public partial class MainWindow : Window
         OffsetText.Text = settings.Offset.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
         output.Configure(settings.Host, settings.Port);
         playback.Observed += OnObserved;
+        playback.ArtworkAvailable += OnArtwork;
+        SystemEvents.PowerModeChanged += OnPowerModeChanged;
         timer.Tick += (_, _) => Tick();
         saveTimer.Tick += (_, _) => { saveTimer.Stop(); Save(); };
         Closing += OnClosing;
         Deactivated += (_, _) => { manual.Focus(false); Tick(); };
+        InitializeLifecycle();
+        InitializeUpdates();
+        LoadCorrection();
+        diagnostics.Add(DiagnosticCategory.Lifecycle, "Application started");
         ready = true; timer.Start(); playback.Start();
     }
 
@@ -75,6 +81,11 @@ public partial class MainWindow : Window
             if (engine.Observe(snapshot))
             {
                 lookup?.Cancel();
+                ClearArtwork();
+                CancelManualMatch();
+                ForgetMatchButton.IsEnabled = snapshot is not null && data.ReadManualAssociation(snapshot.Track) is not null;
+                LoadCorrection();
+                diagnostics.Add(DiagnosticCategory.Playback, snapshot is null ? "Session/recording invalidated" : "Recording changed");
                 // Invalidated state is rendered/scheduled before any lookup can start.
                 Tick();
                 if (engine.Track is not null) StartLookup(false);
@@ -97,6 +108,7 @@ public partial class MainWindow : Window
 
     private async Task ResolveAsync(TrackIdentity track, long epoch, CancellationToken token)
     {
+        var elapsed = Stopwatch.StartNew();
         try
         {
             // Disk parsing and HTTP run off the dispatcher; completion returns to the dispatcher.
@@ -106,7 +118,8 @@ public partial class MainWindow : Window
                     if (!closing && !token.IsCancellationRequested && engine.ReportProgress(epoch, status)) Tick();
                 })), token);
             if (closing || token.IsCancellationRequested || !engine.Complete(epoch, result)) return;
-            if (result.RetryAt is null)
+            diagnostics.Add(DiagnosticCategory.Lyrics, result.Status + " · " + elapsed.ElapsedMilliseconds + " ms");
+            if (result.Timeline is not null || result.Outcome == LyricsOutcome.Instrumental)
             {
                 if (loaded.Count >= 20) loaded.Clear();
                 loaded[track.Key] = result;
@@ -128,7 +141,7 @@ public partial class MainWindow : Window
         // A native metadata event can arrive before its dispatcher callback; never send the old track in that gap.
         if (acceptedPlaybackRevision != playback.Revision)
         {
-            if (engine.Observe(null)) lookup?.Cancel();
+            if (engine.Observe(null)) { lookup?.Cancel(); ClearArtwork(); CancelManualMatch(); LoadCorrection(); }
         }
         if (now >= nextReceiverCheck)
         {
@@ -154,6 +167,7 @@ public partial class MainWindow : Window
         PositionProgress.Value = engine.Track?.Duration > 0 && position.HasValue ? Math.Clamp(position.Value / engine.Track.Duration, 0, 1) : 0;
         PositionText.Text = position.HasValue ? $"{TimeSpan.FromSeconds(position.Value):m\\:ss} / {TimeSpan.FromSeconds(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400)):m\\:ss}" : "No playback position";
         ImportButton.IsEnabled = !string.IsNullOrWhiteSpace(engine.Track?.Title);
+        ChooseMatchButton.Visibility = engine.Track is not null && engine.Timeline is null ? Visibility.Visible : Visibility.Collapsed;
         var automatic = ChatboxComposer.Compose(ChatboxComposer.Template(settings.Preset, settings.CustomTemplate),
             engine.Track, lyric, settings.Message, DateTimeOffset.Now, position, settings.Preset is "Custom" or "Status / Time");
         var desired = manual.Desired(automatic, now);
@@ -207,7 +221,7 @@ public partial class MainWindow : Window
 
     private void Save()
     {
-        settings = settings with { Enabled = engine.Enabled, Offset = engine.Offset };
+        settings = settings with { Enabled = engine.Enabled };
         if (!data.SaveSettings(settings)) ErrorText.Text = "Could not save settings; this session still works.";
     }
     private void EnabledChanged(object sender, RoutedEventArgs e)
@@ -215,7 +229,7 @@ public partial class MainWindow : Window
         if (!ready) return;
         engine.Enabled = EnabledBox.IsChecked == true;
         if (!engine.Enabled) manual.Resume();
-        Save(); Tick();
+        Save(); UpdateTray(); Tick();
     }
     private void DisplayChanged(object sender, RoutedEventArgs e)
     {
@@ -227,6 +241,7 @@ public partial class MainWindow : Window
         TemplateBox.IsEnabled = settings.Preset == "Custom";
         CustomPanel.Visibility = settings.Preset == "Custom" ? Visibility.Visible : Visibility.Collapsed;
         StatusPanel.Visibility = settings.Preset is "Custom" or "Status / Time" ? Visibility.Visible : Visibility.Collapsed;
+        UpdateTray();
         saveTimer.Stop(); saveTimer.Start(); Tick();
     }
     private void DraftFocused(object sender, RoutedEventArgs e) { if (ready) { manual.Focus(true); Tick(); } }
@@ -260,10 +275,9 @@ public partial class MainWindow : Window
     private void ResumeAutomatic(object sender, RoutedEventArgs e) { manual.Resume(); Tick(); }
     private void OffsetChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        if (!ready) return;
+        if (!ready || applyingCorrection) return;
         engine.Offset = Math.Round(e.NewValue, 1);
-        OffsetText.Text = engine.Offset.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
-        saveTimer.Stop(); saveTimer.Start(); Tick();
+        UpdateCorrectionLabel(); Tick();
     }
     private void ApplyOsc(object sender, RoutedEventArgs e)
     {
@@ -299,12 +313,20 @@ public partial class MainWindow : Window
     {
         if (closed) return;
         e.Cancel = true;
+        if (LifecyclePolicy.Close(settings, exitRequested) == WindowAction.Hide) { Hide(); return; }
         if (closing) return;
         closing = true; ready = false; timer.Stop(); saveTimer.Stop(); Save();
+        DisposeTray();
+        lifetime.Cancel();
+        CancelManualMatch();
+        ClearArtwork();
+        playback.ArtworkAvailable -= OnArtwork;
+        SystemEvents.PowerModeChanged -= OnPowerModeChanged;
         engine.Enabled = false; lookup?.Cancel(); playback.Observed -= OnObserved;
         manual.Resume(); output.SendTyping(false);
         await playback.DisposeAsync();
-        await Task.WhenAll(pending.ToArray());
+        try { await Task.WhenAll(pending.ToArray()); }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { diagnostics.Add(DiagnosticCategory.Lifecycle, "Pending work ended during shutdown"); }
         lookup?.Dispose(); resolver.Dispose(); secondary.Dispose(); http.Dispose(); output.Dispose();
         closed = true; Close();
     }

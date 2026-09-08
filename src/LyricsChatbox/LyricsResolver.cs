@@ -8,7 +8,7 @@ namespace LyricsChatbox;
 public record LyricsResolution(LyricTimeline? Timeline, string Status, DateTimeOffset? RetryAt = null,
     string? Provider = null, LyricsOutcome Outcome = LyricsOutcome.Unavailable);
 
-public sealed class LyricsResolver(HttpClient http, LocalData data, ISyncedLyricsProvider? secondary = null) : IDisposable
+public sealed partial class LyricsResolver(HttpClient http, LocalData data, ISyncedLyricsProvider? secondary = null) : IDisposable
 {
     private readonly SemaphoreSlim network = new(1, 1);
     private DateTimeOffset nextRequest;
@@ -20,6 +20,17 @@ public sealed class LyricsResolver(HttpClient http, LocalData data, ISyncedLyric
     public async Task<LyricsResolution> ResolveAsync(TrackIdentity track, CancellationToken token,
         Action<string>? progress = null)
     {
+        if (data.ReadManualAssociation(track) is { } association && LrcParser.Parse(data.ReadLocal(track)).Lines.Count==0 && data.ReadCachedLyrics(track) is null)
+        {
+            var choice = new ManualCandidate(association.Provider,association.Metadata);
+            var selected = await FetchManualAsync(choice,token);
+            token.ThrowIfCancellationRequested();
+            if(selected.Outcome==LyricsOutcome.Found && selected.Record is { } manualRecord)
+            {
+                data.SaveManualAssociation(track,choice,manualRecord);
+                return Convert(manualRecord,choice.Provider) with {Status="Synced lyrics loaded · manual match · "+choice.Provider};
+            }
+        }
         LyricsResolution primary;
         using (var deadline = CancellationTokenSource.CreateLinkedTokenSource(token))
         {
