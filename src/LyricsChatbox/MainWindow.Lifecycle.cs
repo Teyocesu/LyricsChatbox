@@ -25,6 +25,7 @@ public partial class MainWindow
         UpdateTray();
         SourceInitialized += (_, _) => FitWorkArea();
         Loaded += (_, _) => FitWorkArea();
+        ContentRoot.SizeChanged += (_, _) => WindowLayout.Apply(this, ContentRoot.ActualHeight);
         DpiChanged += (_, _) => _ = Dispatcher.InvokeAsync(FitWorkArea);
         StateChanged += (_, _) =>
         {
