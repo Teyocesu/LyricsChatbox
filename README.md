@@ -2,9 +2,9 @@
 
 A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
 
-## v0.4 release candidate
+## v0.4
 
-This branch contains v0.4 in validation; v0.3 remains the public stable release. The candidate adds a per-user Inno Setup installer alongside the portable ZIP, with a Start Menu shortcut and optional desktop shortcut. No administrator rights are required. Uninstall preserves settings, imported lyrics, cache and corrections.
+v0.4 adds a per-user Inno Setup installer alongside the portable ZIP, with a Start Menu shortcut and optional desktop shortcut. No administrator rights are required. Uninstall preserves settings, imported lyrics, cache and corrections.
 
 **Settings → Application behavior** controls Start with Windows, Start minimized, Minimize to system tray and Close window to system tray. All four default **off**, including migration from v0.3. Tray Open, Output, Compact/Floating and Exit act on the same application. Launching a second copy restores the first. Start minimized uses the taskbar unless Minimize to tray is also enabled. Startup points to the current executable; enable it again after moving a portable copy. The installer never enables background preferences.
 
@@ -16,11 +16,11 @@ When automatic matching fails, **Choose another match…** searches up to five c
 
 Home displays the Windows media thumbnail from Apple Music, with no separate artwork service or disk history. **Settings → Diagnostics** copies or exports current playback/provider/output state and up to 100 recent status events. No lyric bodies, drafts, custom messages or credentials are included; review metadata before sharing. Nothing is uploaded automatically.
 
-Windows CI restores using the repository's SDK/lock files, builds Release and runs offline tests on pushes and pull requests. To build the installer after publishing, run `scripts/Build-Installer.ps1 -Compiler <path-to-ISCC.exe>` with Inno Setup installed. Current candidate artifacts live under `artifacts/v0.4.0-rc.1`.
+Windows CI restores using the repository's SDK/lock files, builds Release and runs offline tests on pushes and pull requests. To build the installer after publishing, run `scripts/Build-Installer.ps1 -Compiler <path-to-ISCC.exe>` with Inno Setup installed. Build artifacts live under `artifacts/v0.4.0`.
 
 ## Run
 
-Download the Windows x64 ZIP from [GitHub Releases](https://github.com/Teyocesu/LyricsChatbox/releases), extract it, and launch `win-x64/LyricsChatbox.exe`. The self-contained build does not require a separate .NET installation. Windows 10 version 2004 or newer is required; development validation uses Windows 11. The current development build is v0.4.0-rc.1.
+Download the installer or Windows x64 ZIP from [GitHub Releases](https://github.com/Teyocesu/LyricsChatbox/releases). Run the installer, or extract the ZIP and launch `win-x64/LyricsChatbox.exe`. Both are self-contained and do not require a separate .NET installation. Windows 10 version 2004 or newer is required; development validation uses Windows 11.
 
 1. Open Apple Music for Windows and play a song.
 2. In VRChat, enable **OSC** from the Action Menu. Make your own Chatbox visible to check output. Stop other apps that send Chatbox messages to avoid competing output.
@@ -94,14 +94,14 @@ dotnet run --project src/LyricsChatbox
 .\scripts\Publish.ps1
 ```
 
-The publish script produces `artifacts/v0.4.0-rc.1/win-x64`, a ZIP and SHA256 file, including documentation and third-party license texts. The regression suite covers timeline boundaries, offsets/gaps, pause/resume/seeks, stale lookup epochs, conservative matching, provider failures/cancellation/rate limiting, local persistence corruption and migration, composer tokens, manual ownership, typing lifecycle, latest-draft coalescing and compact Unicode budgets. It does not access Apple Music, LRCLIB or VRChat during normal test execution.
+The publish script produces `artifacts/v0.4.0/win-x64`, a ZIP and SHA256 file, including documentation and third-party license texts. The regression suite covers timeline boundaries, offsets/gaps, pause/resume/seeks, stale lookup epochs, conservative matching, provider failures/cancellation/rate limiting, local persistence corruption and migration, composer tokens, manual ownership, typing lifecycle, latest-draft coalescing and compact Unicode budgets. v0.4 adds single-instance/startup, update checks, bounded artwork, recording corrections, manual matching, diagnostics and resume/recovery checks. It does not access Apple Music, LRCLIB or VRChat during normal test execution.
 
 For explicit physical diagnostics:
 
 ```powershell
 dotnet run --project spikes/AppleMusicPlaybackSpike -- 60
-.\artifacts\v0.4.0-rc.1\win-x64\LyricsChatbox.exe --osc-test
-.\artifacts\v0.4.0-rc.1\win-x64\LyricsChatbox.exe --osc-burst
+.\artifacts\v0.4.0\win-x64\LyricsChatbox.exe --osc-test
+.\artifacts\v0.4.0\win-x64\LyricsChatbox.exe --osc-burst
 ```
 
 The playback spike reads metadata/timing/events and compares the production clock to Windows. Its optional `--exercise` flag changes playback through public GSMTC controls; on the tested Apple Music version, seek calls reported success without actually seeking. Use native player controls for real seek validation.

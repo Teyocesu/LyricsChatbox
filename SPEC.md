@@ -1,6 +1,6 @@
 # LyricsChatbox MVP
 
-## v0.4.0 approved extension (in development)
+## v0.4.0 approved extension
 - Preserve v0.3 core, provider order, matching, OSC cadence and accepted charcoal/lavender UI. Add single instance, opt-in tray/startup, portable plus per-user installer, update notification, native GSMTC artwork, per-recording corrections, explicit manual match recovery, on-demand diagnostics and Windows CI.
 - StartWithWindows, StartMinimized, MinimizeToTray, CloseToTray and AutomaticUpdateChecks default false for new and migrated settings. No automatic update installation. Startup uses only the application's HKCU Run value, written on explicit preference changes and reconciled only when previously opted in; failed registration is shown honestly. Portable startup uses the current quoted executable path. Installation never opts into background behavior; uninstall preserves user data.
 - Single-instance ownership is acquired before constructing any playback/network/OSC controller, including synthetic OSC diagnostics. A second launch signals the existing process to restore its one window and exits. Tray Open, Output, Floating and Exit operate that same controller. Normal minimize/close behavior remains unchanged when preferences are off.

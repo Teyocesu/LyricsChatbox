@@ -49,6 +49,41 @@ public class BoundaryTests
     }
 
     [Fact]
+    public async Task ManualWhileReceiverAbsentReturnsOnlyCurrentDraftThenCurrentAutomatic()
+    {
+        int port;
+        using (var reservation = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0)))
+            port = ((IPEndPoint)reservation.Client.LocalEndPoint!).Port;
+        using var output = new ChatboxOutput();
+        output.Configure("127.0.0.1", port);
+        var manual = new ManualChat();
+        var scheduler = new ChatboxScheduler();
+        manual.Focus(true);
+        foreach (var (time, draft) in new[] { (0d, "old draft A"), (2d, "old draft B") })
+        {
+            manual.Edit(draft, true, time);
+            scheduler.Set(1, manual.Desired("old automatic", time)!, true);
+            output.Send(scheduler.Take(time)!.Value.Text); // No receiver is bound.
+        }
+        manual.Edit("current draft 日本語", true, 3);
+        scheduler.Set(2, manual.Desired("new song", 3)!, false);
+        Assert.Null(scheduler.Take(3));
+        using var receiver = new UdpClient(new IPEndPoint(IPAddress.Loopback, port));
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        scheduler.ReceiverChanged();
+        scheduler.Set(2, manual.Desired("new song", 4)!, true, compact: true);
+        output.Send(scheduler.Take(4)!.Value.Text);
+        Assert.Equal(ChatboxFormatter.Packet(ChatboxFormatter.Format("current draft 日本語", true)),
+            (await receiver.ReceiveAsync(deadline.Token)).Buffer);
+        Assert.Null(scheduler.Take(6));
+        manual.Resume();
+        scheduler.Set(3, manual.Desired("current lyric", 7)!, true);
+        output.Send(scheduler.Take(7)!.Value.Text);
+        Assert.Equal(ChatboxFormatter.Packet("current lyric"), (await receiver.ReceiveAsync(deadline.Token)).Buffer);
+        Assert.Null(scheduler.Take(9));
+    }
+
+    [Fact]
     public void TrackChangeClearsOrReplacesWithinBudgetWithoutBursting()
     {
         var scheduler = new ChatboxScheduler();

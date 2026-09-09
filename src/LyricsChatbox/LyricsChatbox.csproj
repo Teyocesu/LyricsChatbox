@@ -8,7 +8,7 @@
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.4.0-rc.1</Version>
+    <Version>0.4.0</Version>
     <ApplicationIcon>Assets/AppIcon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
