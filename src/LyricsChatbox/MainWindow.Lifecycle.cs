@@ -24,6 +24,7 @@ public partial class MainWindow
         CloseTrayBox.IsChecked = settings.CloseToTray;
         UpdateTray();
         SourceInitialized += (_, _) => FitWorkArea();
+        Loaded += (_, _) => FitWorkArea();
         DpiChanged += (_, _) => _ = Dispatcher.InvokeAsync(FitWorkArea);
         StateChanged += (_, _) =>
         {
@@ -47,6 +48,12 @@ public partial class MainWindow
         var availableHeight = Math.Max(320, area.Height / dpi.DpiScaleY - 16);
         MinWidth = Math.Min(820, availableWidth); MinHeight = Math.Min(650, availableHeight);
         Width = Math.Min(Width, availableWidth); Height = Math.Min(Height, availableHeight);
+        // CenterScreen can place an initially oversized window above the work area before Loaded.
+        if (WindowState == WindowState.Normal)
+        {
+            Left = Math.Clamp(Left, area.Left / dpi.DpiScaleX, Math.Max(area.Left / dpi.DpiScaleX, area.Right / dpi.DpiScaleX - Width));
+            Top = Math.Clamp(Top, area.Top / dpi.DpiScaleY, Math.Max(area.Top / dpi.DpiScaleY, area.Bottom / dpi.DpiScaleY - Height));
+        }
     }
 
     private void UpdateTray()

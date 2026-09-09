@@ -39,6 +39,14 @@ public partial class MainWindow
             MatchStatus.Text = choices.Count == 0 ? "No candidates available. Try different search words or import a local LRC." : "Choose the recording you want to use. NetEase timing is verified after selection.";
         }
         catch (OperationCanceledException) { }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            if (!closing && !token.IsCancellationRequested && engine.Epoch == epoch)
+            {
+                MatchStatus.Text = "Could not search candidates. Try again.";
+                diagnostics.Add(DiagnosticCategory.Lyrics, "Manual candidate search failed");
+            }
+        }
         finally { if (!closing && !token.IsCancellationRequested) SearchMatchesButton.IsEnabled = true; }
     }
     private async void UseMatch(object sender, RoutedEventArgs e)
@@ -62,6 +70,14 @@ public partial class MainWindow
             StartLookup(true); CancelManualMatch(); ForgetMatchButton.IsEnabled = true; Tick();
         }
         catch (OperationCanceledException) { }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            if (!closing && !token.IsCancellationRequested && engine.Epoch == epoch)
+            {
+                MatchStatus.Text = "Could not load that candidate. Try again or choose another.";
+                diagnostics.Add(DiagnosticCategory.Lyrics, "Manual candidate load failed");
+            }
+        }
         finally { if (!closing && !token.IsCancellationRequested) UseMatchButton.IsEnabled = SearchMatchesButton.IsEnabled = true; }
     }
     private void ForgetMatch(object sender, RoutedEventArgs e)

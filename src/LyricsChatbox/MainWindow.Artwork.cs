@@ -48,7 +48,7 @@ public partial class MainWindow
         _ = Dispatcher.InvokeAsync(() =>
         {
             if (closing) return;
-            lookup?.Cancel(); engine.Observe(null); ClearArtwork();
+            lookup?.Cancel(); engine.Observe(null); ClearArtwork(); CancelManualMatch(); LoadCorrection();
             scheduler.ReceiverChanged(); typing.Reset(); manual.Resume(); output.SendTyping(false);
             playback.ReanchorAfterResume();
             diagnostics.Add(DiagnosticCategory.Lifecycle, e.Mode == PowerModes.Resume ? "Resuming; awaiting fresh playback" : "Suspending playback state");

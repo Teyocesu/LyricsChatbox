@@ -5,6 +5,30 @@ namespace LyricsChatbox.Tests;
 public class LifecycleTests
 {
     [Fact]
+    public async Task ResumeInvalidationRejectsOldLookupAndWaitsForFreshClock()
+    {
+        await using var playback = new AppleMusicPlayback();
+        var engine = new SynchronizationEngine { Enabled = true };
+        engine.Observe(CoreTests.Snapshot(10));
+        var beforeSleep = engine.Epoch;
+        var lyrics = new LyricsResolution(LrcParser.Parse("[00:10]before\n[00:30]after"), "Synced");
+        Assert.True(engine.Complete(beforeSleep, lyrics));
+        Assert.Equal("before", engine.Output(0));
+        long observedRevision = -1;
+        playback.Observed += (snapshot, _, revision) => { engine.Observe(snapshot); observedRevision = revision; };
+        playback.ReanchorAfterResume();
+        Assert.Equal(playback.Revision, observedRevision);
+        Assert.True(observedRevision > 0);
+        Assert.Null(engine.Position(7200));
+        Assert.Equal("", engine.Output(7200));
+        Assert.False(engine.Complete(beforeSleep, lyrics));
+        engine.Observe(CoreTests.Snapshot(30, 7200));
+        Assert.True(engine.Complete(engine.Epoch, lyrics));
+        Assert.Equal(30, engine.Position(7200));
+        Assert.Equal("after", engine.Output(7200));
+    }
+
+    [Fact]
     public void V03MigrationKeepsPreferencesAndNeverOptsIntoBackgroundBehavior()
     {
         var settings = JsonSerializer.Deserialize<AppSettings>("""{"Enabled":true,"Compact":true,"Offset":0.7,"Preset":"Custom","CustomTemplate":"{title}"}""")!;

@@ -167,7 +167,7 @@ public partial class MainWindow : Window
         PositionProgress.Value = engine.Track?.Duration > 0 && position.HasValue ? Math.Clamp(position.Value / engine.Track.Duration, 0, 1) : 0;
         PositionText.Text = position.HasValue ? $"{TimeSpan.FromSeconds(position.Value):m\\:ss} / {TimeSpan.FromSeconds(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400)):m\\:ss}" : "No playback position";
         ImportButton.IsEnabled = !string.IsNullOrWhiteSpace(engine.Track?.Title);
-        ChooseMatchButton.Visibility = engine.Track is not null && engine.Timeline is null ? Visibility.Visible : Visibility.Collapsed;
+        ChooseMatchButton.Visibility = !string.IsNullOrWhiteSpace(engine.Track?.Title) && engine.Track.Duration is > 0 and <= 3600 && engine.Timeline is null ? Visibility.Visible : Visibility.Collapsed;
         var automatic = ChatboxComposer.Compose(ChatboxComposer.Template(settings.Preset, settings.CustomTemplate),
             engine.Track, lyric, settings.Message, DateTimeOffset.Now, position, settings.Preset is "Custom" or "Status / Time");
         var desired = manual.Desired(automatic, now);

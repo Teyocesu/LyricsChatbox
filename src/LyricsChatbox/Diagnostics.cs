@@ -24,7 +24,7 @@ public sealed class Diagnostics
         text = new string(text.Where(c => !char.IsControl(c)).Take(512).ToArray());
         return text;
     }
-    public string Export(PlaybackSnapshot? snapshot, AppSettings settings, string lyricsStatus, string oscStatus, double effectiveOffset)
+    public string Export(PlaybackSnapshot? snapshot, AppSettings settings, string lyricsStatus, string oscStatus, double effectiveOffset, bool manualMode = false, string? applicationStatus = null)
     {
         DiagnosticEvent[] recent;
         lock (events) recent = events.ToArray();
@@ -36,6 +36,7 @@ public sealed class Diagnostics
                 .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion,
             Windows = Environment.OSVersion.VersionString,
             Runtime = RuntimeInformation.FrameworkDescription,
+            ApplicationStatus = Clean(applicationStatus),
             AppleMusic = new
             {
                 SessionPresent = snapshot is not null,
@@ -53,7 +54,7 @@ public sealed class Diagnostics
                 State = snapshot?.State.ToString()
             },
             Lyrics = new { Status = Clean(lyricsStatus), EffectiveOffset = effectiveOffset },
-            Output = new { settings.Enabled, settings.Compact, settings.Host, settings.Port, settings.Preset, Status = Clean(oscStatus) },
+            Output = new { settings.Enabled, Mode = manualMode ? "Manual" : "Automatic", settings.Compact, settings.Host, settings.Port, settings.Preset, Status = Clean(oscStatus) },
             ApplicationBehavior = new { settings.StartWithWindows, settings.StartMinimized, settings.MinimizeToTray, settings.CloseToTray, settings.AutomaticUpdateChecks },
             RecentEvents = recent,
             Privacy = "Generated on demand. No lyric bodies, custom messages, drafts, credentials or persistent listening history."
@@ -61,6 +62,7 @@ public sealed class Diagnostics
         return JsonSerializer.Serialize(report, new JsonSerializerOptions
         {
             WriteIndented = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() },
             NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
         });
     }

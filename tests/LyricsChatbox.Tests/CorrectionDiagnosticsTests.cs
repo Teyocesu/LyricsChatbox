@@ -29,13 +29,14 @@ public sealed class CorrectionDiagnosticsTests : IDisposable
         for (var i = 0; i < 150; i++) diagnostics.Add(DiagnosticCategory.Lifecycle, "Event " + i);
         diagnostics.Add(DiagnosticCategory.Update, "token=super-secret Bearer another-secret ghp_exampleSecret");
         var settings = new AppSettings(CustomTemplate: "private lyric body", Message: "private message");
-        var text = diagnostics.Export(null, settings, "Synced · NetEase", "OSC ready", 0.6);
+        var text = diagnostics.Export(null, settings, "Synced · NetEase", "OSC ready", 0.6, manualMode: true);
         Assert.DoesNotContain("private lyric body", text); Assert.DoesNotContain("private message", text);
         Assert.DoesNotContain("super-secret", text); Assert.DoesNotContain("another-secret", text); Assert.DoesNotContain("ghp_exampleSecret", text);
         using var document = JsonDocument.Parse(text);
         Assert.Equal(100, document.RootElement.GetProperty("RecentEvents").GetArrayLength());
         Assert.Equal(0.6, document.RootElement.GetProperty("Lyrics").GetProperty("EffectiveOffset").GetDouble());
         Assert.Equal("LyricsChatbox", document.RootElement.GetProperty("Application").GetString());
+        Assert.Equal("Manual", document.RootElement.GetProperty("Output").GetProperty("Mode").GetString());
     }
     public void Dispose() { if (Directory.Exists(root)) Directory.Delete(root, true); }
 }
