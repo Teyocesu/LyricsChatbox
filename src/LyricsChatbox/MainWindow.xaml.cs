@@ -40,7 +40,13 @@ public partial class MainWindow : Window
         secondary = new(http);
         resolver = new(http, data, secondary);
         settings = data.ReadSettings();
+        profiles = data.ReadProfiles(settings);
+        settings = profiles.Selected.Apply(settings);
+        contextMode = profiles.Selected.ContextMode;
+        quickMessages = data.ReadQuickMessages();
+        ThemeColors.Apply(Application.Current.Resources, settings.Appearance);
         InitializeComponent();
+        InitializeAppearance();
         engine.Enabled = settings.Enabled; engine.Offset = settings.Offset;
         EnabledBox.IsChecked = settings.Enabled; OffsetSlider.Value = settings.Offset;
         HostBox.Text = settings.Host; PortBox.Text = settings.Port.ToString(CultureInfo.InvariantCulture);
@@ -65,6 +71,8 @@ public partial class MainWindow : Window
         Deactivated += (_, _) => { manual.Focus(false); Tick(); };
         InitializeLifecycle();
         InitializeUpdates();
+        InitializeDiscovery();
+        InitializePresentation();
         LoadCorrection();
         diagnostics.Add(DiagnosticCategory.Lifecycle, "Application started");
         ready = true; timer.Start(); playback.Start();
@@ -84,6 +92,7 @@ public partial class MainWindow : Window
                 ClearArtwork();
                 CancelManualMatch();
                 ForgetMatchButton.IsEnabled = snapshot is not null && data.ReadManualAssociation(snapshot.Track) is not null;
+                recordingIgnored = snapshot is not null && data.IsIgnored(snapshot.Track);
                 LoadCorrection();
                 diagnostics.Add(DiagnosticCategory.Playback, snapshot is null ? "Session/recording invalidated" : "Recording changed");
                 // Invalidated state is rendered/scheduled before any lookup can start.
@@ -99,7 +108,9 @@ public partial class MainWindow : Window
         if (engine.Track is not { } track || closing) return;
         lookup?.Cancel(); lookup?.Dispose(); lookup = new();
         var epoch = engine.Epoch;
-        if (!force && loaded.TryGetValue(track.Key, out var memory)) { engine.Complete(epoch, memory); return; }
+        recordingIgnored = data.IsIgnored(track);
+        if (recordingIgnored) { engine.Complete(epoch, new(null, "Lyrics ignored for this recording", Outcome: LyricsOutcome.Ignored)); Tick(); return; }
+        if (!force && loaded.TryGetValue(track.Key, out var memory)) { engine.Complete(epoch, memory with { FromCache = true }); return; }
         engine.BeginRetry();
         var task = ResolveAsync(track, epoch, lookup.Token);
         pending.Add(task);
@@ -141,7 +152,7 @@ public partial class MainWindow : Window
         // A native metadata event can arrive before its dispatcher callback; never send the old track in that gap.
         if (acceptedPlaybackRevision != playback.Revision)
         {
-            if (engine.Observe(null)) { lookup?.Cancel(); ClearArtwork(); CancelManualMatch(); LoadCorrection(); }
+            if (engine.Observe(null)) { lookup?.Cancel(); ClearArtwork(); CancelManualMatch(); LoadCorrection(); recordingIgnored = false; ForgetMatchButton.IsEnabled = false; }
         }
         if (now >= nextReceiverCheck)
         {
@@ -151,25 +162,26 @@ public partial class MainWindow : Window
                 var processes = Process.GetProcessesByName("VRChat");
                 var pid = processes.FirstOrDefault()?.Id ?? 0;
                 foreach (var process in processes) process.Dispose();
-                if (pid != receiverPid) { receiverPid = pid; scheduler.ReceiverChanged(); typing.Reset(); }
+                if (pid != receiverPid) { receiverPid = pid; scheduler.ReceiverChanged(); typing.Reset(); DiscoveryReceiverChanged(); }
             }
             catch (InvalidOperationException) { }
         }
+        TickDiscovery(now);
         if (engine.RetryAt is { } retry && retry <= DateTimeOffset.UtcNow) StartLookup(true);
         var lyric = engine.Current(now);
         TrackText.Text = string.IsNullOrWhiteSpace(engine.Track?.Title) ? "No track playing" : engine.Track.Title;
         ArtistText.Text = engine.Track?.Artist ?? "";
         AlbumText.Text = engine.Track?.Album ?? "";
         LyricText.Text = lyric.Length > 0 ? lyric : "—";
-        LyricsStatusText.Text = engine.LyricsStatus.Replace("Synced lyrics loaded ·", "Synced ·").Replace("Looking up synced lyrics", "Finding lyrics…")
-            .Replace("Insufficient track metadata for safe matching", "Play a song in Apple Music");
+        LyricsStatusText.Text = FriendlyLyricsStatus();
         var position = engine.Position(now);
         PositionProgress.Value = engine.Track?.Duration > 0 && position.HasValue ? Math.Clamp(position.Value / engine.Track.Duration, 0, 1) : 0;
         PositionText.Text = position.HasValue ? $"{TimeSpan.FromSeconds(position.Value):m\\:ss} / {TimeSpan.FromSeconds(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400)):m\\:ss}" : "No playback position";
-        ImportButton.IsEnabled = !string.IsNullOrWhiteSpace(engine.Track?.Title);
-        ChooseMatchButton.Visibility = !string.IsNullOrWhiteSpace(engine.Track?.Title) && engine.Track.Duration is > 0 and <= 3600 && engine.Timeline is null ? Visibility.Visible : Visibility.Collapsed;
-        var automatic = ChatboxComposer.Compose(ChatboxComposer.Template(settings.Preset, settings.CustomTemplate),
-            engine.Track, lyric, settings.Message, DateTimeOffset.Now, position, settings.Preset is "Custom" or "Status / Time");
+        UpdateLyricsDetails();
+        var structured = settings.Preset is "Lyrics Only" or "Song + Lyrics";
+        var automatic = structured ? LyricContextComposer.Compose(engine.Context(now), engine.Track, settings.Preset, contextMode, settings.Compact)
+            : ChatboxComposer.Compose(ChatboxComposer.Template(settings.Preset, settings.CustomTemplate),
+                engine.Track, lyric, settings.Message, DateTimeOffset.Now, position, true);
         var desired = manual.Desired(automatic, now);
         var preserveLayout = manual.IsManual || settings.Preset is "Custom" or "Status / Time";
         var alignment = manual.IsManual ? settings.ManualAlignment : settings.CustomAlignment;
@@ -180,6 +192,8 @@ public partial class MainWindow : Window
         PreviewText.FontFamily = preserveLayout ? LayoutFont : TextFont;
         BudgetText.Text = payload.Length + " / 144";
         PreviewLabel.Text = settings.Compact ? "CHATBOX PREVIEW · FLOATING" : "CHATBOX PREVIEW";
+        PreviewProfileText.Text = manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
+            : profiles.Selected.Name + " · " + (structured ? contextMode : settings.Preset);
         PreviewBubble.Background = settings.Compact ? System.Windows.Media.Brushes.Transparent : (System.Windows.Media.Brush)FindResource("RaisedBrush");
         PreviewBubble.Padding = settings.Compact ? new Thickness(0, 4, 0, 4) : new Thickness(12, 8, 12, 8);
         OwnerText.Text = !engine.Enabled ? "Output off · preview" : manual.IsManual
@@ -190,7 +204,7 @@ public partial class MainWindow : Window
             (ChatboxFormatter.Visible(manualPayload).Length < manualLayout.Trim('\r', '\n').Length ? " · trimmed" : "");
         ManualStateText.Text = manual.RemainingHold(now) is double remaining
             ? $"Sent · automatic resumes in {Math.Ceiling(remaining):0} s"
-            : manual.IsManual ? manual.PendingSend ? "Sending your message…" : "Manual owns the Chatbox · automatic lyrics are paused"
+            : manual.IsManual ? manual.PendingSend ? "Sending your message…" : desired is null ? "Unsent draft · automatic lyrics are paused" : "Manual owns the Chatbox · automatic lyrics are paused"
             : "Automatic mode · editing a draft takes priority";
         ConnectionSummary.Text = engine.Enabled ? "Output enabled · OSC" : "Output off";
         SendButton.IsEnabled = ClearButton.IsEnabled = engine.Enabled;
@@ -223,6 +237,7 @@ public partial class MainWindow : Window
     {
         settings = settings with { Enabled = engine.Enabled };
         if (!data.SaveSettings(settings)) ErrorText.Text = "Could not save settings; this session still works.";
+        if (!data.SaveProfiles(profiles)) ProfileStatus.Text = "Could not save profiles. Changes apply only to this session.";
     }
     private void EnabledChanged(object sender, RoutedEventArgs e)
     {
@@ -233,7 +248,7 @@ public partial class MainWindow : Window
     }
     private void DisplayChanged(object sender, RoutedEventArgs e)
     {
-        if (!ready) return;
+        if (!ready || changingProfiles) return;
         settings = settings with { Preset = PresetBox.SelectedItem as string ?? "Lyrics Only", CustomTemplate = TemplateBox.Text,
             Message = MessageBox.Text, Compact = CompactBox.IsChecked == true, TypingIndicator = TypingBox.IsChecked == true,
             LiveEdit = LiveBox.IsChecked == true, CustomAlignment = CustomAlignmentBox.SelectedItem as string ?? "Left",
@@ -241,6 +256,7 @@ public partial class MainWindow : Window
         TemplateBox.IsEnabled = settings.Preset == "Custom";
         CustomPanel.Visibility = settings.Preset == "Custom" ? Visibility.Visible : Visibility.Collapsed;
         StatusPanel.Visibility = settings.Preset is "Custom" or "Status / Time" ? Visibility.Visible : Visibility.Collapsed;
+        RememberProfileChanges();
         UpdateTray();
         saveTimer.Stop(); saveTimer.Start(); Tick();
     }
@@ -248,7 +264,7 @@ public partial class MainWindow : Window
     private void DraftUnfocused(object sender, RoutedEventArgs e) { if (ready) { manual.Focus(false); Tick(); } }
     private void DraftChanged(object sender, RoutedEventArgs e)
     {
-        if (!ready) return;
+        if (!ready || loadingQuickDraft) return;
         manual.Focus(DraftBox.IsKeyboardFocusWithin);
         manual.Edit(DraftBox.Text, settings.LiveEdit, MonotonicClock.Now); Tick();
     }
@@ -282,9 +298,15 @@ public partial class MainWindow : Window
     private void ApplyOsc(object sender, RoutedEventArgs e)
     {
         if (!int.TryParse(PortBox.Text, out var port)) port = 0;
-        var next = settings with { Host = HostBox.Text.Trim(), Port = port };
+        var next = settings with { Host = HostBox.Text.Trim(), Port = port, AutoDiscoverOsc = false };
         if (!next.IsValid) { ErrorText.Text = "Use an IP address or localhost, and a port from 1 to 65535."; return; }
-        try { output.SendTyping(false); output.Configure(next.Host, next.Port); settings = next; scheduler.ReceiverChanged(); typing.Reset(); ErrorText.Text = ""; Save(); Tick(); }
+        try
+        {
+            output.SendTyping(false); output.Configure(next.Host, next.Port); settings = next;
+            discoveryCancellation?.Cancel(); destinationSelection.SetMode(false); configuredDestination = new(next.Host, next.Port);
+            AutoOscBox.IsChecked = false; DiscoveryStatus.Text = "Manual destination"; ConfigureEffectiveDestination();
+            scheduler.ReceiverChanged(); typing.Reset(); ErrorText.Text = ""; Save(); Tick();
+        }
         catch (Exception ex) when (ex is System.Net.Sockets.SocketException or ArgumentException) { ErrorText.Text = "Could not configure OSC destination."; }
     }
     private async void ImportLrc(object sender, RoutedEventArgs e)
@@ -328,6 +350,8 @@ public partial class MainWindow : Window
         try { await Task.WhenAll(pending.ToArray()); }
         catch (Exception ex) when (ex is not OutOfMemoryException) { diagnostics.Add(DiagnosticCategory.Lifecycle, "Pending work ended during shutdown"); }
         lookup?.Dispose(); resolver.Dispose(); secondary.Dispose(); http.Dispose(); output.Dispose();
+        discoveryCancellation?.Dispose(); discoveryHttp.Dispose();
+        downloadCancellation?.Dispose(); installerHttp.Dispose();
         closed = true; Close();
     }
 }

@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace LyricsChatbox;
 
-public record UpdateResult(string Status, Uri? Release = null);
+public record UpdateResult(string Status, Uri? Release = null, string? Tag = null, string Notes = "", InstallerAsset? Installer = null);
 public sealed class UpdateChecker(HttpClient http)
 {
     public static readonly TimeSpan Deadline = TimeSpan.FromSeconds(5);
@@ -16,8 +16,12 @@ public sealed class UpdateChecker(HttpClient http)
         if (tag is null || !Regex.IsMatch(tag, @"^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")) return null;
         return Version.TryParse(tag.TrimStart('v'), out var version) ? version : null;
     }
-    public Task<UpdateResult> CheckAtStartupAsync(bool enabled, Version current, CancellationToken token) => enabled
-        ? CheckAsync(current, token) : Task.FromResult(new UpdateResult("Automatic checks are off"));
+    public async Task<UpdateResult> CheckAtStartupAsync(bool enabled, Version current, CancellationToken token, string? skipped = null)
+    {
+        if (!enabled) return new("Automatic checks are off");
+        var result = await CheckAsync(current, token);
+        return StableVersion(skipped) is { } version && version == StableVersion(result.Tag) ? new("This version is skipped. Use Check now to view it.") : result;
+    }
     public async Task<UpdateResult> CheckAsync(Version current, CancellationToken token)
     {
         if (DateTimeOffset.UtcNow < retryAfter) return new("GitHub is busy. Try again later.");
@@ -54,7 +58,10 @@ public sealed class UpdateChecker(HttpClient http)
             if (latest is null) return new("Could not read release information.");
             if (latest <= new Version(current.Major, current.Minor, Math.Max(0, current.Build))) return new("You're up to date.");
             // Build a known project URL; never open a URL supplied by untrusted JSON.
-            return new("LyricsChatbox " + tag + " is available", new Uri("https://github.com/Teyocesu/LyricsChatbox/releases/tag/" + tag));
+            var notes = root.TryGetProperty("body", out var body) && body.ValueKind == JsonValueKind.String ? body.GetString() ?? "" : "";
+            notes = notes.Length > 6000 ? notes[..6000] + "\nRead the complete release notes on GitHub." : notes;
+            return new("LyricsChatbox " + tag + " is available", new Uri("https://github.com/Teyocesu/LyricsChatbox/releases/tag/" + tag),
+                tag, notes, InstallerAsset.FromRelease(root, tag!));
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is OperationCanceledException or HttpRequestException or IOException or JsonException or InvalidOperationException or KeyNotFoundException)

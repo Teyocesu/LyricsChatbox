@@ -11,6 +11,7 @@ public partial class MainWindow
     private CancellationTokenSource? artworkCancellation;
     private void ClearArtwork()
     {
+        ClearArtworkTint();
         artworkCancellation?.Cancel(); artworkCancellation?.Dispose(); artworkCancellation = null;
         artworkState.Reset(); ArtImage.Source = null; ArtFallback.Visibility = Visibility.Visible;
     }
@@ -39,6 +40,7 @@ public partial class MainWindow
             }, token), token);
             if (closing || token.IsCancellationRequested || revision != playback.Revision || !artworkState.Complete(generation, image)) return;
             ArtImage.Source = image; ArtFallback.Visibility = image is null ? Visibility.Visible : Visibility.Collapsed;
+            RefreshArtworkTint();
         }
         catch (OperationCanceledException) { }
     }

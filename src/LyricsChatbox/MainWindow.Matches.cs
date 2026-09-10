@@ -19,14 +19,16 @@ public partial class MainWindow
     }
     private void OpenMatches(object sender, RoutedEventArgs e)
     {
-        if (engine.Track is not { } track) return;
+        if (engine.Track is not { } track || recordingIgnored) return;
+        ShowPage("Home");
         MatchPanel.Visibility = Visibility.Visible; MatchQuery.Text = track.Title + " " + track.Artist;
         MatchStatus.Text = "Compare the recording, artist and duration. Your choice applies only to this song.";
+        _ = Dispatcher.InvokeAsync(() => { MatchCard.BringIntoView(); MatchQuery.Focus(); });
     }
     private void CloseMatches(object sender, RoutedEventArgs e) => CancelManualMatch();
     private async void SearchMatches(object sender, RoutedEventArgs e)
     {
-        if (engine.Track is not { } track || closing) return;
+        if (engine.Track is not { } track || closing || recordingIgnored) return;
         matchCancellation?.Cancel(); matchCancellation?.Dispose();
         matchCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         var token = matchCancellation.Token; var epoch = engine.Epoch; var query = MatchQuery.Text;
@@ -51,7 +53,7 @@ public partial class MainWindow
     }
     private async void UseMatch(object sender, RoutedEventArgs e)
     {
-        if (engine.Track is not { } track || MatchChoices.SelectedItem is not ManualCandidate choice || closing) return;
+        if (engine.Track is not { } track || MatchChoices.SelectedItem is not ManualCandidate choice || closing || recordingIgnored) return;
         matchCancellation?.Cancel(); matchCancellation?.Dispose();
         matchCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         var token = matchCancellation.Token; var epoch = engine.Epoch;
@@ -65,7 +67,7 @@ public partial class MainWindow
             { MatchStatus.Text = "That candidate has no available synchronized lyrics. Choose another."; return; }
             if (!data.SaveManualAssociation(track, choice, record)) { MatchStatus.Text = "Could not save the manual match."; return; }
             loaded.Remove(track.Key);
-            engine.Complete(epoch, new(LrcParser.Parse(record.SyncedLyrics), "Synced lyrics loaded · manual match · " + choice.Provider, Provider: choice.Provider, Outcome: LyricsOutcome.Found));
+            engine.Complete(epoch, new(LrcParser.Parse(record.SyncedLyrics), "Synced lyrics loaded · manual match · " + choice.Provider, Provider: choice.Provider, Outcome: LyricsOutcome.Found, CandidateDuration: record.Duration, ManualMatch: true));
             // Local imports remain authoritative, even after explicitly selecting a remote association.
             StartLookup(true); CancelManualMatch(); ForgetMatchButton.IsEnabled = true; Tick();
         }

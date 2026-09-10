@@ -2,13 +2,31 @@
 
 A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
 
-## v0.4
+## v0.5 preview
+
+The WPF interface now has a larger Now Playing area, saved profile cards, lyric context controls and a secondary Lyrics Details panel. v0.5 is in development; the latest stable public release remains v0.4 until the visual and physical acceptance gates pass.
+
+**Settings → Appearance** changes the whole interface immediately. Choose Rose (default), Purple, Blue, Cyan, Green, Orange, Red or a custom `#RRGGBB` color, with a Windows color picker available. Very dark accents derive readable control colors. Midnight (default), Pure Dark, Graphite and Tinted control the dark surfaces. **Tint Now Playing from album artwork**, off by default, adds a subtle tint using only the current Windows media artwork. It keeps the global accent, samples on artwork changes and discards old-track results.
+
+**Profiles** save display layout/template, custom status, lyric context, Compact/Floating and Custom/Status alignment. Select a card on Home or manage profiles in Display: create, rename, duplicate and delete user profiles. Presentation edits save automatically. Lyrics, Minimal, Music Info and Custom are editable starter profiles protected from deletion. Existing settings migrate to an equivalent profile or **My display**. Appearance, timing, manual typing/live edit and OSC settings stay global.
+
+**Lyric context** offers Current only, Current + next, Previous + current + next and Adaptive for Lyrics Only and Song + Lyrics layouts. Adaptive fits the available adjacent lyrics into the budget. The current line wins, followed by next, previous and song metadata; whole lower-priority pieces are removed before truncating the current line. With a previous line present, `›` marks the current one. Instrumental gaps do not send future lyrics alone. Custom/Status templates retain their token behavior and do not use context mode. All output retains the 144-unit, nine-line, whole-grapheme limits and the two-unit compact reserve.
+
+**Lyrics Details** shows source, cache/match state, Apple Music/candidate durations, global/saved/effective offsets, manual association and ignore state. Recovery offers retry, alternatives and LRC import when relevant. **Ignore lyrics for this recording** saves an exact-recording decision and pauses all lyric sources for it, including imported LRC. Imports and cache are kept. **Resume lyrics for this recording** reverses the decision without affecting another version of the song.
+
+**Quick messages** are a small editable local list, available from Home and Manual. Select one to prepare an **unsent** manual draft, even with Live edit enabled. Then edit deliberately or press Send. Add/edit/delete reusable messages in Manual; this is not a chat history, and their contents are excluded from diagnostics.
+
+**Settings → VRChat OSC** can discover local VRChat through OSCQuery. New/default-localhost configurations enable this convenience; migrated custom/LAN destinations remain manual. It validates the advertised Chatbox endpoint and falls back to your saved manual destination when discovery fails. Advanced destination → Apply explicitly selects manual mode. Discovery never proves message delivery, and the app does not advertise a server.
+
+**Updates → Check now** shows stable-release notes. An available official installer can be downloaded explicitly; the app checks its SHA256, then offers a separate **Open verified installer…** action that checks the file again. Failed, cancelled or mismatched downloads never launch. Skip this version suppresses automatic notifications only; Check now still reveals the release. Automatic checks remain off by default. The app and installer are currently unsigned; see the [Windows signing investigation](docs/WINDOWS-SIGNING.md) for requirements, costs and CI options.
+
+## Existing daily-use features
 
 v0.4 adds a per-user Inno Setup installer alongside the portable ZIP, with a Start Menu shortcut and optional desktop shortcut. No administrator rights are required. Uninstall preserves settings, imported lyrics, cache and corrections.
 
 **Settings → Application behavior** controls Start with Windows, Start minimized, Minimize to system tray and Close window to system tray. All four default **off**, including migration from v0.3. Tray Open, Output, Compact/Floating and Exit act on the same application. Launching a second copy restores the first. Start minimized uses the taskbar unless Minimize to tray is also enabled. Startup points to the current executable; enable it again after moving a portable copy. The installer never enables background preferences.
 
-**Settings → Updates → Check now** checks the project's latest stable GitHub release. Checks at startup default **off**. The app offers a release page and never downloads, executes or installs updates automatically. Failed checks do not interrupt playback.
+**Settings → Updates → Check now** checks the project's latest stable GitHub release. Checks at startup default **off**. Downloads and installer launch each require a deliberate action. Failed checks do not interrupt playback.
 
 The offset slider shows the effective value. Adjustments are temporary until **Save for this song** or **Use globally** is selected. Song values override the global value for the exact title/artist/album/duration identity, within ±5 seconds. **Reset song** restores the global preference. Positive values delay lyrics; no audio analysis is performed.
 
@@ -16,7 +34,7 @@ When automatic matching fails, **Choose another match…** searches up to five c
 
 Home displays the Windows media thumbnail from Apple Music, with no separate artwork service or disk history. **Settings → Diagnostics** copies or exports current playback/provider/output state and up to 100 recent status events. No lyric bodies, drafts, custom messages or credentials are included; review metadata before sharing. Nothing is uploaded automatically.
 
-Windows CI restores using the repository's SDK/lock files, builds Release and runs offline tests on pushes and pull requests. To build the installer after publishing, run `scripts/Build-Installer.ps1 -Compiler <path-to-ISCC.exe>` with Inno Setup installed. Build artifacts live under `artifacts/v0.4.0`.
+Windows CI restores using the repository's SDK/lock files, builds Release and runs offline tests on pushes and pull requests. To build the installer after publishing, run `scripts/Build-Installer.ps1 -Compiler <path-to-ISCC.exe>` with Inno Setup installed. Build artifacts live under the selected version's directory in `artifacts`.
 
 ## Run
 
@@ -26,7 +44,7 @@ Download the installer or Windows x64 ZIP from [GitHub Releases](https://github.
 2. In VRChat, enable **OSC** from the Action Menu. Make your own Chatbox visible to check output. Stop other apps that send Chatbox messages to avoid competing output.
 3. Open LyricsChatbox and enable **Output** in the sidebar. The first launch starts with sending off; this setting is remembered. **Lyrics Only** is the default, with no forced song title or prefix.
 
-The **Settings → Advanced destination** section contains the OSC destination. Default: `127.0.0.1:9000`. **Apply** accepts an IP address (IPv4/IPv6) or `localhost`, and a port from 1 to 65535. UDP has no delivery acknowledgement; “sent” does not prove that VRChat displayed a message. No inbound server is needed.
+The **Settings → VRChat OSC → Advanced destination** section contains the manual OSC destination. Default: `127.0.0.1:9000`. **Apply** accepts an IP address (IPv4/IPv6) or `localhost`, and a port from 1 to 65535, and selects manual mode. UDP has no delivery acknowledgement; “sent” does not prove that VRChat displayed a message. No inbound server is needed.
 
 ## Synchronization and lyrics
 
@@ -66,7 +84,7 @@ The evaluation compared Musixmatch, NetEase, QQ Music and Kugou. The final uncac
 
 ## Local data and privacy
 
-Settings, imported lyrics and a simple successful-lookup cache live in `%LocalAppData%\LyricsChatbox`. **Open data folder** opens that directory. Imported files use a hash of recording metadata; choose them through the app instead of guessing filenames. Cache entries expire after 30 days and retain their source. Existing v0.2 cache entries are read as LRCLIB; existing preferences migrate unchanged. Broken cache/settings files are ignored; writes are atomic where supported by the filesystem. Normal listening does not persist lyric history or diagnostics.
+Settings, profiles, reusable quick messages, exact-recording ignore decisions, imported lyrics and a simple successful-lookup cache live in `%LocalAppData%\LyricsChatbox`. **Open data folder** opens that directory. Imported files use a hash of recording metadata; choose them through the app instead of guessing filenames. Cache entries expire after 30 days and retain their source. Existing v0.2 cache entries are read as LRCLIB; existing preferences migrate unchanged. Broken cache/settings files are ignored; writes are atomic where supported by the filesystem. Normal listening does not persist lyric history or diagnostics. Uninstall preserves this local data.
 
 **Retry lyrics** checks local files/cache again and repeats lookup if needed. It cannot bypass either source's rate limit. A successful cached recording is reused during normal replay.
 
@@ -94,7 +112,7 @@ dotnet run --project src/LyricsChatbox
 .\scripts\Publish.ps1
 ```
 
-The publish script produces `artifacts/v0.4.0/win-x64`, a ZIP and SHA256 file, including documentation and third-party license texts. The regression suite covers timeline boundaries, offsets/gaps, pause/resume/seeks, stale lookup epochs, conservative matching, provider failures/cancellation/rate limiting, local persistence corruption and migration, composer tokens, manual ownership, typing lifecycle, latest-draft coalescing and compact Unicode budgets. v0.4 adds single-instance/startup, update checks, bounded artwork, recording corrections, manual matching, diagnostics and resume/recovery checks. It does not access Apple Music, LRCLIB or VRChat during normal test execution.
+The publish script produces `artifacts/v<version>/win-x64`, a ZIP and SHA256 file, including documentation and third-party license texts. The regression suite covers timeline boundaries, offsets/gaps, pause/resume/seeks, stale lookup epochs, conservative matching, provider failures/cancellation/rate limiting, local persistence corruption and migration, composer tokens, manual ownership, typing lifecycle, latest-draft coalescing and compact Unicode budgets. It also covers lifecycle, diagnostics, artwork, corrections, matching recovery, themes, profiles, context, ignored recordings, Quick Messages, OSCQuery boundaries and verified downloads. Normal tests do not access Apple Music, live lyrics providers or VRChat.
 
 For explicit physical diagnostics:
 

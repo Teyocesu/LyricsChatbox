@@ -10,12 +10,9 @@ public static class ChatboxFormatter
     public const string CompactSuffix = "\u0003\u001F";
     public static string Format(string input, bool compact = false, bool preserveLayout = false)
     {
-        // Replacing invalid UTF-16 before grapheme enumeration also prevents invalid UTF-8 on the wire.
-        input = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(input)).Replace("\r\n", "\n").Replace('\r', '\n');
-        var clean = new StringBuilder();
-        foreach (var c in input) if (!char.IsControl(c) || c == '\n') clean.Append(c);
+        var clean = CleanText(input);
         var result = new StringBuilder();
-        var elements = StringInfo.GetTextElementEnumerator(clean.ToString());
+        var elements = StringInfo.GetTextElementEnumerator(clean);
         var lines = 1;
         while (elements.MoveNext())
         {
@@ -26,6 +23,14 @@ public static class ChatboxFormatter
         var visible = preserveLayout ? result.ToString().Trim('\r', '\n') : result.ToString().Trim();
         if (string.IsNullOrWhiteSpace(visible)) visible = "";
         return compact && visible.Length > 0 ? visible + CompactSuffix : visible;
+    }
+    public static string CleanText(string input)
+    {
+        // Replacing invalid UTF-16 before grapheme enumeration also prevents invalid UTF-8 on the wire.
+        input = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(input)).Replace("\r\n", "\n").Replace('\r', '\n');
+        var clean = new StringBuilder();
+        foreach (var c in input) if (!char.IsControl(c) || c == '\n') clean.Append(c);
+        return clean.ToString();
     }
 
     public static string Visible(string payload) => payload.EndsWith(CompactSuffix, StringComparison.Ordinal)

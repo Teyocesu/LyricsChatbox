@@ -1,7 +1,7 @@
 name: Windows CI
 on:
   push:
-    branches: [main, 'codex/v0.4.0']
+    branches: [main, 'codex/**']
   pull_request:
   workflow_dispatch:
 permissions:

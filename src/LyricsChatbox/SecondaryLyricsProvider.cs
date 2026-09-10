@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace LyricsChatbox;
 
-public enum LyricsOutcome { Found, Instrumental, NotFound, Rejected, Ambiguous, RateLimited, Timeout, Unavailable }
+public enum LyricsOutcome { Found, Instrumental, NotFound, Rejected, Ambiguous, RateLimited, Timeout, Unavailable, Ignored }
 public record ProviderResult(LyricsOutcome Outcome, LyricsRecord? Record = null, DateTimeOffset? RetryAt = null);
 public interface ISyncedLyricsProvider
 {

@@ -53,6 +53,11 @@
         "resolved": "13.0.3",
         "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
       },
+      "System.Reactive": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "erBZjkQHWL9jpasCE/0qKAryzVBJFxGHVBAvgRN1bzM0q2s1S4oYREEEL0Vb+1kA/6BKb5FjUZMp5VXmy+gzkQ=="
+      },
       "xunit.abstractions": {
         "type": "Transitive",
         "resolved": "2.0.3",
@@ -93,8 +98,19 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "Zeroconf": {
+        "type": "Transitive",
+        "resolved": "3.7.16",
+        "contentHash": "7NrPhT8r6a76TYVIuT0jSjLrWdwFNY0GaX1VWB6WVtI+4s3E+5Skd4IASjtEG6HFxWM4dbwPA5CpUCSFWmoYUg==",
+        "dependencies": {
+          "System.Reactive": "5.0.0"
+        }
+      },
       "lyricschatbox": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "Zeroconf": "[3.7.16, )"
+        }
       }
     }
   }

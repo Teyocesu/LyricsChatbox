@@ -15,7 +15,9 @@ public sealed class LyricTimeline
         .Select(g => new LyricLine(g.Key, string.Join("\n", g.Select(l => l.Text).Where(t => t.Length > 0).Distinct())))
         .ToArray();
 
-    public string Current(double position, double offset = 0)
+    public string Current(double position, double offset = 0) => Context(position, offset).Current;
+
+    public LyricContext Context(double position, double offset = 0)
     {
         var time = position - offset;
         var lo = 0; var hi = Lines.Count - 1;
@@ -24,7 +26,10 @@ public sealed class LyricTimeline
             var mid = lo + (hi - lo) / 2;
             if (Lines[mid].Seconds <= time) lo = mid + 1; else hi = mid - 1;
         }
-        return hi < 0 || time - Lines[hi].Seconds >= HoldSeconds ? "" : Lines[hi].Text;
+        if (hi < 0 || time - Lines[hi].Seconds >= HoldSeconds || Lines[hi].Text.Length == 0) return LyricContext.Empty;
+        var previous = hi > 0 && Lines[hi].Seconds - Lines[hi-1].Seconds < HoldSeconds ? Lines[hi-1].Text : "";
+        var next = hi+1 < Lines.Count && Lines[hi+1].Seconds - Lines[hi].Seconds < HoldSeconds ? Lines[hi+1].Text : "";
+        return new(previous,Lines[hi].Text,next);
     }
 }
 

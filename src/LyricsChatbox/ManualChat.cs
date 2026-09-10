@@ -25,6 +25,11 @@ public sealed class ManualChat
         resumeAt = double.PositiveInfinity; pendingSend = false;
         desired = live ? draft : null;
     }
+    public void PrepareDraft(string draft)
+    {
+        Draft = draft; IsManual = true; desired = null; pendingSend = false;
+        focused = false; lastEdit = double.NegativeInfinity; resumeAt = double.PositiveInfinity;
+    }
     public void LiveChanged(bool live)
     {
         if (IsManual) { desired = live ? Draft : null; pendingSend = false; resumeAt = double.PositiveInfinity; }

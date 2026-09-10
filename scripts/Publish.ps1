@@ -9,6 +9,9 @@ try {
     dotnet publish src/LyricsChatbox -c $Configuration -r win-x64 --self-contained true -o $distribution
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
     Copy-Item -LiteralPath README.md,THIRD_PARTY_NOTICES.md,PLAN.md -Destination $distribution
+    $docsDestination = Join-Path $distribution 'docs'
+    New-Item -ItemType Directory -Path $docsDestination -Force | Out-Null
+    Copy-Item -LiteralPath docs/WINDOWS-SIGNING.md -Destination $docsDestination
     $licenseDestination = Join-Path $distribution 'licenses'
     New-Item -ItemType Directory -Path $licenseDestination -Force | Out-Null
     Copy-Item -Path licenses/* -Destination $licenseDestination

@@ -9,7 +9,8 @@ public record AppSettings(bool Enabled = false, double Offset = 0, string Host =
     bool Compact = false, bool TypingIndicator = false, bool LiveEdit = false,
     string CustomAlignment = "Left", string ManualAlignment = "Left",
     bool StartWithWindows = false, bool StartMinimized = false, bool MinimizeToTray = false,
-    bool CloseToTray = false, bool AutomaticUpdateChecks = false)
+    bool CloseToTray = false, bool AutomaticUpdateChecks = false, AppearanceSettings? Appearance = null,
+    bool? AutoDiscoverOsc = null, string? SkippedUpdateVersion = null)
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => double.IsFinite(Offset) && Offset is >= -5 and <= 5 && Port is >= 1 and <= 65535 &&
@@ -18,7 +19,7 @@ public record AppSettings(bool Enabled = false, double Offset = 0, string Host =
         MessageLayout.Alignments.Contains(CustomAlignment) && MessageLayout.Alignments.Contains(ManualAlignment);
 }
 
-public sealed class LocalData(string root)
+public sealed partial class LocalData(string root)
 {
     public static string DefaultRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LyricsChatbox");
     public string Root { get; } = root;
@@ -29,9 +30,10 @@ public sealed class LocalData(string root)
     public AppSettings ReadSettings()
     {
         var settings = Read<AppSettings>(Path.Combine(Root, "settings.json"), 16_384);
-        return settings is { IsValid: true } ? settings : new();
+        return settings is { IsValid: true } ? settings with { Appearance = settings.Appearance is null ? null : AppearanceSettings.Normalize(settings.Appearance) } : new();
     }
-    public bool SaveSettings(AppSettings settings) => settings.IsValid && Write(Path.Combine(Root, "settings.json"), JsonSerializer.Serialize(settings, Json));
+    public bool SaveSettings(AppSettings settings) => settings.IsValid && Write(Path.Combine(Root, "settings.json"),
+        JsonSerializer.Serialize(settings with { Appearance = settings.Appearance is null ? null : AppearanceSettings.Normalize(settings.Appearance) }, Json));
     public string? ReadLocal(TrackIdentity track) => ReadText(LocalLrcPath(track), LrcParser.MaxCharacters * 4);
     public bool SaveLocal(TrackIdentity track, string lrc) => LrcParser.Parse(lrc).Lines.Count > 0 && Write(LocalLrcPath(track), lrc);
     public LyricsRecord? ReadCache(TrackIdentity track) => ReadCachedLyrics(track)?.Record;
@@ -42,7 +44,7 @@ public sealed class LocalData(string root)
             entry.StoredUtc <= DateTimeOffset.UtcNow.AddMinutes(5) && entry.StoredUtc > DateTimeOffset.UtcNow.AddDays(-30) &&
             (entry.Manual ? ReadManualAssociation(track) is { } manual && manual.Provider == entry.Provider && ManualMatching.Same(manual.Metadata,entry.Record)
                 : LyricsMatching.Score(track, entry.Record).HasValue) && entry.Provider is "LRCLIB" or "NetEase"
-            ? new(entry.Record, entry.Provider) : null;
+            ? new(entry.Record, entry.Provider, entry.Manual) : null;
     }
     public void SaveCache(TrackIdentity track, LyricsRecord record, string provider = "LRCLIB") => Write(CachePath(track),
         JsonSerializer.Serialize(new CacheEntry(1, track.Key, DateTimeOffset.UtcNow, record, provider), Json));
@@ -107,6 +109,6 @@ public sealed class LocalData(string root)
         finally { try { if (File.Exists(temp)) File.Delete(temp); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
     }
     private record CacheEntry(int Version, string TrackKey, DateTimeOffset StoredUtc, LyricsRecord Record, string Provider = "LRCLIB", bool Manual = false);
-    public record CachedLyrics(LyricsRecord Record, string Provider);
+    public record CachedLyrics(LyricsRecord Record, string Provider, bool Manual = false);
     private record Correction(int Version, string TrackKey, double? Seconds);
 }

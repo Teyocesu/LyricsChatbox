@@ -21,5 +21,16 @@ internal static class WindowLayout
         Find<Border>("PreviewCard").Margin = new(0, shortWindow ? 8 : 16, 0, 0);
         Find<DockPanel>("PreviewHeading").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
         Find<ScrollViewer>("PreviewScroller").MaxHeight = shortWindow ? 24 : 72;
+        Find<TextBlock>("PreviewProfileText").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
+        var width = Find<Grid>("ContentPanel").ActualWidth;
+        var narrow = width < 780;
+        var inspector = Find<Border>("InspectorCard");
+        Grid.SetRow(inspector, narrow ? 1 : 0); Grid.SetColumn(inspector, narrow ? 0 : 1);
+        Grid.SetColumnSpan(inspector, narrow ? 2 : 1);
+        Grid.SetColumnSpan(Find<StackPanel>("HomeControlsPanel"), narrow ? 2 : 1);
+        Find<StackPanel>("HomeControlsPanel").Margin = new(0, 0, narrow ? 0 : 14, 0);
+        Find<ColumnDefinition>("ArtworkColumn").Width = new(narrow ? 128 : 202);
+        Find<Border>("ArtworkFrame").Width = Find<Border>("ArtworkFrame").Height = narrow ? 110 : 180;
+        Find<TextBlock>("TrackText").FontSize = narrow ? 24 : 30;
     }
 }

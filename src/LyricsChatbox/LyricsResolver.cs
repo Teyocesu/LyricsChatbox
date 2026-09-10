@@ -6,7 +6,8 @@ using System.Text.Json;
 namespace LyricsChatbox;
 
 public record LyricsResolution(LyricTimeline? Timeline, string Status, DateTimeOffset? RetryAt = null,
-    string? Provider = null, LyricsOutcome Outcome = LyricsOutcome.Unavailable);
+    string? Provider = null, LyricsOutcome Outcome = LyricsOutcome.Unavailable, double? CandidateDuration = null,
+    bool FromCache = false, bool ManualMatch = false);
 
 public sealed partial class LyricsResolver(HttpClient http, LocalData data, ISyncedLyricsProvider? secondary = null) : IDisposable
 {
@@ -20,6 +21,8 @@ public sealed partial class LyricsResolver(HttpClient http, LocalData data, ISyn
     public async Task<LyricsResolution> ResolveAsync(TrackIdentity track, CancellationToken token,
         Action<string>? progress = null)
     {
+        token.ThrowIfCancellationRequested();
+        if (data.IsIgnored(track)) return new(null, "Lyrics ignored for this recording", Outcome: LyricsOutcome.Ignored);
         if (data.ReadManualAssociation(track) is { } association && LrcParser.Parse(data.ReadLocal(track)).Lines.Count==0 && data.ReadCachedLyrics(track) is null)
         {
             var choice = new ManualCandidate(association.Provider,association.Metadata);
@@ -28,7 +31,7 @@ public sealed partial class LyricsResolver(HttpClient http, LocalData data, ISyn
             if(selected.Outcome==LyricsOutcome.Found && selected.Record is { } manualRecord)
             {
                 data.SaveManualAssociation(track,choice,manualRecord);
-                return Convert(manualRecord,choice.Provider) with {Status="Synced lyrics loaded · manual match · "+choice.Provider};
+                return Convert(manualRecord,choice.Provider) with {Status="Synced lyrics loaded · manual match · "+choice.Provider, ManualMatch=true};
             }
         }
         LyricsResolution primary;
@@ -82,7 +85,7 @@ public sealed partial class LyricsResolver(HttpClient http, LocalData data, ISyn
         var cached = cachedEntry?.Record;
         if (cached is not null)
         {
-            var result = Convert(cached, cachedEntry!.Provider) with { Status = "Synced lyrics loaded · cache · " + cachedEntry.Provider };
+            var result = Convert(cached, cachedEntry!.Provider) with { Status = "Synced lyrics loaded · cache · " + cachedEntry.Provider, FromCache=true, ManualMatch=cachedEntry.Manual };
             if (result.Timeline is not null || cached.Instrumental) return cached.Instrumental ? result with { Status = "Instrumental" } : result;
         }
         if (string.IsNullOrWhiteSpace(track.Title) || string.IsNullOrWhiteSpace(track.Artist) || !double.IsFinite(track.Duration) || track.Duration is < 1 or > 3600)
@@ -124,9 +127,9 @@ public sealed partial class LyricsResolver(HttpClient http, LocalData data, ISyn
 
     private static LyricsResolution Convert(LyricsRecord record, string source)
     {
-        if (record.Instrumental) return new(null, "Instrumental", Provider: source, Outcome: LyricsOutcome.Instrumental);
+        if (record.Instrumental) return new(null, "Instrumental", Provider: source, Outcome: LyricsOutcome.Instrumental, CandidateDuration:record.Duration);
         var timeline = LrcParser.Parse(record.SyncedLyrics);
-        return timeline.Lines.Count == 0 ? new(null, "No synchronized lyrics", Provider: "LRCLIB", Outcome: LyricsOutcome.NotFound) : new(timeline, "Synced lyrics loaded · " + source, Provider: source, Outcome: LyricsOutcome.Found);
+        return timeline.Lines.Count == 0 ? new(null, "No synchronized lyrics", Provider: source, Outcome: LyricsOutcome.NotFound) : new(timeline, "Synced lyrics loaded · " + source, Provider: source, Outcome: LyricsOutcome.Found, CandidateDuration:record.Duration);
     }
 
     private async Task<T?> GetAsync<T>(string path, CancellationToken token)

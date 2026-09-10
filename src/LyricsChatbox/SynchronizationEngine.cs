@@ -9,6 +9,7 @@ public sealed class SynchronizationEngine
     public TrackIdentity? Track { get; private set; }
     public PlaybackSnapshot? Snapshot { get; private set; }
     public LyricTimeline? Timeline { get; private set; }
+    public LyricsResolution? Resolution { get; private set; }
     public string LyricsStatus { get; private set; } = "Waiting for a track";
     public DateTimeOffset? RetryAt { get; private set; }
     public bool Enabled { get; set; }
@@ -18,7 +19,7 @@ public sealed class SynchronizationEngine
         var changed = next?.SessionId != sessionId || next?.Track != Track;
         if (changed)
         {
-            Epoch++; Timeline = null; RetryAt = null;
+            Epoch++; Timeline = null; Resolution = null; RetryAt = null;
             Track = next?.Track; sessionId = next?.SessionId;
             LyricsStatus = Track is null ? "Waiting for a track" : "Looking up synced lyrics";
             clock.Reset();
@@ -30,10 +31,14 @@ public sealed class SynchronizationEngine
     public bool Complete(long epoch, LyricsResolution resolution)
     {
         if (epoch != Epoch || Track is null) return false;
-        Timeline = resolution.Timeline; LyricsStatus = resolution.Status; RetryAt = resolution.RetryAt;
+        Resolution = resolution; Timeline = resolution.Timeline; LyricsStatus = resolution.Status; RetryAt = resolution.RetryAt;
         return true;
     }
     public void BeginRetry() { RetryAt = null; LyricsStatus = "Looking up synced lyrics"; }
+    public void InvalidateLyrics(string status)
+    {
+        Epoch++; Timeline = null; Resolution = null; RetryAt = null; LyricsStatus = status;
+    }
     public bool ReportProgress(long epoch, string status)
     {
         if (epoch != Epoch || Track is null) return false;
@@ -42,5 +47,6 @@ public sealed class SynchronizationEngine
     }
     public double? Position(double now) => clock.Position(now);
     public string Current(double now) => Position(now) is double position ? Timeline?.Current(position, Offset) ?? "" : "";
+    public LyricContext Context(double now) => Position(now) is double position ? Timeline?.Context(position, Offset) ?? LyricContext.Empty : LyricContext.Empty;
     public string Output(double now) => Enabled ? Current(now) : "";
 }
