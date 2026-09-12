@@ -29,6 +29,8 @@ public partial class MainWindow
         DpiChanged += (_, _) => _ = Dispatcher.InvokeAsync(FitWorkArea);
         StateChanged += (_, _) =>
         {
+            MaximizeCaptionButton.Content = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
+            ContentRoot.Margin = WindowState == WindowState.Maximized ? new Thickness(8) : new Thickness(0);
             if (WindowState == WindowState.Minimized && LifecyclePolicy.Minimize(settings) == WindowAction.Hide) Hide();
         };
     }

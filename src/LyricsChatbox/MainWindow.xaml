@@ -1,6 +1,12 @@
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="LyricsChatbox.MainWindow" Title="LyricsChatbox" Icon="Assets/AppIcon.ico" Width="1280" Height="940" MinWidth="820" MinHeight="650" WindowStartupLocation="CenterScreen" Style="{StaticResource {x:Type Window}}">
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" x:Class="LyricsChatbox.MainWindow" WindowStyle="None" Title="LyricsChatbox" Icon="Assets/AppIcon.ico" Width="1280" Height="940" MinWidth="820" MinHeight="650" WindowStartupLocation="CenterScreen" Style="{StaticResource {x:Type Window}}">
 
+  <shell:WindowChrome.WindowChrome><shell:WindowChrome CaptionHeight="36" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/></shell:WindowChrome.WindowChrome>
   <Window.Resources>
+    <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Width" Value="46"/><Setter Property="Height" Value="32"/><Setter Property="MinHeight" Value="32"/><Setter Property="Padding" Value="0"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="FontFamily" Value="Segoe Fluent Icons"/><Setter Property="FontSize" Value="10"/><Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/></Style>
+    <Style x:Key="DashboardTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="15"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+    <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Padding" Value="10,5"/><Setter Property="MinHeight" Value="30"/><Setter Property="FontSize" Value="11"/></Style>
+    <Style x:Key="StatusPill" TargetType="Border"><Setter Property="Background" Value="{DynamicResource RaisedBrush}"/><Setter Property="BorderBrush" Value="{DynamicResource LineBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="14"/><Setter Property="Padding" Value="10,5"/></Style>
+    <DataTemplate x:Key="DashboardQuickTemplate"><Button Click="UseQuickMessage" Margin="0,0,6,6" Padding="6,8" MinHeight="38" ToolTip="Load as an unsent manual draft"><TextBlock Text="{Binding Name}" TextAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis" MaxHeight="34"/></Button></DataTemplate>
     <DataTemplate x:Key="QuickMessageTemplate"><Button Content="{Binding Name}" Click="UseQuickMessage" Margin="0,0,8,8" MinWidth="92" ToolTip="Load as an unsent manual draft"/></DataTemplate>
   </Window.Resources>
   <Grid x:Name="ContentRoot">
@@ -8,46 +14,44 @@
       <ColumnDefinition Width="194"/>
       <ColumnDefinition/>
     </Grid.ColumnDefinitions>
-    <Border x:Name="Sidebar" Background="{DynamicResource SidebarBrush}" Padding="16,28,16,20">
+    <Border x:Name="Sidebar" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource SidebarBrush}" Padding="16,28,16,20">
       <DockPanel>
         <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,0,0,32">
           <StackPanel Orientation="Horizontal">
-            <Image Source="Assets/AppIcon.png" Width="28" Height="28" Margin="0,0,8,0"/>
-            <TextBlock Text="LyricsChatbox" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <Image Source="Assets/AppIcon.png" Width="34" Height="34" Margin="4,0,10,0"/>
+            <StackPanel VerticalAlignment="Center"><TextBlock Text="LyricsChatbox" FontSize="14" FontWeight="SemiBold"/><TextBlock x:Name="VersionCaption" Text="v0.5 preview" Style="{StaticResource Caption}" FontSize="11" Margin="0,3,0,0"/></StackPanel>
           </StackPanel>
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom">
-          <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Padding="10,12" Margin="0,0,0,12">
+          <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Padding="10,12">
             <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output">
               <TextBlock Text="Output" FontSize="12"/>
             </CheckBox>
           </Border>
-          <TextBlock x:Name="ConnectionSummary" Text="OSC ready" Style="{StaticResource Caption}"/>
-          <TextBlock x:Name="VersionCaption" Text="v0.5 preview" Style="{StaticResource Caption}" Margin="0,16,0,0"/>
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="NavigationPanel">
           <RadioButton Tag="Home" AutomationProperties.Name="Home" GroupName="Navigation" IsChecked="True" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <TextBlock Text="Home"/>
             </StackPanel>
           </RadioButton>
           <RadioButton Tag="Display" AutomationProperties.Name="Display" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE7F4;" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <TextBlock Text="Display"/>
             </StackPanel>
           </RadioButton>
           <RadioButton Tag="Manual" AutomationProperties.Name="Manual" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8F2;" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <TextBlock Text="Manual"/>
             </StackPanel>
           </RadioButton>
           <RadioButton Tag="Settings" AutomationProperties.Name="Settings" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <TextBlock Text="Settings"/>
             </StackPanel>
           </RadioButton>
@@ -66,134 +70,157 @@
         <TextBlock x:Name="PageTitle" Text="Home" FontSize="28" FontWeight="SemiBold"/>
       </StackPanel>
       <ScrollViewer x:Name="HomePage" Grid.Row="1" Visibility="Visible" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel>
-          <Border x:Name="NowPlayingCard" Style="{StaticResource Card}" Background="{DynamicResource HeroBrush}" Margin="0,0,8,14" Padding="24">
-            <Grid x:Name="HeroGrid">
-              <Grid.ColumnDefinitions><ColumnDefinition x:Name="ArtworkColumn" Width="202"/><ColumnDefinition/></Grid.ColumnDefinitions>
-              <Border x:Name="ArtworkFrame" Width="180" Height="180" CornerRadius="12" Background="{DynamicResource AccentMutedBrush}" HorizontalAlignment="Left" VerticalAlignment="Top" ClipToBounds="True">
-                <Grid>
+        <StackPanel Margin="0,0,8,0">
+          <Border x:Name="NowPlayingCard" Style="{StaticResource Card}" Background="{DynamicResource HeroBrush}" Margin="0,0,0,12" Padding="0">
+            <Grid ClipToBounds="True" SizeChanged="HeroSurfaceSizeChanged">
+              <Grid x:Name="HeroArtworkLayer" IsHitTestVisible="False" ClipToBounds="True">
+                <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsChecked, ElementName=ArtworkTintBox}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding Source, ElementName=ArtImage}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
+                <Border Margin="-32" Opacity="0.48" CacheMode="BitmapCache">
+                  <Border.Background><ImageBrush ImageSource="{Binding Source, ElementName=ArtImage}" Stretch="UniformToFill" AlignmentY="Center"/></Border.Background>
+                  <Border.Effect><BlurEffect Radius="28" RenderingBias="Performance"/></Border.Effect>
+                </Border>
+                <Border Background="{DynamicResource SurfaceBrush}" Opacity="0.5"/>
+                <Border Background="{DynamicResource SurfaceBrush}"><Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#FF000000" Offset="0"/><GradientStop Color="#E6000000" Offset="0.30"/><GradientStop Color="#44000000" Offset="0.68"/><GradientStop Color="#10000000" Offset="1"/></LinearGradientBrush></Border.OpacityMask></Border>
+              </Grid>
+            <Grid x:Name="HeroGrid" Margin="22">
+              <Grid.ColumnDefinitions><ColumnDefinition x:Name="ArtworkColumn" Width="216"/><ColumnDefinition/></Grid.ColumnDefinitions>
+              <Border x:Name="ArtworkFrame" Width="194" Height="194" CornerRadius="10" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{DynamicResource AccentMutedBrush}">
+                <Grid><Grid.OpacityMask><VisualBrush><VisualBrush.Visual><Border Width="194" Height="194" CornerRadius="10" Background="White"/></VisualBrush.Visual></VisualBrush></Grid.OpacityMask>
                   <Image x:Name="ArtImage" Stretch="UniformToFill" AutomationProperties.Name="Apple Music album artwork"/>
                   <TextBlock x:Name="ArtFallback" Text="♫" FontSize="56" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
               </Border>
-              <StackPanel Grid.Column="1">
-                <DockPanel Margin="0,0,0,10">
-                  <TextBlock Text="NOW PLAYING" Style="{StaticResource Caption}" Foreground="{DynamicResource AccentBrush}"/>
-                  <TextBlock x:Name="SourceText" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
+              <Grid Grid.Column="1">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <DockPanel LastChildFill="False" Margin="0,0,0,12">
+                  <TextBlock Text="NOW PLAYING" FontSize="11" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                  <Border DockPanel.Dock="Right" Style="{StaticResource StatusPill}"><TextBlock x:Name="SourceText" FontSize="11" Foreground="{DynamicResource MutedBrush}"/></Border>
                 </DockPanel>
-                <TextBlock x:Name="TrackText" Text="No track playing" FontSize="30" FontWeight="SemiBold" MaxHeight="86" TextTrimming="CharacterEllipsis"/>
-                <TextBlock x:Name="ArtistText" FontSize="16" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"/>
-                <TextBlock x:Name="AlbumText" Style="{StaticResource Caption}" Margin="0,4,0,0" MaxHeight="32" TextTrimming="CharacterEllipsis"/>
-                <Border Background="{DynamicResource RaisedBrush}" CornerRadius="12" Padding="10,5" HorizontalAlignment="Left" Margin="0,12,0,0">
-                  <TextBlock x:Name="LyricsStatusText" Style="{StaticResource Caption}"/>
-                </Border>
-                <TextBlock x:Name="LyricText" Text="—" FontSize="24" Margin="0,20,0,16"/>
-                <ProgressBar x:Name="PositionProgress" Maximum="1" Height="4" BorderThickness="0" Background="{DynamicResource RaisedBrush}" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Playback progress"/>
-                <TextBlock x:Name="PositionText" Style="{StaticResource Caption}" Margin="0,7,0,0"/>
-              </StackPanel>
+                <Grid x:Name="HeroContentGrid" Grid.Row="1">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="1.1*"/></Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                  <StackPanel x:Name="TrackMetadata" Margin="0,0,20,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="TrackText" Text="No track playing" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="28" FontWeight="SemiBold" MaxHeight="76" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    <TextBlock x:Name="ArtistText" FontSize="15" Foreground="{DynamicResource TextBrush}" Margin="0,5,0,0" MaxHeight="42" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="AlbumText" Style="{StaticResource Caption}" Margin="0,4,0,0" MaxHeight="32" TextTrimming="CharacterEllipsis"/>
+                    <Border Style="{StaticResource StatusPill}" HorizontalAlignment="Left" Margin="0,10,0,0"><TextBlock x:Name="LyricsStatusText" FontSize="11" Foreground="{DynamicResource MutedBrush}"/></Border>
+                  </StackPanel>
+                  <Border x:Name="HeroLyricPanel" Grid.Column="1" BorderThickness="0" Padding="22,4,0,4" VerticalAlignment="Center">
+                    <StackPanel>
+                      <TextBlock x:Name="LyricText" Text="—" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="27" FontWeight="Light" TextAlignment="Center" LineHeight="36" LineStackingStrategy="BlockLineHeight" MaxHeight="144" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                      <Border Width="22" Height="2" CornerRadius="1" Background="{DynamicResource AccentBrush}" HorizontalAlignment="Center" Margin="0,18,0,0"/>
+                    </StackPanel>
+                  </Border>
+                </Grid>
+                <StackPanel Grid.Row="2" Margin="0,14,0,0">
+                  <ProgressBar x:Name="PositionProgress" Maximum="1" Height="4" BorderThickness="0" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Playback progress"/>
+                  <TextBlock x:Name="PositionText" Style="{StaticResource Caption}" Margin="0,7,0,0"/>
+                </StackPanel>
+              </Grid>
+            </Grid>
             </Grid>
           </Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,14">
-            <StackPanel>
-              <DockPanel Margin="0,0,0,10">
-                <Button Content="Manage profiles" Click="ManageProfiles" DockPanel.Dock="Right" Padding="10,5" MinHeight="30"/>
-                <TextBlock Text="Profiles" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" Margin="0"/>
-              </DockPanel>
-              <ListBox x:Name="ProfileCards" SelectionChanged="SelectProfile" SelectedValuePath="Id" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Saved display profiles">
-                <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-                <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Width" Value="175"/><Setter Property="Margin" Value="0,0,8,4"/></Style></ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate><DataTemplate><StackPanel>
-                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                  <TextBlock Text="{Binding Preset}" Style="{StaticResource Caption}" Margin="0,6,0,0"/>
-                  <TextBlock Text="{Binding ContextMode}" Style="{StaticResource Caption}" Margin="0,2,0,0"/>
-                </StackPanel></DataTemplate></ListBox.ItemTemplate>
-              </ListBox>
-            </StackPanel>
-          </Border>
-          <Grid x:Name="HomeDetailsGrid" Margin="0,0,8,0">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
+          <Grid x:Name="HomePreferencesGrid" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="1.65*"/><ColumnDefinition/></Grid.ColumnDefinitions>
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <StackPanel x:Name="HomeControlsPanel" Margin="0,0,14,0">
-              <Border Style="{StaticResource Card}" Margin="0,0,0,14">
-                <StackPanel>
-                  <TextBlock Text="Lyric context" Style="{StaticResource SectionTitle}"/>
-                  <ListBox x:Name="ContextBox" SelectionChanged="ContextChanged" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Lyric context mode">
-                    <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-                    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Padding" Value="10,8"/></Style></ListBox.ItemContainerStyle>
-                    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="12" TextAlignment="Center"/></DataTemplate></ListBox.ItemTemplate>
-                  </ListBox>
-                  <TextBlock x:Name="ContextHint" Text="The current lyric takes priority when space is limited." Style="{StaticResource Caption}" Margin="0,8,0,12"/>
-                  <CheckBox x:Name="CompactBox" Content="Compact / Floating text" Checked="DisplayChanged" Unchecked="DisplayChanged" ToolTip="Uses VRChat's current Chatbox rendering behavior and may change after VRChat updates."/>
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource Card}" Margin="0,0,0,14">
-                <StackPanel>
-                  <DockPanel><TextBlock Text="Lyric timing" Style="{StaticResource SectionTitle}"/><TextBlock x:Name="OffsetText" Text="0.0 s" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}"/></DockPanel>
-                  <Slider x:Name="OffsetSlider" ToolTip="Positive timing values show lyrics later." Minimum="-5" Maximum="5" TickFrequency="0.1" SmallChange="0.1" LargeChange="0.5" IsSnapToTickEnabled="True" ValueChanged="OffsetChanged" AutomationProperties.Name="Lyric offset in seconds"/>
-                  <TextBlock x:Name="CorrectionStatus" Style="{StaticResource Caption}" Margin="0,6,0,8"/>
-                  <WrapPanel>
-                    <Button x:Name="SaveSongButton" Content="Save for this song" Click="SaveSongCorrection" Padding="8,5" MinHeight="30" Margin="0,0,6,6"/>
-                    <Button x:Name="ResetSongButton" Content="Reset song" Click="ResetSongCorrection" Padding="8,5" MinHeight="30" Margin="0,0,6,6"/>
-                    <Button Content="Use globally" Click="UseGlobalCorrection" Padding="8,5" MinHeight="30" Margin="0,0,0,6"/>
-                  </WrapPanel>
-                </StackPanel>
-              </Border>
-            </StackPanel>
-            <Border x:Name="InspectorCard" Grid.Column="1" Style="{StaticResource Card}" Margin="0,0,0,14" VerticalAlignment="Top">
+            <Border x:Name="ProfilesCard" Style="{StaticResource Card}" Margin="0,0,12,0" Padding="18">
+              <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,14"><Button Content="Manage" Click="ManageProfiles" DockPanel.Dock="Right" Style="{StaticResource SmallButton}"/><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8D6;" Margin="0,0,10,0"/><TextBlock Text="Profiles" Style="{StaticResource DashboardTitle}"/></StackPanel></DockPanel>
+                <ListBox x:Name="ProfileCards" Grid.Row="1" SelectionChanged="SelectProfile" SelectedValuePath="Id" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Saved display profiles" VerticalAlignment="Center" Padding="0">
+                  <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                  <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Width" Value="102"/><Setter Property="Padding" Value="12,10"/><Setter Property="Margin" Value="0,0,8,4"/></Style></ListBox.ItemContainerStyle>
+                  <ListBox.ItemTemplate><DataTemplate><StackPanel><Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="6" HorizontalAlignment="Left" Margin="0,0,0,7"><TextBlock FontFamily="Segoe Fluent Icons" FontSize="16"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Text" Value="&#xE8A4;"/><Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/><Style.Triggers><DataTrigger Binding="{Binding Preset}" Value="Song + Lyrics"><Setter Property="Text" Value="&#xE8D6;"/></DataTrigger><DataTrigger Binding="{Binding Preset}" Value="Custom"><Setter Property="Text" Value="&#xE713;"/></DataTrigger><DataTrigger Binding="{Binding Preset}" Value="Status / Time"><Setter Property="Text" Value="&#xE916;"/></DataTrigger><DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"><Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Border><TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding Name}"/><TextBlock Text="{Binding Preset}" FontSize="10" Foreground="{DynamicResource MutedBrush}" Margin="0,5,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+              </Grid>
+            </Border>
+            <Border x:Name="ContextCard" Grid.Column="1" Style="{StaticResource Card}" Padding="18">
               <StackPanel>
-                <TextBlock Text="Lyrics details" Style="{StaticResource SectionTitle}"/>
-                <Grid>
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                  <TextBlock Grid.Row="0" Text="Source" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="0" Grid.Column="1" x:Name="InspectorSource" Text="—" FontSize="12" Margin="0,0,0,7"/>
-<TextBlock Grid.Row="1" Text="Cache" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="1" Grid.Column="1" x:Name="InspectorCache" Text="—" FontSize="12" Margin="0,0,0,7"/>
-<TextBlock Grid.Row="2" Text="Match" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="2" Grid.Column="1" x:Name="InspectorMatch" Text="—" FontSize="12" Margin="0,0,0,7"/>
-<TextBlock Grid.Row="3" Text="Duration¹" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="3" Grid.Column="1" x:Name="InspectorDuration" Text="—" FontSize="12" Margin="0,0,0,7"/>
-<TextBlock Grid.Row="4" Text="Global offset" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="4" Grid.Column="1" x:Name="InspectorGlobalOffset" Text="—" FontSize="12" Margin="0,0,0,7"/>
-<TextBlock Grid.Row="5" Text="Saved offset" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="5" Grid.Column="1" x:Name="InspectorSavedOffset" Text="—" FontSize="12" Margin="0,0,0,7"/>
-<TextBlock Grid.Row="6" Text="Effective offset" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="6" Grid.Column="1" x:Name="InspectorEffectiveOffset" Text="—" FontSize="12" Margin="0,0,0,7" Foreground="{DynamicResource AccentBrush}"/>
-<TextBlock Grid.Row="7" Text="Manual match" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="7" Grid.Column="1" x:Name="InspectorManual" Text="—" FontSize="12" Margin="0,0,0,7"/>
-<TextBlock Grid.Row="8" Text="Ignored" Style="{StaticResource Caption}" Margin="0,0,12,7"/><TextBlock Grid.Row="8" Grid.Column="1" x:Name="InspectorIgnored" Text="—" FontSize="12" Margin="0,0,0,7"/>
-                </Grid>
-                <TextBlock Text="¹ Apple Music / lyrics candidate" Style="{StaticResource Caption}" Margin="0,4,0,0"/><WrapPanel Margin="0,14,0,0">
-                  <Button x:Name="InspectorSearchButton" Content="Search alternatives" Click="OpenMatches" Padding="8,5" MinHeight="30" Margin="0,0,6,6"/>
-                  <Button Content="Forget manual match" Click="ForgetMatch" IsEnabled="{Binding IsEnabled, ElementName=ForgetMatchButton}" Padding="8,5" MinHeight="30" Margin="0,0,0,6"/>
-                </WrapPanel>
-                <Button x:Name="IgnoreButton" Content="Ignore lyrics for this recording" Click="ToggleIgnore" Padding="8,5" MinHeight="30" HorizontalContentAlignment="Left"/>
+                <TextBlock Text="Lyric context" Style="{StaticResource DashboardTitle}" Margin="0,0,0,14"/>
+                <ListBox x:Name="ContextBox" SelectionChanged="ContextChanged" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Lyric context mode" Padding="0">
+                  <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                  <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Padding" Value="7,7"/><Setter Property="Margin" Value="0,0,5,5"/><Setter Property="VerticalContentAlignment" Value="Center"/></Style></ListBox.ItemContainerStyle>
+                  <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="11" TextAlignment="Center"/></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock x:Name="ContextHint" Text="The current lyric takes priority when space is limited." Visibility="Collapsed"/>
+                <CheckBox x:Name="CompactBox" Content="Compact / Floating" FontSize="12" Margin="0,8,0,0" Checked="DisplayChanged" Unchecked="DisplayChanged" ToolTip="{Binding Text, ElementName=ContextHint}"/>
               </StackPanel>
             </Border>
           </Grid>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,14">
-            <StackPanel>
-              <DockPanel Margin="0,0,0,10"><Button Content="Edit messages" Click="ManageQuickMessages" DockPanel.Dock="Right" Padding="10,5" MinHeight="30"/><TextBlock Text="Quick messages" Style="{StaticResource SectionTitle}" Margin="0"/></DockPanel>
-              <ItemsControl x:Name="HomeQuickMessages" ItemTemplate="{StaticResource QuickMessageTemplate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel></ItemsControl>
-              <TextBlock x:Name="QuickEmptyText" Text="Add reusable messages in Manual." Style="{StaticResource Caption}" Visibility="Collapsed"/>
-              <TextBlock Text="Select to prepare a draft, then edit or Send." Style="{StaticResource Caption}" Margin="0,6,0,0"/>
-            </StackPanel>
+          <Grid x:Name="HomeDetailsGrid" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="1.38*"/><ColumnDefinition Width="1.12*"/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <ContentControl x:Name="HomePreviewHost" Margin="0,0,12,0" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch"/>
+            <Border x:Name="InspectorCard" Grid.Column="1" Style="{StaticResource Card}" Padding="18" Margin="0,0,12,0">
+              <StackPanel>
+                <TextBlock Text="Lyrics details" Style="{StaticResource DashboardTitle}" Margin="0,0,0,14"/>
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Source" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="0" Grid.Column="1" x:Name="InspectorSource" Text="—" FontSize="12" Margin="0,0,0,4" />
+<TextBlock Grid.Row="1" Text="Cache" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="1" Grid.Column="1" x:Name="InspectorCache" Text="—" FontSize="12" Margin="0,0,0,4" />
+<TextBlock Grid.Row="2" Text="Duration¹" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="2" Grid.Column="1" x:Name="InspectorDuration" Text="—" FontSize="12" Margin="0,0,0,4" />
+<TextBlock Grid.Row="3" Text="Global offset" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="3" Grid.Column="1" x:Name="InspectorGlobalOffset" Text="—" FontSize="12" Margin="0,0,0,4" />
+<TextBlock Grid.Row="4" Text="Saved offset" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="4" Grid.Column="1" x:Name="InspectorSavedOffset" Text="—" FontSize="12" Margin="0,0,0,4" />
+<TextBlock Grid.Row="5" Text="Effective offset" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="5" Grid.Column="1" x:Name="InspectorEffectiveOffset" Text="—" FontSize="12" Margin="0,0,0,4" Foreground="{DynamicResource AccentBrush}" />
+</Grid>
+                <TextBlock Text="¹ Apple Music / lyrics candidate" Style="{StaticResource Caption}" FontSize="10" Margin="0,0,0,10"/>
+                <Expander Header="Recording &amp; timing" FontSize="12">
+                  <StackPanel Margin="0,12,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Match" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="0" Grid.Column="1" x:Name="InspectorMatch" Text="—" FontSize="12" Margin="0,0,0,4" />
+<TextBlock Grid.Row="1" Text="Manual match" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="1" Grid.Column="1" x:Name="InspectorManual" Text="—" FontSize="12" Margin="0,0,0,4" />
+<TextBlock Grid.Row="2" Text="Ignored" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="2" Grid.Column="1" x:Name="InspectorIgnored" Text="—" FontSize="12" Margin="0,0,0,4" />
+                </Grid>
+                    <Button Content="Forget manual match" Click="ForgetMatch" IsEnabled="{Binding IsEnabled, ElementName=ForgetMatchButton}" Style="{StaticResource SmallButton}" Margin="0,2,0,12"/>
+                    <DockPanel><TextBlock Text="Lyric timing" FontWeight="SemiBold"/><TextBlock x:Name="OffsetText" Text="0.0 s" HorizontalAlignment="Right" Foreground="{DynamicResource AccentBrush}"/></DockPanel>
+                    <Slider x:Name="OffsetSlider" ToolTip="Positive timing values show lyrics later." Minimum="-5" Maximum="5" TickFrequency="0.1" SmallChange="0.1" LargeChange="0.5" IsSnapToTickEnabled="True" ValueChanged="OffsetChanged" AutomationProperties.Name="Lyric offset in seconds" Margin="0,6,0,2" />
+
+                    <TextBlock x:Name="CorrectionStatus" Style="{StaticResource Caption}" Margin="0,4,0,8"/>
+                    <WrapPanel><Button x:Name="SaveSongButton" Content="Save for song" Click="SaveSongCorrection" Style="{StaticResource SmallButton}" Margin="0,0,6,6"/><Button x:Name="ResetSongButton" Content="Reset song" Click="ResetSongCorrection" Style="{StaticResource SmallButton}" Margin="0,0,0,6"/><Button Content="Use globally" Click="UseGlobalCorrection" Style="{StaticResource SmallButton}"/></WrapPanel>
+                  </StackPanel>
+                </Expander>
+              </StackPanel>
+            </Border>
+            <Border x:Name="QuickMessagesCard" Grid.Column="2" Style="{StaticResource Card}" Padding="18">
+              <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <TextBlock Text="Quick messages" Style="{StaticResource DashboardTitle}"/>
+                <TextBlock Grid.Row="1" Text="Choose a draft, then Send." Style="{StaticResource Caption}" Margin="0,6,0,16"/>
+                <ScrollViewer Grid.Row="2" MaxHeight="128" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                  <ItemsControl x:Name="HomeQuickMessages" ItemTemplate="{StaticResource DashboardQuickTemplate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ItemsControl.ItemsPanel></ItemsControl>
+                </ScrollViewer>
+                <TextBlock x:Name="QuickEmptyText" Grid.Row="3" Text="Add reusable messages in Manual." Style="{StaticResource Caption}" Visibility="Collapsed"/>
+                <Button Grid.Row="4" Content="Edit messages" Click="ManageQuickMessages" Style="{StaticResource SmallButton}" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+              </Grid>
+            </Border>
+          </Grid>
+          <Border Style="{StaticResource Card}" Padding="18,14" Margin="0,0,0,12">
+            <WrapPanel VerticalAlignment="Center">
+              <TextBlock Text="Lyrics tools" Style="{StaticResource DashboardTitle}" Margin="0,8,24,8"/>
+              <Button x:Name="InspectorSearchButton" Content="Search alternatives" Click="OpenMatches" Margin="0,0,8,0"/>
+              <Button Content="Import LRC…" Click="ImportLrc" IsEnabled="{Binding IsEnabled, ElementName=ImportButton}" Margin="0,0,8,0"/>
+              <Button x:Name="IgnoreButton" Content="Ignore this recording" Click="ToggleIgnore"/>
+            </WrapPanel>
           </Border>
           <Border x:Name="RecoveryCard" Style="{StaticResource Card}" Margin="0,0,8,14" Visibility="Collapsed">
             <StackPanel>
-              <TextBlock x:Name="RecoveryTitle" Style="{StaticResource SectionTitle}"/>
-              <TextBlock x:Name="RecoveryHint" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
+              <TextBlock x:Name="RecoveryTitle" Style="{StaticResource SectionTitle}" />
+              <TextBlock x:Name="RecoveryHint" Style="{StaticResource Caption}" Margin="0,0,0,12" />
               <WrapPanel>
-                <Button x:Name="RecoveryRetryButton" Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,8,8"/>
-                <Button x:Name="ChooseMatchButton" Content="Search alternatives" Click="OpenMatches" Margin="0,0,8,8"/>
-                <Button x:Name="RecoveryImportButton" Content="Import LRC…" Click="ImportLrc" Margin="0,0,8,8"/>
-                <Button Content="{Binding Content, ElementName=IgnoreButton}" Click="ToggleIgnore" Margin="0,0,0,8"/>
+                <Button x:Name="RecoveryRetryButton" Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,8,8" />
+                <Button x:Name="ChooseMatchButton" Content="Search alternatives" Click="OpenMatches" Margin="0,0,8,8" />
+                <Button x:Name="RecoveryImportButton" Content="Import LRC…" Click="ImportLrc" Margin="0,0,8,8" />
+                <Button Content="{Binding Content, ElementName=IgnoreButton}" Click="ToggleIgnore" Margin="0,0,0,8" />
               </WrapPanel>
             </StackPanel>
           </Border>
+
           <Border x:Name="MatchCard" Style="{StaticResource Card}" Margin="0,0,8,14" Visibility="{Binding Visibility, ElementName=MatchPanel}">
                   <StackPanel x:Name="MatchPanel" Visibility="Collapsed" Margin="0,12,0,0">
-                    <TextBox x:Name="MatchQuery" MaxLength="512" AutomationProperties.Name="Search lyrics candidates"/>
-                    <WrapPanel Margin="0,8,0,8"><Button x:Name="SearchMatchesButton" Content="Search" Click="SearchMatches" Margin="0,0,8,4"/><Button x:Name="UseMatchButton" Content="Use selected match" Click="UseMatch" Margin="0,0,8,4"/><Button Content="Cancel" Click="CloseMatches" Margin="0,0,0,4"/></WrapPanel>
-                    <TextBlock x:Name="MatchStatus" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                    <TextBox x:Name="MatchQuery" MaxLength="512" AutomationProperties.Name="Search lyrics candidates" />
+                    <WrapPanel Margin="0,8,0,8"><Button x:Name="SearchMatchesButton" Content="Search" Click="SearchMatches" Margin="0,0,8,4" /><Button x:Name="UseMatchButton" Content="Use selected match" Click="UseMatch" Margin="0,0,8,4" /><Button Content="Cancel" Click="CloseMatches" Margin="0,0,0,4" /></WrapPanel>
+                    <TextBlock x:Name="MatchStatus" Style="{StaticResource Caption}" Margin="0,0,0,8" />
                     <ListBox x:Name="MatchChoices" MaxHeight="220" Background="{DynamicResource RaisedBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Candidate recordings">
-                      <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Display}" Margin="6" TextWrapping="Wrap"/></DataTemplate></ListBox.ItemTemplate>
-                      <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListBox.ItemContainerStyle>
+                      <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Display}" Margin="6" TextWrapping="Wrap" /></DataTemplate></ListBox.ItemTemplate>
+                      <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /></Style></ListBox.ItemContainerStyle>
                     </ListBox>
                   </StackPanel>
           </Border>
+
         </StackPanel>
       </ScrollViewer>
       <ScrollViewer x:Name="DisplayPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -405,25 +432,25 @@
           </Border>
         </StackPanel>
       </ScrollViewer>
-      <Border x:Name="PreviewCard" Grid.Row="2" Style="{StaticResource Card}" Margin="0,16,0,0" Padding="16">
-        <StackPanel>
-          <DockPanel x:Name="PreviewHeading" Margin="0,0,0,8">
-            <TextBlock x:Name="PreviewLabel" Text="CHATBOX PREVIEW" Style="{StaticResource Caption}"/>
-            <TextBlock x:Name="BudgetText" Text="0 / 144" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
-          </DockPanel>
-          <TextBlock x:Name="PreviewProfileText" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
-          <Border x:Name="PreviewBubble" Background="{DynamicResource RaisedBrush}" CornerRadius="8" Padding="12,8">
-            <ScrollViewer x:Name="PreviewScroller" MaxHeight="72" VerticalScrollBarVisibility="Auto">
-              <TextBlock x:Name="PreviewText" Text="Nothing to send yet" FontSize="17"/>
-            </ScrollViewer>
-          </Border>
-          <DockPanel Margin="0,10,0,0">
-            <TextBlock x:Name="OwnerText" Text="Automatic" Foreground="{DynamicResource AccentBrush}" FontSize="12"/>
-            <TextBlock x:Name="OscText" Text="OSC ready" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
-          </DockPanel>
-        </StackPanel>
-      </Border>
+      <ContentControl x:Name="PersistentPreviewHost" Grid.Row="2" HorizontalContentAlignment="Stretch">
+        <Border x:Name="PreviewCard" Style="{StaticResource Card}" Padding="18">
+          <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <DockPanel x:Name="PreviewHeading" Margin="0,0,0,12"><TextBlock x:Name="BudgetText" Text="0 / 144" Style="{StaticResource Caption}" DockPanel.Dock="Right"/><TextBlock x:Name="PreviewLabel" Text="Chatbox preview" FontWeight="SemiBold" FontSize="14"/></DockPanel>
+            <TextBlock x:Name="PreviewProfileText" Grid.Row="1" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
+            <Border x:Name="PreviewFrame" Grid.Row="2" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="3,0,0,0" Background="Transparent" CornerRadius="5" Padding="12,8" Margin="0,0,0,12">
+              <Border x:Name="PreviewBubble" Padding="0,4" VerticalAlignment="Center"><ScrollViewer x:Name="PreviewScroller" MaxHeight="130" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock x:Name="PreviewText" Text="Nothing to send yet" FontSize="20" FontWeight="Light"/></ScrollViewer></Border>
+            </Border>
+            <StackPanel x:Name="PreviewStatus" Grid.Row="3"><TextBlock x:Name="OwnerText" Text="Automatic" Foreground="{DynamicResource AccentBrush}" FontSize="11"/><TextBlock x:Name="OscText" Text="OSC ready" Style="{StaticResource Caption}" FontSize="10" Margin="0,4,0,0"/></StackPanel>
+          </Grid>
+        </Border>
+      </ContentControl>
       <TextBlock Grid.Row="3" x:Name="ErrorText" Foreground="{DynamicResource WarningBrush}" Margin="0,8,0,0"/>
     </Grid>
+    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0">
+      <Button Content="&#xE921;" Style="{StaticResource CaptionButton}" Click="MinimizeWindow" AutomationProperties.Name="Minimize" ToolTip="Minimize"/>
+      <Button x:Name="MaximizeCaptionButton" Content="&#xE922;" Style="{StaticResource CaptionButton}" Click="ToggleMaximizeWindow" AutomationProperties.Name="Maximize or restore" ToolTip="Maximize or restore"/>
+      <Button Content="&#xE8BB;" Style="{StaticResource CaptionButton}" Click="CloseWindow" AutomationProperties.Name="Close" ToolTip="Close"/>
+    </StackPanel>
   </Grid>
 </Window>

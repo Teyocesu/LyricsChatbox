@@ -116,5 +116,26 @@ public sealed class PresentationTests : IDisposable
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken cancellationToken) => throw new InvalidOperationException("No network expected");
     }
+    [Fact]
+    public void FullUnicodeLibrariesCanBeReadAfterSuccessfulSave()
+    {
+        var data = new LocalData(root);
+        var profiles = Enumerable.Range(0, ProfileLibrary.Maximum).Select(i => new DisplayProfile(
+            new string('界', 62) + i.ToString("D2"), new string('名', 40),
+            CustomTemplate: new string('語', 512), Message: new string('文', 512))).ToArray();
+        var library = new ProfileLibrary(1, profiles[^1].Id, profiles);
+        Assert.True(data.SaveProfiles(library));
+        var restored = new LocalData(root).ReadProfiles(new());
+        Assert.Equal(profiles.Length, restored.Items.Count);
+        Assert.Equal(library.SelectedId, restored.SelectedId);
+        Assert.Equal(profiles, restored.Items.ToArray());
+
+        var messages = Enumerable.Range(0, QuickMessageLibrary.Maximum).Select(i => new QuickMessage(
+            new string('界', 62) + i.ToString("D2"), new string('名', 32), new string('文', 512))).ToArray();
+        Assert.True(data.SaveQuickMessages(new(1, messages)));
+        var restoredMessages = new LocalData(root).ReadQuickMessages();
+        Assert.Equal(messages.Length, restoredMessages.Items.Count);
+        Assert.Equal(messages, restoredMessages.Items.ToArray());
+    }
     public void Dispose() { if(Directory.Exists(root)) Directory.Delete(root,true); }
 }

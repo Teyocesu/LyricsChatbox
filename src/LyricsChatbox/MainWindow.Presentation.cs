@@ -24,6 +24,7 @@ public partial class MainWindow
         {
             ProfileCards.ItemsSource = profiles.Items;
             ProfileCards.SelectedValue = profiles.SelectedId;
+            ProfileCards.ScrollIntoView(profiles.Selected);
             ProfileNameBox.Text = profiles.Selected.Name;
             DeleteProfileButton.IsEnabled = !profiles.Selected.BuiltIn;
         }
@@ -168,13 +169,13 @@ public partial class MainWindow
         RecoveryImportButton.IsEnabled = hasTrack;
         RecoveryRetryButton.IsEnabled = hasTrack && !recordingIgnored;
         IgnoreButton.IsEnabled = hasTrack;
-        IgnoreButton.Content = recordingIgnored ? "Resume lyrics for this recording" : "Ignore lyrics for this recording";
+        IgnoreButton.Content = recordingIgnored ? "Resume this recording" : "Ignore this recording";
         RecoveryCard.Visibility = hasTrack && engine.Timeline is null ? Visibility.Visible : Visibility.Collapsed;
         RecoveryTitle.Text = FriendlyLyricsStatus();
         RecoveryHint.Text = recordingIgnored ? "Saved for this recording. Imported lyrics are kept."
             : "Retry, choose a recording yourself, or add a synchronized LRC file.";
         InspectorSource.Text = resolution?.Provider ?? "—";
-        InspectorCache.Text = resolution is null ? "—" : resolution.FromCache ? "Reused saved / loaded lyrics"
+        InspectorCache.Text = resolution is null ? "—" : resolution.FromCache ? "Saved / loaded"
             : resolution.Provider == "Local LRC" ? "Local import" : resolution.Timeline is not null ? "Resolved this session" : "No usable lyrics";
         InspectorMatch.Text = recordingIgnored ? "Ignored" : resolution?.ManualMatch == true ? "User-selected recording"
             : resolution?.Provider == "Local LRC" ? "User-imported LRC" : resolution?.Outcome == LyricsOutcome.Found ? "Automatic match" : FriendlyLyricsStatus();

@@ -191,9 +191,9 @@ public partial class MainWindow : Window
         PreviewText.Text = visible.Length > 0 ? visible : "—";
         PreviewText.FontFamily = preserveLayout ? LayoutFont : TextFont;
         BudgetText.Text = payload.Length + " / 144";
-        PreviewLabel.Text = settings.Compact ? "CHATBOX PREVIEW · FLOATING" : "CHATBOX PREVIEW";
-        PreviewProfileText.Text = manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
-            : profiles.Selected.Name + " · " + (structured ? contextMode : settings.Preset);
+        PreviewLabel.Text = "Chatbox preview";
+        PreviewProfileText.Text = (manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
+            : profiles.Selected.Name + " · " + (structured ? contextMode : settings.Preset)) + (settings.Compact ? " · Floating" : "");
         PreviewBubble.Background = settings.Compact ? System.Windows.Media.Brushes.Transparent : (System.Windows.Media.Brush)FindResource("RaisedBrush");
         PreviewBubble.Padding = settings.Compact ? new Thickness(0, 4, 0, 4) : new Thickness(12, 8, 12, 8);
         OwnerText.Text = !engine.Enabled ? "Output off · preview" : manual.IsManual
@@ -206,7 +206,6 @@ public partial class MainWindow : Window
             ? $"Sent · automatic resumes in {Math.Ceiling(remaining):0} s"
             : manual.IsManual ? manual.PendingSend ? "Sending your message…" : desired is null ? "Unsent draft · automatic lyrics are paused" : "Manual owns the Chatbox · automatic lyrics are paused"
             : "Automatic mode · editing a draft takes priority";
-        ConnectionSummary.Text = engine.Enabled ? "Output enabled · OSC" : "Output off";
         SendButton.IsEnabled = ClearButton.IsEnabled = engine.Enabled;
         scheduler.Set(engine.Epoch, desired ?? "", engine.Enabled && desired is not null, settings.Compact, manual.PendingSend, preserveLayout);
         if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && engine.Enabled)
@@ -218,6 +217,17 @@ public partial class MainWindow : Window
         OscText.Text = !engine.Enabled ? "Output paused" : output.Status.StartsWith("OSC unavailable") ? "OSC unavailable · check Settings" : "OSC ready · no delivery receipt";
     }
 
+    private void MinimizeWindow(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+    private void ToggleMaximizeWindow(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    private void CloseWindow(object sender, RoutedEventArgs e) => Close();
+
+    private void HeroSurfaceSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        ((FrameworkElement)sender).Clip = new System.Windows.Media.RectangleGeometry(
+            new Rect(new Point(), e.NewSize), 11, 11);
+    }
+
     private void Navigate(object sender, RoutedEventArgs e)
     {
         if (!ready || sender is not RadioButton { Tag: string page }) return;
@@ -226,6 +236,7 @@ public partial class MainWindow : Window
         ManualPage.Visibility = page == "Manual" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
         PageTitle.Text = page;
+        WindowLayout.Apply(this, ContentRoot.ActualHeight);
     }
     private void DraftKeyDown(object sender, KeyEventArgs e)
     {
