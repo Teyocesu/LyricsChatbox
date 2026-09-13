@@ -174,6 +174,7 @@ public partial class MainWindow : Window
         AlbumText.Text = engine.Track?.Album ?? "";
         LyricText.Text = lyric.Length > 0 ? lyric : "—";
         LyricsStatusText.Text = FriendlyLyricsStatus();
+        RefreshTransport(now);
         var position = engine.Position(now);
         PositionProgress.Value = engine.Track?.Duration > 0 && position.HasValue ? Math.Clamp(position.Value / engine.Track.Duration, 0, 1) : 0;
         PositionText.Text = position.HasValue ? $"{TimeSpan.FromSeconds(position.Value):m\\:ss} / {TimeSpan.FromSeconds(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400)):m\\:ss}" : "No playback position";
@@ -215,6 +216,11 @@ public partial class MainWindow : Window
         if (typing.Take(engine.Enabled && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
             output.SendTyping(typingState);
         OscText.Text = !engine.Enabled ? "Output paused" : output.Status.StartsWith("OSC unavailable") ? "OSC unavailable · check Settings" : "OSC ready · no delivery receipt";
+    }
+
+    private void HomeSectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ready) WindowLayout.Apply(this, ContentRoot.ActualHeight);
     }
 
     private void MinimizeWindow(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

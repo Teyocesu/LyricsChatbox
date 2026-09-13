@@ -2,7 +2,7 @@ using Windows.Media.Control;
 
 namespace LyricsChatbox;
 
-public sealed class AppleMusicPlayback : IAsyncDisposable
+public sealed partial class AppleMusicPlayback : IAsyncDisposable
 {
     public const string AppleSource = "AppleInc.AppleMusicWin_nzyj5cx40ttqa!App";
     private readonly CancellationTokenSource stop = new();

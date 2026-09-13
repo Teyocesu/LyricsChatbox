@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 using Forms = System.Windows.Forms;
 
 namespace LyricsChatbox;
@@ -23,14 +25,17 @@ public partial class MainWindow
         MinimizeTrayBox.IsChecked = settings.MinimizeToTray;
         CloseTrayBox.IsChecked = settings.CloseToTray;
         UpdateTray();
-        SourceInitialized += (_, _) => FitWorkArea();
+        SourceInitialized += (_, _) =>
+        {
+            HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(WindowBoundsHook);
+            FitWorkArea();
+        };
         Loaded += (_, _) => FitWorkArea();
         ContentRoot.SizeChanged += (_, _) => WindowLayout.Apply(this, ContentRoot.ActualHeight);
         DpiChanged += (_, _) => _ = Dispatcher.InvokeAsync(FitWorkArea);
         StateChanged += (_, _) =>
         {
             MaximizeCaptionButton.Content = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
-            ContentRoot.Margin = WindowState == WindowState.Maximized ? new Thickness(8) : new Thickness(0);
             if (WindowState == WindowState.Minimized && LifecyclePolicy.Minimize(settings) == WindowAction.Hide) Hide();
         };
     }
@@ -41,6 +46,26 @@ public partial class MainWindow
         Show(); WindowState = WindowState.Normal; Activate();
     }
     public void RequestExit() { exitRequested = true; Close(); }
+    private IntPtr WindowBoundsHook(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (message != 0x0024 || lParam == IntPtr.Zero) return IntPtr.Zero; // WM_GETMINMAXINFO
+        var screen = Forms.Screen.FromHandle(hwnd);
+        var bounds = screen.Bounds;
+        var work = screen.WorkingArea;
+        var limits = Marshal.PtrToStructure<WindowMinMaxInfo>(lParam);
+        limits.MaxPosition = new() { X = work.Left - bounds.Left, Y = work.Top - bounds.Top };
+        limits.MaxSize = new() { X = work.Width, Y = work.Height };
+        Marshal.StructureToPtr(limits, lParam, false);
+        handled = true;
+        return IntPtr.Zero;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WindowPoint { public int X, Y; }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WindowMinMaxInfo
+    {
+        public WindowPoint Reserved, MaxSize, MaxPosition, MinTrackSize, MaxTrackSize;
+    }
     private void FitWorkArea()
     {
         var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;

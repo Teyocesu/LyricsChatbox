@@ -21,6 +21,7 @@ public partial class MainWindow
     {
         if (engine.Track is not { } track || recordingIgnored) return;
         ShowPage("Home");
+        HomeSectionBox.SelectedIndex = 5;
         MatchPanel.Visibility = Visibility.Visible; MatchQuery.Text = track.Title + " " + track.Artist;
         MatchStatus.Text = "Compare the recording, artist and duration. Your choice applies only to this song.";
         _ = Dispatcher.InvokeAsync(() => { MatchCard.BringIntoView(); MatchQuery.Focus(); });

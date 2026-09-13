@@ -2,6 +2,11 @@
 
   <shell:WindowChrome.WindowChrome><shell:WindowChrome CaptionHeight="36" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/></shell:WindowChrome.WindowChrome>
   <Window.Resources>
+    <Style x:Key="MusicTransportButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Width" Value="36"/><Setter Property="Height" Value="36"/><Setter Property="Padding" Value="0"/><Setter Property="FontSize" Value="16"/></Style>
+    <Style x:Key="MusicPlayButton" TargetType="Button" BasedOn="{StaticResource MusicTransportButton}">
+      <Setter Property="Width" Value="46"/><Setter Property="Height" Value="46"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Circle" CornerRadius="23" BorderThickness="1.5" BorderBrush="{DynamicResource AccentBrush}" Background="Transparent"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Circle" Property="Background" Value="{DynamicResource AccentMutedBrush}"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter TargetName="Circle" Property="Opacity" Value="0.4"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Circle" Property="BorderBrush" Value="{DynamicResource TextBrush}"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+    </Style>
     <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Width" Value="46"/><Setter Property="Height" Value="32"/><Setter Property="MinHeight" Value="32"/><Setter Property="Padding" Value="0"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="FontFamily" Value="Segoe Fluent Icons"/><Setter Property="FontSize" Value="10"/><Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/></Style>
     <Style x:Key="DashboardTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="15"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
     <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Padding" Value="10,5"/><Setter Property="MinHeight" Value="30"/><Setter Property="FontSize" Value="11"/></Style>
@@ -18,7 +23,7 @@
       <DockPanel>
         <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,0,0,32">
           <StackPanel Orientation="Horizontal">
-            <Image Source="Assets/AppIcon.png" Width="34" Height="34" Margin="4,0,10,0"/>
+            <Image Source="Assets/AppIcon.png" Width="34" Height="34" Margin="4,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
             <StackPanel VerticalAlignment="Center"><TextBlock Text="LyricsChatbox" FontSize="14" FontWeight="SemiBold"/><TextBlock x:Name="VersionCaption" Text="v0.5 preview" Style="{StaticResource Caption}" FontSize="11" Margin="0,3,0,0"/></StackPanel>
           </StackPanel>
         </StackPanel>
@@ -69,8 +74,10 @@
       <StackPanel x:Name="HeadingPanel" Margin="0,0,0,20">
         <TextBlock x:Name="PageTitle" Text="Home" FontSize="28" FontWeight="SemiBold"/>
       </StackPanel>
-      <ScrollViewer x:Name="HomePage" Grid.Row="1" Visibility="Visible" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="0,0,8,0">
+      <ScrollViewer x:Name="HomePage" Grid.Row="1" Visibility="Visible" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
+        <Grid>
+        <Border x:Name="HomeFit">
+        <Grid x:Name="HomeDashboard"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Border x:Name="NowPlayingCard" Style="{StaticResource Card}" Background="{DynamicResource HeroBrush}" Margin="0,0,0,12" Padding="0">
             <Grid ClipToBounds="True" SizeChanged="HeroSurfaceSizeChanged">
               <Grid x:Name="HeroArtworkLayer" IsHitTestVisible="False" ClipToBounds="True">
@@ -82,7 +89,7 @@
                 <Border Background="{DynamicResource SurfaceBrush}" Opacity="0.5"/>
                 <Border Background="{DynamicResource SurfaceBrush}"><Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#FF000000" Offset="0"/><GradientStop Color="#E6000000" Offset="0.30"/><GradientStop Color="#44000000" Offset="0.68"/><GradientStop Color="#10000000" Offset="1"/></LinearGradientBrush></Border.OpacityMask></Border>
               </Grid>
-            <Grid x:Name="HeroGrid" Margin="22">
+            <Grid x:Name="HeroGrid" Margin="18">
               <Grid.ColumnDefinitions><ColumnDefinition x:Name="ArtworkColumn" Width="216"/><ColumnDefinition/></Grid.ColumnDefinitions>
               <Border x:Name="ArtworkFrame" Width="194" Height="194" CornerRadius="10" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{DynamicResource AccentMutedBrush}">
                 <Grid><Grid.OpacityMask><VisualBrush><VisualBrush.Visual><Border Width="194" Height="194" CornerRadius="10" Background="White"/></VisualBrush.Visual></VisualBrush></Grid.OpacityMask>
@@ -92,7 +99,7 @@
               </Border>
               <Grid Grid.Column="1">
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                <DockPanel LastChildFill="False" Margin="0,0,0,12">
+                <DockPanel x:Name="HeroStatusRow" LastChildFill="False" Margin="0,0,0,8">
                   <TextBlock Text="NOW PLAYING" FontSize="11" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
                   <Border DockPanel.Dock="Right" Style="{StaticResource StatusPill}"><TextBlock x:Name="SourceText" FontSize="11" Foreground="{DynamicResource MutedBrush}"/></Border>
                 </DockPanel>
@@ -100,42 +107,52 @@
                   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="1.1*"/></Grid.ColumnDefinitions>
                   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                   <StackPanel x:Name="TrackMetadata" Margin="0,0,20,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="TrackText" Text="No track playing" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="28" FontWeight="SemiBold" MaxHeight="76" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                    <TextBlock x:Name="ArtistText" FontSize="15" Foreground="{DynamicResource TextBrush}" Margin="0,5,0,0" MaxHeight="42" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock x:Name="AlbumText" Style="{StaticResource Caption}" Margin="0,4,0,0" MaxHeight="32" TextTrimming="CharacterEllipsis"/>
-                    <Border Style="{StaticResource StatusPill}" HorizontalAlignment="Left" Margin="0,10,0,0"><TextBlock x:Name="LyricsStatusText" FontSize="11" Foreground="{DynamicResource MutedBrush}"/></Border>
+                    <TextBlock x:Name="TrackText" Text="No track playing" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="28" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    <TextBlock x:Name="ArtistText" TextWrapping="NoWrap" FontSize="15" Foreground="{DynamicResource TextBrush}" Margin="0,5,0,0" MaxHeight="42" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="AlbumText" TextWrapping="NoWrap" Style="{StaticResource Caption}" Margin="0,4,0,0" MaxHeight="32" TextTrimming="CharacterEllipsis"/>
+                    <Border x:Name="HeroProviderBadge" Style="{StaticResource StatusPill}" HorizontalAlignment="Left" Margin="0,10,0,0"><TextBlock x:Name="LyricsStatusText" FontSize="11" Foreground="{DynamicResource MutedBrush}"/></Border>
                   </StackPanel>
                   <Border x:Name="HeroLyricPanel" Grid.Column="1" BorderThickness="0" Padding="22,4,0,4" VerticalAlignment="Center">
                     <StackPanel>
-                      <TextBlock x:Name="LyricText" Text="—" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="27" FontWeight="Light" TextAlignment="Center" LineHeight="36" LineStackingStrategy="BlockLineHeight" MaxHeight="144" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                      <TextBlock x:Name="LyricText" Text="—" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="24" FontWeight="Light" TextAlignment="Center" LineHeight="30" LineStackingStrategy="BlockLineHeight" MaxHeight="144" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                       <Border Width="22" Height="2" CornerRadius="1" Background="{DynamicResource AccentBrush}" HorizontalAlignment="Center" Margin="0,18,0,0"/>
                     </StackPanel>
                   </Border>
                 </Grid>
                 <StackPanel Grid.Row="2" Margin="0,14,0,0">
-                  <ProgressBar x:Name="PositionProgress" Maximum="1" Height="4" BorderThickness="0" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Playback progress"/>
+                  <ProgressBar x:Name="PositionProgress" Maximum="1" Height="4" BorderThickness="0" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Playback progress" ToolTip="Apple Music does not currently expose seeking through Windows"/>
                   <TextBlock x:Name="PositionText" Style="{StaticResource Caption}" Margin="0,7,0,0"/>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0">
+                    <Button x:Name="ShuffleButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8B1;" FontFamily="Segoe Fluent Icons" Tag="Shuffle" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Shuffle is not exposed by Apple Music" AutomationProperties.Name="Shuffle"/>
+                    <Button x:Name="PreviousButton" Style="{StaticResource MusicTransportButton}" Content="&#xE892;" FontFamily="Segoe Fluent Icons" Tag="Previous" Click="TransportClicked" ToolTip="Previous track" AutomationProperties.Name="Previous track"/>
+                    <Button x:Name="PlayPauseButton" Style="{StaticResource MusicPlayButton}" Content="&#xE768;" FontFamily="Segoe Fluent Icons" Tag="PlayPause" Click="TransportClicked" Foreground="{DynamicResource AccentBrush}" BorderBrush="{DynamicResource AccentBrush}" Margin="8,0" ToolTip="Play or pause" AutomationProperties.Name="Play or pause"/>
+                    <Button x:Name="NextButton" Style="{StaticResource MusicTransportButton}" Content="&#xE893;" FontFamily="Segoe Fluent Icons" Tag="Next" Click="TransportClicked" ToolTip="Next track" AutomationProperties.Name="Next track"/>
+                    <Button x:Name="RepeatButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8EE;" FontFamily="Segoe Fluent Icons" Tag="Repeat" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Repeat is not exposed by Apple Music" AutomationProperties.Name="Repeat" Margin="8,0,16,0"/>
+                    <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE767;" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Slider x:Name="MusicVolumeSlider" ValueChanged="MusicVolumeChanged" Minimum="0" Maximum="1" Width="90" IsEnabled="False" IsMoveToPointEnabled="True" SmallChange="0.02" LargeChange="0.1" AutomationProperties.Name="Apple Music volume" ToolTip="Apple Music volume" PreviewMouseLeftButtonUp="VolumeReleased" KeyUp="VolumeKeyReleased"/>
+                  </StackPanel>
+                  <TextBlock x:Name="TransportStatus" Style="{StaticResource Caption}" FontSize="10" Visibility="Collapsed"/>
                 </StackPanel>
               </Grid>
             </Grid>
             </Grid>
           </Border>
-          <Grid x:Name="HomePreferencesGrid" Margin="0,0,0,12">
+          <Grid x:Name="HomePreferencesGrid" Grid.Row="1" Margin="0,0,0,12">
             <Grid.ColumnDefinitions><ColumnDefinition Width="1.65*"/><ColumnDefinition/></Grid.ColumnDefinitions>
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <Border x:Name="ProfilesCard" Style="{StaticResource Card}" Margin="0,0,12,0" Padding="18">
+            <Border x:Name="ProfilesCard" Style="{StaticResource Card}" Margin="0,0,12,0" Padding="14">
               <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
-                <DockPanel Margin="0,0,0,14"><Button Content="Manage" Click="ManageProfiles" DockPanel.Dock="Right" Style="{StaticResource SmallButton}"/><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8D6;" Margin="0,0,10,0"/><TextBlock Text="Profiles" Style="{StaticResource DashboardTitle}"/></StackPanel></DockPanel>
+                <DockPanel Margin="0,0,0,8"><Button Content="Manage" Click="ManageProfiles" DockPanel.Dock="Right" Style="{StaticResource SmallButton}"/><StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8D6;" Margin="0,0,10,0"/><TextBlock Text="Profiles" Style="{StaticResource DashboardTitle}"/></StackPanel></DockPanel>
                 <ListBox x:Name="ProfileCards" Grid.Row="1" SelectionChanged="SelectProfile" SelectedValuePath="Id" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Saved display profiles" VerticalAlignment="Center" Padding="0">
                   <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-                  <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Width" Value="102"/><Setter Property="Padding" Value="12,10"/><Setter Property="Margin" Value="0,0,8,4"/></Style></ListBox.ItemContainerStyle>
-                  <ListBox.ItemTemplate><DataTemplate><StackPanel><Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="6" HorizontalAlignment="Left" Margin="0,0,0,7"><TextBlock FontFamily="Segoe Fluent Icons" FontSize="16"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Text" Value="&#xE8A4;"/><Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/><Style.Triggers><DataTrigger Binding="{Binding Preset}" Value="Song + Lyrics"><Setter Property="Text" Value="&#xE8D6;"/></DataTrigger><DataTrigger Binding="{Binding Preset}" Value="Custom"><Setter Property="Text" Value="&#xE713;"/></DataTrigger><DataTrigger Binding="{Binding Preset}" Value="Status / Time"><Setter Property="Text" Value="&#xE916;"/></DataTrigger><DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"><Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Border><TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding Name}"/><TextBlock Text="{Binding Preset}" FontSize="10" Foreground="{DynamicResource MutedBrush}" Margin="0,5,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
+                  <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Width" Value="102"/><Setter Property="Padding" Value="10,8"/><Setter Property="Margin" Value="0,0,8,4"/></Style></ListBox.ItemContainerStyle>
+                  <ListBox.ItemTemplate><DataTemplate><StackPanel><Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="4" HorizontalAlignment="Left" Margin="0,0,0,5"><TextBlock FontFamily="Segoe Fluent Icons" FontSize="16"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Text" Value="&#xE8A4;"/><Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/><Style.Triggers><DataTrigger Binding="{Binding Preset}" Value="Song + Lyrics"><Setter Property="Text" Value="&#xE8D6;"/></DataTrigger><DataTrigger Binding="{Binding Preset}" Value="Custom"><Setter Property="Text" Value="&#xE713;"/></DataTrigger><DataTrigger Binding="{Binding Preset}" Value="Status / Time"><Setter Property="Text" Value="&#xE916;"/></DataTrigger><DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"><Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Border><TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding Name}"/><TextBlock Text="{Binding Preset}" FontSize="10" Foreground="{DynamicResource MutedBrush}" Margin="0,5,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
               </Grid>
             </Border>
-            <Border x:Name="ContextCard" Grid.Column="1" Style="{StaticResource Card}" Padding="18">
+            <Border x:Name="ContextCard" Grid.Column="1" Style="{StaticResource Card}" Padding="14">
               <StackPanel>
-                <TextBlock Text="Lyric context" Style="{StaticResource DashboardTitle}" Margin="0,0,0,14"/>
+                <TextBlock Text="Lyric context" Style="{StaticResource DashboardTitle}" Margin="0,0,0,8"/>
                 <ListBox x:Name="ContextBox" SelectionChanged="ContextChanged" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Lyric context mode" Padding="0">
                   <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
                   <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Padding" Value="7,7"/><Setter Property="Margin" Value="0,0,5,5"/><Setter Property="VerticalContentAlignment" Value="Center"/></Style></ListBox.ItemContainerStyle>
@@ -146,11 +163,12 @@
               </StackPanel>
             </Border>
           </Grid>
-          <Grid x:Name="HomeDetailsGrid" Margin="0,0,0,12">
+          <ScrollViewer x:Name="HomeDetailsScroller" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="HomeDetailsStack"><Grid x:Name="HomeDetailsGrid" Margin="0,0,0,12">
             <Grid.ColumnDefinitions><ColumnDefinition Width="1.38*"/><ColumnDefinition Width="1.12*"/><ColumnDefinition/></Grid.ColumnDefinitions>
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <ContentControl x:Name="HomePreviewHost" Margin="0,0,12,0" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch"/>
-            <Border x:Name="InspectorCard" Grid.Column="1" Style="{StaticResource Card}" Padding="18" Margin="0,0,12,0">
+            <Border x:Name="InspectorCard" Grid.Column="1" Style="{StaticResource Card}" Padding="18" Margin="0,0,12,0" Height="244" VerticalAlignment="Top">
+              <ScrollViewer x:Name="InspectorScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
               <StackPanel>
                 <TextBlock Text="Lyrics details" Style="{StaticResource DashboardTitle}" Margin="0,0,0,14"/>
                 <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Source" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="0" Grid.Column="1" x:Name="InspectorSource" Text="—" FontSize="12" Margin="0,0,0,4" />
@@ -175,6 +193,7 @@
                   </StackPanel>
                 </Expander>
               </StackPanel>
+              </ScrollViewer>
             </Border>
             <Border x:Name="QuickMessagesCard" Grid.Column="2" Style="{StaticResource Card}" Padding="18">
               <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -188,7 +207,7 @@
               </Grid>
             </Border>
           </Grid>
-          <Border Style="{StaticResource Card}" Padding="18,14" Margin="0,0,0,12">
+          </StackPanel></ScrollViewer><Border x:Name="HomeToolsCard" Grid.Row="3" Style="{StaticResource Card}" Padding="18,14" Margin="0,0,0,12">
             <WrapPanel VerticalAlignment="Center">
               <TextBlock Text="Lyrics tools" Style="{StaticResource DashboardTitle}" Margin="0,8,24,8"/>
               <Button x:Name="InspectorSearchButton" Content="Search alternatives" Click="OpenMatches" Margin="0,0,8,0"/>
@@ -221,7 +240,17 @@
                   </StackPanel>
           </Border>
 
-        </StackPanel>
+        </Grid>
+        </Border>
+        <Grid x:Name="HomeCompact" Visibility="Collapsed">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+          <ContentControl x:Name="CompactHeroHost" HorizontalContentAlignment="Stretch"/>
+          <ComboBox x:Name="HomeSectionBox" Grid.Row="1" SelectedIndex="0" SelectionChanged="HomeSectionChanged" AutomationProperties.Name="Home section" Margin="0,0,0,8">
+            <ComboBoxItem Content="Chatbox preview"/><ComboBoxItem Content="Profiles"/><ComboBoxItem Content="Lyric context"/><ComboBoxItem Content="Lyrics details"/><ComboBoxItem Content="Quick messages"/><ComboBoxItem Content="Lyrics tools"/>
+          </ComboBox>
+          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Grid><ContentControl x:Name="CompactSectionHost" HorizontalContentAlignment="Stretch"/><StackPanel x:Name="CompactToolsHost" Visibility="Collapsed"/></Grid></ScrollViewer>
+        </Grid>
+        </Grid>
       </ScrollViewer>
       <ScrollViewer x:Name="DisplayPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
