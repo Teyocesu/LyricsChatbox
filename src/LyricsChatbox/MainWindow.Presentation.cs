@@ -76,8 +76,7 @@ public partial class MainWindow
     }
     private void DuplicateProfile(object sender, RoutedEventArgs e)
     {
-        var name = profiles.Selected.Name;
-        if (profiles.Create(name[..Math.Min(name.Length, 34)] + " copy", CurrentProfile()) is { } next) ApplyProfileLibrary(next);
+        if (profiles.Duplicate(CurrentProfile()) is { } next) ApplyProfileLibrary(next);
         else ProfileStatus.Text = "Up to 20 profiles can be saved. Remove a user profile first.";
     }
     private void RenameProfile(object sender, RoutedEventArgs e)

@@ -55,6 +55,14 @@ public partial class MainWindow
         var limits = Marshal.PtrToStructure<WindowMinMaxInfo>(lParam);
         limits.MaxPosition = new() { X = work.Left - bounds.Left, Y = work.Top - bounds.Top };
         limits.MaxSize = new() { X = work.Width, Y = work.Height };
+        // Handling this message also bypasses WPF's normal MinWidth/MinHeight processing.
+        // Native tracking sizes use physical pixels, while WPF minimums are in DIPs.
+        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+        limits.MinTrackSize = new()
+        {
+            X = (int)Math.Min(work.Width, Math.Ceiling(MinWidth * dpi.DpiScaleX)),
+            Y = (int)Math.Min(work.Height, Math.Ceiling(MinHeight * dpi.DpiScaleY))
+        };
         Marshal.StructureToPtr(limits, lParam, false);
         handled = true;
         return IntPtr.Zero;

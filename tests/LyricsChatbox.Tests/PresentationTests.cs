@@ -7,6 +7,24 @@ namespace LyricsChatbox.Tests;
 
 public sealed class PresentationTests : IDisposable
 {
+    [Theory]
+    [InlineData("🎵")]
+    [InlineData("é")]
+    [InlineData("🇯🇵")]
+    public void DuplicatedProfileDoesNotSplitTheLastTextElement(string element)
+    {
+        var prefix = new string('a', 33);
+        var source = new DisplayProfile("original", prefix + element + "end", ContextMode: "Adaptive", Compact: true);
+        var library = new ProfileLibrary(1, source.Id, [source]);
+        var copy = library.Duplicate(source)!;
+        Assert.Equal(prefix + " copy", copy.Selected.Name);
+        Assert.Equal(source.ContextMode, copy.Selected.ContextMode);
+        Assert.Equal(source.Compact, copy.Selected.Compact);
+        Assert.NotEqual(source.Id, copy.SelectedId);
+        var data = new LocalData(root);
+        Assert.True(data.SaveProfiles(copy));
+        Assert.Equal(copy.Selected, data.ReadProfiles(new()).Selected);
+    }
     private readonly string root = Path.Combine(Path.GetTempPath(),"LyricsChatbox.Tests",Guid.NewGuid().ToString("N"));
     [Fact]
     public void ProfilesMigrateExactPresentationAndPersistCreateEditSelectDelete()

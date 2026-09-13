@@ -36,6 +36,12 @@ public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<Displ
         if (Items.Count >= Maximum || !profile.IsValid) return null;
         return this with {Items=Items.Append(profile).ToArray(), SelectedId=profile.Id};
     }
+    public ProfileLibrary? Duplicate(DisplayProfile source)
+    {
+        var length = source.Name.Length <= 34 ? source.Name.Length
+            : System.Globalization.StringInfo.ParseCombiningCharacters(source.Name).Last(index => index <= 34);
+        return Create(source.Name[..length] + " copy", source);
+    }
     public ProfileLibrary? Delete(string id)
     {
         if (Items.Count <= 1 || Items.FirstOrDefault(p=>p.Id==id) is not {BuiltIn:false}) return null;
