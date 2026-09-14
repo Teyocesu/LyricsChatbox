@@ -1,5 +1,8 @@
 # Current handoff
 
+Latest override: f8a3893 and Windows CI34789674315 passed all178 tests. The local0.5.0-rc.1 portable ZIP and installer now exist under artifacts/v0.5.0-rc.1, with package-receipt.json containing sizes/hashes. The installer was compiled, not executed. The development app is closed; the actual portable executable is running, and a Windows Firewall security prompt appeared for this new path. Do not interact with that security prompt; user must handle it. No publication or visual/physical acceptance. See the final PLAN entry for package checks and limitations.
+
+
 ## Current checkpoint — 2026-09-13
 
 Branch: codex/v0.5.0. Stable v0.4 and its tags remain unchanged. v0.5 is not visually accepted or released. SPEC and the full 11-feature goal remain authoritative; PLAN records detailed receipts and historical acceptance limits.

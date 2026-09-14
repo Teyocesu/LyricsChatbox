@@ -6,7 +6,7 @@ try {
     $project = [xml](Get-Content src/LyricsChatbox/LyricsChatbox.csproj -Raw)
     $version = $project.Project.PropertyGroup.Version
     $distribution = Join-Path $repo "artifacts/v$version/win-x64"
-    dotnet publish src/LyricsChatbox -c $Configuration -r win-x64 --self-contained true -o $distribution
+    dotnet publish src/LyricsChatbox -c $Configuration -r win-x64 --self-contained true -p:RestoreLockedMode=true -o $distribution
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
     Copy-Item -LiteralPath README.md,THIRD_PARTY_NOTICES.md,PLAN.md -Destination $distribution
     $docsDestination = Join-Path $distribution 'docs'
