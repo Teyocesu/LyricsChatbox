@@ -2,9 +2,9 @@
 
 A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
 
-## v0.5 preview
+## v0.5.0
 
-The WPF interface now has a larger Now Playing area, saved profile cards, lyric context controls and a secondary Lyrics Details panel. v0.5 is in development; the latest stable public release remains v0.4 until the visual and physical acceptance gates pass.
+The WPF interface now has a larger Now Playing area, saved profile cards, lyric context controls and a secondary Lyrics Details panel.
 
 **Settings → Appearance** changes the whole interface immediately. Choose Rose (default), Purple, Blue, Cyan, Green, Orange, Red or a custom `#RRGGBB` color, with a Windows color picker available. Very dark accents derive readable control colors. Midnight (default), Pure Dark, Graphite and Tinted control the dark surfaces. **Tint Now Playing from album artwork**, off by default, adds a subtle tint using only the current Windows media artwork. It keeps the global accent, samples on artwork changes and discards old-track results.
 
