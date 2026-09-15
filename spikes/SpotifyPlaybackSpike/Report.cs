@@ -21,7 +21,7 @@ internal sealed record Options(int Duration, bool Interactive, string? Source, s
                 case "--interactive": interactive = true; break;
                 case "--source" when i + 1 < args.Length: source = args[++i]; break;
                 case "--exercise" when i + 1 < args.Length: exercise = args[++i].ToLowerInvariant(); break;
-                default: throw new ArgumentException("Invalid argument. Use --help."); 
+                default: throw new ArgumentException("Invalid argument. Use --help.");
             }
         }
         if (exercise is not null && (source is null || exercise is not ("play" or "pause" or "next" or "previous" or "shuffle" or "repeat")))
