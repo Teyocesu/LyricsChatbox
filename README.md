@@ -2,11 +2,15 @@
 
 A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
 
+## v0.5.2
+
+This update makes Adaptive lyric context respond more intelligently to the available VRChat message space. Recovery options appear only when useful, Apple Music connection states are clearer, and empty Chatbox previews now show when there is nothing to send.
+
+Long tracks display hours correctly. Update notes are converted to readable plain text inside LyricsChatbox. Lyric Context help is attached to the context selector, Compact/Floating has its own explanation, and duplicate recovery actions have been removed.
+
 ## v0.5.1
 
-This maintenance patch separates recordings whose durations differ within the same rounded second while safely migrating v0.5.0 local lyrics, caches, corrections, manual matches and ignore decisions. It retries the latest OSC payload after a local UDP send failure without building a queue or exceeding the 1.05-second cadence.
-
-Manual match updates now commit as one atomic local bundle. **Use globally** also removes the current recording's saved correction so the selected value takes effect immediately. Imported Local LRC lyrics remain authoritative; remote-match controls are blocked with an explanation until that local file is deliberately removed. Successful correction, match, ignore/resume and manual OSC retries clear stale global errors.
+This maintenance update improves recording identification, VRChat retry behavior, saved manual lyric choices and song timing preferences. Imported LRC files remain prioritized, and old error messages clear after a successful operation. Existing v0.5.0 data migrates automatically.
 
 ## v0.5.0
 

@@ -24,7 +24,7 @@
         <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,0,0,32">
           <StackPanel Orientation="Horizontal">
             <Image Source="Assets/AppIcon.png" Width="34" Height="34" Margin="4,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-            <StackPanel VerticalAlignment="Center"><TextBlock Text="LyricsChatbox" FontSize="14" FontWeight="SemiBold"/><TextBlock x:Name="VersionCaption" Text="v0.5.1" Style="{StaticResource Caption}" FontSize="11" Margin="0,3,0,0"/></StackPanel>
+            <StackPanel VerticalAlignment="Center"><TextBlock Text="LyricsChatbox" FontSize="14" FontWeight="SemiBold"/><TextBlock x:Name="VersionCaption" Text="v0.5.2" Style="{StaticResource Caption}" FontSize="11" Margin="0,3,0,0"/></StackPanel>
           </StackPanel>
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom">
@@ -153,13 +153,13 @@
             <Border x:Name="ContextCard" Grid.Column="1" Style="{StaticResource Card}" Padding="14">
               <StackPanel>
                 <TextBlock Text="Lyric context" Style="{StaticResource DashboardTitle}" Margin="0,0,0,8"/>
-                <ListBox x:Name="ContextBox" SelectionChanged="ContextChanged" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Lyric context mode" Padding="0">
+                <ListBox x:Name="ContextBox" SelectionChanged="ContextChanged" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Lyric context mode" Padding="0" ToolTip="{Binding Text, ElementName=ContextHint}">
                   <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
                   <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Padding" Value="7,7"/><Setter Property="Margin" Value="0,0,5,5"/><Setter Property="VerticalContentAlignment" Value="Center"/></Style></ListBox.ItemContainerStyle>
                   <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="11" TextAlignment="Center"/></DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
-                <TextBlock x:Name="ContextHint" Text="The current lyric takes priority when space is limited." Visibility="Collapsed"/>
-                <CheckBox x:Name="CompactBox" Content="Compact / Floating" FontSize="12" Margin="0,8,0,0" Checked="DisplayChanged" Unchecked="DisplayChanged" ToolTip="{Binding Text, ElementName=ContextHint}"/>
+                <TextBlock x:Name="ContextHint" Text="Adds nearby lyrics when they fit. The current lyric always stays." Visibility="Collapsed"/>
+                <CheckBox x:Name="CompactBox" Content="Compact / Floating" FontSize="12" Margin="0,8,0,0" Checked="DisplayChanged" Unchecked="DisplayChanged" ToolTip="Shows text with VRChat's compact floating style."/>
               </StackPanel>
             </Border>
           </Grid>
@@ -210,8 +210,9 @@
           </StackPanel></ScrollViewer><Border x:Name="HomeToolsCard" Grid.Row="3" Style="{StaticResource Card}" Padding="18,14" Margin="0,0,0,12">
             <WrapPanel VerticalAlignment="Center">
               <TextBlock Text="Lyrics tools" Style="{StaticResource DashboardTitle}" Margin="0,8,24,8"/>
+              <Button x:Name="HomeRetryButton" Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,8,0" Visibility="Collapsed"/>
               <Button x:Name="InspectorSearchButton" Content="Search alternatives" Click="OpenMatches" Margin="0,0,8,0"/>
-              <Button Content="Import LRC…" Click="ImportLrc" IsEnabled="{Binding IsEnabled, ElementName=ImportButton}" Margin="0,0,8,0"/>
+              <Button x:Name="HomeImportButton" Content="Import LRC…" Click="ImportLrc" IsEnabled="{Binding IsEnabled, ElementName=ImportButton}" Margin="0,0,8,0"/>
               <Button x:Name="IgnoreButton" Content="Ignore this recording" Click="ToggleIgnore"/>
             </WrapPanel>
           </Border>
@@ -219,12 +220,6 @@
             <StackPanel>
               <TextBlock x:Name="RecoveryTitle" Style="{StaticResource SectionTitle}" />
               <TextBlock x:Name="RecoveryHint" Style="{StaticResource Caption}" Margin="0,0,0,12" />
-              <WrapPanel>
-                <Button x:Name="RecoveryRetryButton" Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,8,8" />
-                <Button x:Name="ChooseMatchButton" Content="Search alternatives" Click="OpenMatches" Margin="0,0,8,8" />
-                <Button x:Name="RecoveryImportButton" Content="Import LRC…" Click="ImportLrc" Margin="0,0,8,8" />
-                <Button Content="{Binding Content, ElementName=IgnoreButton}" Click="ToggleIgnore" Margin="0,0,0,8" />
-              </WrapPanel>
             </StackPanel>
           </Border>
 

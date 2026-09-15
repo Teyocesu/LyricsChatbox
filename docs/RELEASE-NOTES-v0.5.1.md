@@ -1,14 +1,14 @@
 # LyricsChatbox v0.5.1
 
-Focused reliability patch for the Windows Apple Music to VRChat Chatbox workflow.
+A maintenance update that improves reliability during everyday use.
 
-- Uses precise deterministic recording keys and safely claims/migrates v0.5.0 local lyrics, cache, corrections, manual matches and ignore decisions.
-- Retries the latest current OSC payload when the local UDP send fails, retaining latest-state-wins behavior and the 1.05-second cadence.
-- Commits each manual match and its synchronized lyrics as one atomically replaced local bundle, preserving previous valid state on failure.
-- Makes **Use globally** remove the current recording override so the chosen global timing value applies immediately.
-- Keeps imported Local LRC lyrics authoritative and blocks remote match selection with a clear removal path.
-- Clears stale global errors after successful correction, manual match, ignore/resume and manual OSC operations.
+### Fixed
 
-No providers, privacy behavior or feature scope changed. The installer and portable ZIP remain self-contained and unsigned.
+- Improved how LyricsChatbox identifies individual recordings, preventing lyrics or song-specific settings from being mixed between very similar versions of a track.
+- VRChat messages now retry correctly when a local OSC send fails.
+- Manual lyric selections are saved more safely.
+- **Use globally** now correctly removes the current song-specific timing override.
+- Imported LRC files remain clearly prioritized when choosing alternative lyrics.
+- Old error messages now clear after an operation succeeds.
 
-Automated release validation: locked restore, Release build with zero warnings/errors, and 189 passing tests.
+Existing local data from v0.5.0 is migrated automatically. No action is required.

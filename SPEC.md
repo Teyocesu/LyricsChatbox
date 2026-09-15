@@ -1,5 +1,11 @@
 # LyricsChatbox MVP
 
+## v0.5.2 approved maintenance
+- Adaptive context is distinct from the explicit three-line mode. It keeps the current lyric, then uses available space for the next lyric, the previous lyric when the adjacent set fits, or song metadata when adjacent context does not fit. The explicit three-line mode continues to prefer previous, current and next together and removes lower-priority pieces only when required by the existing UTF-16, line, compact-suffix and grapheme limits. Custom and Status layouts do not use lyric context.
+- Recovery guidance is hidden during lookup/fallback and for resolved or instrumental states. Ignored recordings offer Resume; missing, ambiguous and rejected matches offer useful recovery; temporary failures offer retry/recovery. Home has one context-sensitive action set. User-visible status text does not expose internal outcome or provider wording.
+- Null Apple Music snapshots retain clear no-session, multiple-session and reconnecting/transition states. Empty previews use a distinct non-payload placeholder. All playback and candidate durations use m:ss below one hour and h:mm:ss from one hour onward.
+- Update release notes are converted from bounded GitHub Markdown to deterministic safe plain text supporting headings, lists, emphasis and simple links, without HTML rendering or a browser view.
+
 ## v0.5.0 approved extension (in development)
 - Additional user-approved scope (2026-09-11): real Apple Music transport controls in the Now Playing card (play/pause, previous/next, seek, supported shuffle/repeat) and an Apple Music-only volume slider. Commands target the selected unambiguous native Apple Music session, expose unsupported/unavailable controls honestly, and never alter VRChat or system master volume. No synthetic clock changes, audio capture, extra player or new provider.
 - Preserve the Windows/WPF Apple Music clock, strict LRCLIB→NetEase chain, epochs, manual ownership, 1.05s OSC cadence and opt-in v0.4 lifecycle. Use the attached music-app mockup as visual direction: prominent artwork/lyrics, restrained rose accents, dark surfaces, profile cards and secondary inspector/preview. Original Windows UI; no Apple branding, fake playback controls, slogans or promotional filler.

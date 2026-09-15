@@ -59,7 +59,7 @@ public sealed class UpdateChecker(HttpClient http)
             if (latest <= new Version(current.Major, current.Minor, Math.Max(0, current.Build))) return new("You're up to date.");
             // Build a known project URL; never open a URL supplied by untrusted JSON.
             var notes = root.TryGetProperty("body", out var body) && body.ValueKind == JsonValueKind.String ? body.GetString() ?? "" : "";
-            notes = notes.Length > 6000 ? notes[..6000] + "\nRead the complete release notes on GitHub." : notes;
+            notes = PresentationText.ReleaseNotes(notes);
             return new("LyricsChatbox " + tag + " is available", new Uri("https://github.com/Teyocesu/LyricsChatbox/releases/tag/" + tag),
                 tag, notes, InstallerAsset.FromRelease(root, tag!));
         }

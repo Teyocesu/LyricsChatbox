@@ -76,6 +76,20 @@ public sealed class PresentationTests : IDisposable
         var fullCurrent = new string('c',142);
         Assert.Equal(fullCurrent,LyricContextComposer.Compose(new("previous",fullCurrent,"next"),track,"Song + Lyrics","Adaptive",true));
     }
+    [Fact]
+    public void AdaptiveIsDistinctFromExplicitThreeLineContext()
+    {
+        var context = new LyricContext("previous", "current", "");
+        var explicitContext = LyricContextComposer.Compose(context, CoreTests.Track, "Song + Lyrics", "Previous + current + next", false);
+        var adaptive = LyricContextComposer.Compose(context, CoreTests.Track, "Song + Lyrics", "Adaptive", false);
+        Assert.Contains("previous", explicitContext);
+        Assert.DoesNotContain("previous", adaptive);
+        Assert.Contains("♫ Song — Artist", adaptive);
+        Assert.EndsWith("current", adaptive);
+
+        Assert.Equal("current\nnext", LyricContextComposer.Compose(new(new string('p', 140), "current", "next"), CoreTests.Track, "Lyrics Only", "Adaptive", false));
+        Assert.Equal(new string('c', 140), LyricContextComposer.Compose(new("previous", new string('c', 140), "next"), CoreTests.Track, "Lyrics Only", "Adaptive", false));
+    }
     [Theory]
     [InlineData("日本語")]
     [InlineData("👨‍👩‍👧‍👦")]

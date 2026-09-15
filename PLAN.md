@@ -1,5 +1,13 @@
 # Execution state
 
+## v0.5.2 presentation maintenance
+
+2026-09-15 implementation checkpoint: verified `origin/main` and local `main` at post-v0.5.1 commit c73f55ce55ea3108b06a26035062ad5137e72e07, with annotated v0.5.1 still dereferencing to fd2beab239abba57479a28a25959f8ea8284cb05. Created isolated `codex/v0.5.2` worktree from that main. Replaced only the public v0.5.1 GitHub Release body and verified its title, tag, publication state, URL and four assets were unchanged. Added the permanent user-facing public-copy rule to AGENTS.md.
+
+The pre-change locked restore, Release build and complete existing suite passed. U2-01 through U2-08 are implemented: Adaptive has its own composition choices; context and Compact help are correctly attached; recovery visibility and the single Home action set are outcome-aware; null Apple Music statuses are formatted; empty preview is a non-payload placeholder; one duration formatter covers templates, Home, details and manual candidates; and bounded release Markdown becomes safe plain text. Focused presentation/update tests passed. Native targeted UI validation was attempted with output temporarily disabled, but this session's computer-use runtime exposed browser surfaces only; the launched source app was closed and the exact settings file restored. No native state is claimed from that attempt.
+
+Version and user documentation are prepared for 0.5.2. Final locked restore passed, the Release build completed with zero warnings/errors, and the complete suite passed 209/209 with no skips. Exact-commit CI, final artifacts, consistency audit and publication remain pending.
+
 ## v0.5.1 maintenance patch
 
 2026-09-15 publication verified: stable non-draft/non-prerelease release https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.1 . Annotated tag v0.5.1 dereferences to application commit fd2beab239abba57479a28a25959f8ea8284cb05. Branch CI 34995871836 and main CI 34996365603 both passed for that exact commit, including locked Windows publication. The portable ZIP is 84,086,145 bytes with SHA256 9c8e7ae9264b38cb1e9f0b9cf7ab8040a00e51ec73e08cc8dd683d7cd088825e; the installer is 58,191,056 bytes with SHA256 ecbd58f8b55ed49e8a2256486c90924487f9ea906c9de7a6ada0a5183cabb2c8. GitHub reports matching digests and all four assets uploaded. The ZIP's 488 files match the publish directory byte-for-byte, all seven bundled license copies match their sources, and the package-name audit found no settings, profiles, quick messages, imports/LRC, cache, corrections, matches, ignore state, diagnostics or tests. Application and installer remain unsigned as documented. No v0.5.2 work was started.

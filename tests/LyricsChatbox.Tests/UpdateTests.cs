@@ -49,10 +49,17 @@ public class UpdateTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => checker.CheckAsync(new(0, 4, 0), cancel.Token));
         Assert.Null((await checker.CheckAsync(new(0, 4, 0), default)).Release);
     }
-    private static HttpResponseMessage Json(string tag) => new(HttpStatusCode.OK)
+    [Fact]
+    public async Task ReleaseNotesAreShownAsPlainText()
+    {
+        using var http = new HttpClient(new Handler(_ => Task.FromResult(Json("v0.5.2", "# Improved\n\n- **Clear** [notes](https://example.com)"))));
+        var result = await new UpdateChecker(http).CheckAsync(new(0, 5, 1), default);
+        Assert.Equal("Improved\n\n• Clear notes (https://example.com/)", result.Notes);
+    }
+    private static HttpResponseMessage Json(string tag, string body = "") => new(HttpStatusCode.OK)
     {
         Content = new StringContent(
-        System.Text.Json.JsonSerializer.Serialize(new { draft = false, prerelease = false, tag_name = tag, html_url = "https://evil.invalid/" }))
+        System.Text.Json.JsonSerializer.Serialize(new { draft = false, prerelease = false, tag_name = tag, html_url = "https://evil.invalid/", body, assets = Array.Empty<object>() }))
     };
     private sealed class Handler(Func<CancellationToken, Task<HttpResponseMessage>> send) : HttpMessageHandler
     { protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => send(cancellationToken); }

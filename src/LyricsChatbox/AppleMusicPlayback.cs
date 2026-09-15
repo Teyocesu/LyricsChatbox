@@ -34,7 +34,7 @@ public sealed partial class AppleMusicPlayback : IAsyncDisposable
     private void PlaybackChanged(GlobalSystemMediaTransportControlsSession _, PlaybackInfoChangedEventArgs __) => Wake();
     private void TimelineChanged(GlobalSystemMediaTransportControlsSession _, TimelinePropertiesChangedEventArgs __) => Wake();
 
-    private void Select(GlobalSystemMediaTransportControlsSession? next)
+    private void Select(GlobalSystemMediaTransportControlsSession? next, string? emptyStatus = null)
     {
         if (Equals(session, next)) return;
         if (session is not null)
@@ -51,7 +51,7 @@ public sealed partial class AppleMusicPlayback : IAsyncDisposable
             session.PlaybackInfoChanged += PlaybackChanged;
             session.TimelinePropertiesChanged += TimelineChanged;
         }
-        Invalidate(session is null ? "No Apple Music session" : "Reading Apple Music");
+        Invalidate(session is null ? emptyStatus ?? "No Apple Music session" : "Reading Apple Music");
     }
 
     private async Task RunAsync()
@@ -67,7 +67,7 @@ public sealed partial class AppleMusicPlayback : IAsyncDisposable
                 }
                 var matches = manager.GetSessions().Where(s => s.SourceAppUserModelId == AppleSource).ToArray();
                 // If more than one native session exists, do not guess which recording the user hears.
-                Select(matches.Length == 1 ? matches[0] : null);
+                Select(matches.Length == 1 ? matches[0] : null, matches.Length > 1 ? "Multiple Apple Music sessions · waiting" : "No Apple Music session");
                 var active = session;
                 if (active is null)
                     Observed?.Invoke(null, matches.Length > 1 ? "Multiple Apple Music sessions · waiting" : "No Apple Music session", Revision);
@@ -107,8 +107,8 @@ public sealed partial class AppleMusicPlayback : IAsyncDisposable
             catch (OperationCanceledException) when (stop.IsCancellationRequested) { break; }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                Invalidate("Apple Music unavailable · reconnecting");
-                Select(null);
+                if (session is null) Invalidate("Apple Music unavailable · reconnecting");
+                else Select(null, "Apple Music unavailable · reconnecting");
                 if (manager is not null) manager.SessionsChanged -= SessionsChanged;
                 manager = null;
                 try { await Task.Delay(1000, stop.Token); } catch (OperationCanceledException) { break; }

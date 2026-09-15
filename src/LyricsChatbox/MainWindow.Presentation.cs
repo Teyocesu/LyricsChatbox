@@ -36,9 +36,10 @@ public partial class MainWindow
     {
         profiles = profiles.Save(CurrentProfile()) ?? profiles;
         ContextHint.Text = settings.Preset is "Custom" or "Status / Time"
-            ? "Custom and status layouts use their template; lyric context does not apply."
-            : contextMode == "Adaptive" ? "Fits current, next and previous lyrics in the available space."
-            : "The current lyric takes priority when space is limited.";
+            ? "Lyric context does not apply to Custom or Status layouts."
+            : contextMode == "Adaptive" ? "Adds nearby lyrics when they fit. The current lyric always stays."
+            : contextMode == "Previous + current + next" ? "Shows all three lyrics when they fit. The current lyric always stays."
+            : "The current lyric always stays when space is limited.";
         // Replacing immutable items updates card summaries without changing the selected profile.
         RefreshProfiles(); ProfileStatus.Text = "Changes save automatically. Appearance stays global.";
     }
@@ -165,24 +166,26 @@ public partial class MainWindow
         var localIsAuthoritative = resolution?.Provider == "Local LRC" && resolution.Timeline is not null;
         var canSearch = hasTrack && track!.Duration is > 0 and <= 3600 && !recordingIgnored && !localIsAuthoritative;
         ImportButton.IsEnabled = hasTrack;
-        ChooseMatchButton.IsEnabled = InspectorSearchButton.IsEnabled = canSearch;
+        InspectorSearchButton.IsEnabled = canSearch;
         var searchHint = localIsAuthoritative ? "Imported Local LRC lyrics are authoritative. Remove the file from the data folder before choosing a remote match." : null;
-        ChooseMatchButton.ToolTip = InspectorSearchButton.ToolTip = searchHint;
-        RecoveryImportButton.IsEnabled = hasTrack;
-        RecoveryRetryButton.IsEnabled = hasTrack && !recordingIgnored;
+        InspectorSearchButton.ToolTip = searchHint;
+        HomeImportButton.IsEnabled = hasTrack;
         IgnoreButton.IsEnabled = hasTrack;
         IgnoreButton.Content = recordingIgnored ? "Resume this recording" : "Ignore this recording";
-        RecoveryCard.Visibility = hasTrack && engine.Timeline is null ? Visibility.Visible : Visibility.Collapsed;
-        RecoveryTitle.Text = FriendlyLyricsStatus();
-        RecoveryHint.Text = recordingIgnored ? "Saved for this recording. Imported lyrics are kept."
-            : "Retry, choose a recording yourself, or add a synchronized LRC file.";
+        var lookingUp = engine.LyricsStatus is "Looking up synced lyrics" or "Searching another source…";
+        var recovery = PresentationText.Recovery(hasTrack, engine.Timeline is not null, recordingIgnored, resolution?.Outcome, lookingUp);
+        RecoveryCard.Visibility = recovery.Visible ? Visibility.Visible : Visibility.Collapsed;
+        RecoveryTitle.Text = recovery.Title; RecoveryHint.Text = recovery.Hint;
+        HomeRetryButton.Visibility = recovery.Retry ? Visibility.Visible : Visibility.Collapsed;
+        InspectorSearchButton.Visibility = recovery.Visible && !recovery.Search ? Visibility.Collapsed : Visibility.Visible;
+        HomeImportButton.Visibility = recovery.Visible && !recovery.Import ? Visibility.Collapsed : Visibility.Visible;
+        IgnoreButton.Visibility = recovery.Visible && !(recovery.Ignore || recovery.Resume) ? Visibility.Collapsed : Visibility.Visible;
         InspectorSource.Text = resolution?.Provider ?? "—";
         InspectorCache.Text = resolution is null ? "—" : resolution.FromCache ? "Saved / loaded"
             : resolution.Provider == "Local LRC" ? "Local import" : resolution.Timeline is not null ? "Resolved this session" : "No usable lyrics";
         InspectorMatch.Text = recordingIgnored ? "Ignored" : resolution?.ManualMatch == true ? "User-selected recording"
             : resolution?.Provider == "Local LRC" ? "User-imported LRC" : resolution?.Outcome == LyricsOutcome.Found ? "Automatic match" : FriendlyLyricsStatus();
-        static string Duration(double? seconds) => seconds is > 0 && double.IsFinite(seconds.Value)
-            ? TimeSpan.FromSeconds(Math.Min(seconds.Value, 86400)).ToString(@"m\:ss", CultureInfo.InvariantCulture) : "—";
+        static string Duration(double? seconds) => DurationFormatter.Format(seconds) is { Length: > 0 } text && seconds > 0 ? text : "—";
         InspectorDuration.Text = Duration(track?.Duration) + " / " + Duration(resolution?.CandidateDuration);
         static string Offset(double seconds) => seconds.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
         InspectorGlobalOffset.Text = Offset(settings.Offset);

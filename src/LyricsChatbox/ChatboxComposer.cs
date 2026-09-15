@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace LyricsChatbox;
@@ -13,8 +12,7 @@ public static class ChatboxComposer
         "Custom" => custom,
         _ => "{lyrics}"
     };
-    public static string Time(double? seconds) => seconds is double s && double.IsFinite(s) && s >= 0 && s <= 86400
-        ? TimeSpan.FromSeconds(s).ToString(s >= 3600 ? @"h\:mm\:ss" : @"m\:ss", CultureInfo.InvariantCulture) : "";
+    public static string Time(double? seconds) => DurationFormatter.Format(seconds);
 
     public static string Compose(string? template, TrackIdentity? track, string lyrics, string message,
         DateTimeOffset localTime, double? position, bool preserveLayout = false)
@@ -23,7 +21,7 @@ public static class ChatboxComposer
         var values = new Dictionary<string, string>
         {
             ["lyrics"] = lyrics, ["title"] = track?.Title ?? "", ["artist"] = track?.Artist ?? "",
-            ["album"] = track?.Album ?? "", ["time"] = localTime.ToString("HH:mm", CultureInfo.InvariantCulture),
+            ["album"] = track?.Album ?? "", ["time"] = localTime.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),
             ["message"] = message, ["elapsed"] = Time(position), ["duration"] = Time(track?.Duration)
         };
         var lines = new List<string>();

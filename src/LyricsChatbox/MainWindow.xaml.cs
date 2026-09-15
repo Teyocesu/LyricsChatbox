@@ -85,7 +85,7 @@ public partial class MainWindow : Window
         {
             if (closing || revision != playback.Revision) return;
             acceptedPlaybackRevision = revision;
-            SourceText.Text = snapshot is null ? "Apple Music · not detected" : "Apple Music · " + snapshot.State.ToString().ToLowerInvariant();
+            SourceText.Text = PresentationText.AppleMusicStatus(snapshot, status);
             if (engine.Observe(snapshot))
             {
                 lookup?.Cancel();
@@ -177,7 +177,7 @@ public partial class MainWindow : Window
         RefreshTransport(now);
         var position = engine.Position(now);
         PositionProgress.Value = engine.Track?.Duration > 0 && position.HasValue ? Math.Clamp(position.Value / engine.Track.Duration, 0, 1) : 0;
-        PositionText.Text = position.HasValue ? $"{TimeSpan.FromSeconds(position.Value):m\\:ss} / {TimeSpan.FromSeconds(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400)):m\\:ss}" : "No playback position";
+        PositionText.Text = position.HasValue ? $"{DurationFormatter.Format(position)} / {DurationFormatter.Format(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400))}" : "No playback position";
         UpdateLyricsDetails();
         var structured = settings.Preset is "Lyrics Only" or "Song + Lyrics";
         var automatic = structured ? LyricContextComposer.Compose(engine.Context(now), engine.Track, settings.Preset, contextMode, settings.Compact)
@@ -189,7 +189,10 @@ public partial class MainWindow : Window
         if (desired is not null && preserveLayout) desired = MessageLayout.Align(desired, alignment);
         var payload = ChatboxFormatter.Format(desired ?? MessageLayout.Align(manual.Draft, settings.ManualAlignment), settings.Compact, preserveLayout);
         var visible = ChatboxFormatter.Visible(payload);
-        PreviewText.Text = visible.Length > 0 ? visible : "—";
+        var preview = PresentationText.Preview(visible);
+        PreviewText.Text = preview.Text;
+        PreviewText.Foreground = (System.Windows.Media.Brush)FindResource(preview.IsPlaceholder ? "MutedBrush" : "TextBrush");
+        PreviewText.FontStyle = preview.IsPlaceholder ? FontStyles.Italic : FontStyles.Normal;
         PreviewText.FontFamily = preserveLayout ? LayoutFont : TextFont;
         BudgetText.Text = payload.Length + " / 144";
         PreviewLabel.Text = "Chatbox preview";

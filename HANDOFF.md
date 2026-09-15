@@ -1,4 +1,12 @@
-# Current handoff — v0.5.1 published
+# Current handoff — v0.5.2 in validation
+
+Branch `codex/v0.5.2` starts from post-v0.5.1 main commit `c73f55ce55ea3108b06a26035062ad5137e72e07`. U2-01 through U2-08 are implemented, versioned as 0.5.2, and focused presentation/update tests pass. The v0.5.1 public release body was rewritten for users; title, tag, state, URL and assets were verified unchanged.
+
+Native targeted UI validation could not be observed because the available computer-use runtime exposed browser surfaces only. The source executable did launch; VRChat output was disabled for the attempt, the process was closed, and the original settings file was restored. Do not claim the requested native state matrix as performed.
+
+Final locked restore passed, the Release build completed with zero warnings/errors, and the complete suite passed 209/209 with no skips. CI, packaging, artifact consistency/digests and publication are pending. The intended public notes are in `docs/RELEASE-NOTES-v0.5.2.md`.
+
+## Previous stable release
 
 Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.1
 
