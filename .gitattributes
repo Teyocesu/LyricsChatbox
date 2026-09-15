@@ -1,2 +1,5 @@
 # Preserve upstream license bytes, including their original whitespace and line endings.
 licenses/** -text -whitespace
+
+# Exclude the third-party Windows SDK license from GitHub Linguist language statistics.
+licenses/WINDOWS-SDK-LICENSE.rtf linguist-vendored
