@@ -50,10 +50,14 @@ public partial class MainWindow
         _ = Dispatcher.InvokeAsync(() =>
         {
             if (closing) return;
+            var transition = e.Mode == PowerModes.Resume ? PowerTransition.Resume : PowerTransition.Suspend;
             lookup?.Cancel(); engine.Observe(null); ClearArtwork(); CancelManualMatch(); LoadCorrection();
             scheduler.ReceiverChanged(); typing.Reset(); manual.Resume(); output.SendTyping(false);
-            playback.ReanchorAfterResume();
-            diagnostics.Add(DiagnosticCategory.Lifecycle, e.Mode == PowerModes.Resume ? "Resuming; awaiting fresh playback" : "Suspending playback state");
+            InvalidateDiscoveryForLifecycle();
+            nextReceiverCheck = 0;
+            if (LifecyclePolicy.Playback(transition) == PlaybackRefresh.Resume) playback.ReanchorAfterResume();
+            else playback.Suspend();
+            diagnostics.Add(DiagnosticCategory.Lifecycle, transition == PowerTransition.Resume ? "Resuming; awaiting fresh playback" : "Suspending playback state");
             Tick();
         });
     }

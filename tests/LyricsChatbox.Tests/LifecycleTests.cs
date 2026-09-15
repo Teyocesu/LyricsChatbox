@@ -29,6 +29,17 @@ public class LifecycleTests
     }
 
     [Fact]
+    public async Task PlaybackSuspendAndResumePublishDistinctInvalidations()
+    {
+        await using var playback = new AppleMusicPlayback();
+        var statuses = new List<string>();
+        playback.Observed += (_, status, _) => statuses.Add(status);
+        playback.Suspend();
+        playback.ReanchorAfterResume();
+        Assert.Equal(["Playback suspended", "Refreshing playback after resume"], statuses);
+    }
+
+    [Fact]
     public void V03MigrationKeepsPreferencesAndNeverOptsIntoBackgroundBehavior()
     {
         var settings = JsonSerializer.Deserialize<AppSettings>("""{"Enabled":true,"Compact":true,"Offset":0.7,"Preset":"Custom","CustomTemplate":"{title}"}""")!;

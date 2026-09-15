@@ -119,7 +119,7 @@ public sealed class InstallerDownloader(HttpClient http)
         for (var hop = 0; hop < 4; hop++)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            request.Headers.UserAgent.ParseAdd("LyricsChatbox/0.5.2");
+            request.Headers.UserAgent.ParseAdd("LyricsChatbox/0.5.3");
             var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
             if (response.StatusCode is HttpStatusCode.Moved or HttpStatusCode.Redirect or HttpStatusCode.TemporaryRedirect or HttpStatusCode.PermanentRedirect)
             {

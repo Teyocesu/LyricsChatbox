@@ -169,15 +169,10 @@ public partial class MainWindow : Window
         TickDiscovery(now);
         if (engine.RetryAt is { } retry && retry <= DateTimeOffset.UtcNow) StartLookup(true);
         var lyric = engine.Current(now);
-        TrackText.Text = string.IsNullOrWhiteSpace(engine.Track?.Title) ? "No track playing" : engine.Track.Title;
-        ArtistText.Text = engine.Track?.Artist ?? "";
-        AlbumText.Text = engine.Track?.Album ?? "";
-        LyricText.Text = lyric.Length > 0 ? lyric : "—";
-        LyricsStatusText.Text = FriendlyLyricsStatus();
+        ApplyPlaybackView(lyric);
         RefreshTransport(now);
         var position = engine.Position(now);
-        PositionProgress.Value = engine.Track?.Duration > 0 && position.HasValue ? Math.Clamp(position.Value / engine.Track.Duration, 0, 1) : 0;
-        PositionText.Text = position.HasValue ? $"{DurationFormatter.Format(position)} / {DurationFormatter.Format(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400))}" : "No playback position";
+        ApplyProgressView(now, position);
         UpdateLyricsDetails();
         var structured = settings.Preset is "Lyrics Only" or "Song + Lyrics";
         var automatic = structured ? LyricContextComposer.Compose(engine.Context(now), engine.Track, settings.Preset, contextMode, settings.Compact)
@@ -189,28 +184,10 @@ public partial class MainWindow : Window
         if (desired is not null && preserveLayout) desired = MessageLayout.Align(desired, alignment);
         var payload = ChatboxFormatter.Format(desired ?? MessageLayout.Align(manual.Draft, settings.ManualAlignment), settings.Compact, preserveLayout);
         var visible = ChatboxFormatter.Visible(payload);
-        var preview = PresentationText.Preview(visible);
-        PreviewText.Text = preview.Text;
-        PreviewText.Foreground = (System.Windows.Media.Brush)FindResource(preview.IsPlaceholder ? "MutedBrush" : "TextBrush");
-        PreviewText.FontStyle = preview.IsPlaceholder ? FontStyles.Italic : FontStyles.Normal;
-        PreviewText.FontFamily = preserveLayout ? LayoutFont : TextFont;
-        BudgetText.Text = payload.Length + " / 144";
-        PreviewLabel.Text = "Chatbox preview";
-        PreviewProfileText.Text = (manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
-            : profiles.Selected.Name + " · " + (structured ? contextMode : settings.Preset)) + (settings.Compact ? " · Floating" : "");
-        PreviewBubble.Background = settings.Compact ? System.Windows.Media.Brushes.Transparent : (System.Windows.Media.Brush)FindResource("RaisedBrush");
-        PreviewBubble.Padding = settings.Compact ? new Thickness(0, 4, 0, 4) : new Thickness(12, 8, 12, 8);
-        OwnerText.Text = !engine.Enabled ? "Output off · preview" : manual.IsManual
-            ? desired is null ? "Manual · unsent draft" : "Manual · preview" : "Automatic · preview";
+        ApplyPreviewView(visible, preserveLayout, payload.Length, structured, desired);
         var manualLayout = MessageLayout.Align(manual.Draft, settings.ManualAlignment);
         var manualPayload = ChatboxFormatter.Format(manualLayout, settings.Compact, true);
-        ManualBudgetText.Text = manualPayload.Length + " / 144" +
-            (ChatboxFormatter.Visible(manualPayload).Length < manualLayout.Trim('\r', '\n').Length ? " · trimmed" : "");
-        ManualStateText.Text = manual.RemainingHold(now) is double remaining
-            ? $"Sent · automatic resumes in {Math.Ceiling(remaining):0} s"
-            : manual.IsManual ? manual.PendingSend ? "Sending your message…" : desired is null ? "Unsent draft · automatic lyrics are paused" : "Manual owns the Chatbox · automatic lyrics are paused"
-            : "Automatic mode · editing a draft takes priority";
-        SendButton.IsEnabled = ClearButton.IsEnabled = engine.Enabled;
+        ApplyManualView(manualLayout, manualPayload, desired, now);
         scheduler.Set(engine.Epoch, desired ?? "", engine.Enabled && desired is not null, settings.Compact, manual.PendingSend, preserveLayout);
         if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && engine.Enabled)
         {
@@ -220,7 +197,7 @@ public partial class MainWindow : Window
         }
         if (typing.Take(engine.Enabled && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
             output.SendTyping(typingState);
-        OscText.Text = !engine.Enabled ? "Output paused" : output.Status.StartsWith("OSC unavailable") ? "OSC unavailable · check Settings" : "OSC ready · no delivery receipt";
+        ApplyOscView();
     }
 
     private void HomeSectionChanged(object sender, SelectionChangedEventArgs e)

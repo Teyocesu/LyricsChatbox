@@ -165,34 +165,36 @@ public partial class MainWindow
         var hasTrack = !string.IsNullOrWhiteSpace(track?.Title);
         var localIsAuthoritative = resolution?.Provider == "Local LRC" && resolution.Timeline is not null;
         var canSearch = hasTrack && track!.Duration is > 0 and <= 3600 && !recordingIgnored && !localIsAuthoritative;
-        ImportButton.IsEnabled = hasTrack;
-        InspectorSearchButton.IsEnabled = canSearch;
         var searchHint = localIsAuthoritative ? "Imported Local LRC lyrics are authoritative. Remove the file from the data folder before choosing a remote match." : null;
-        InspectorSearchButton.ToolTip = searchHint;
-        HomeImportButton.IsEnabled = hasTrack;
-        IgnoreButton.IsEnabled = hasTrack;
-        IgnoreButton.Content = recordingIgnored ? "Resume this recording" : "Ignore this recording";
         var lookingUp = engine.LyricsStatus is "Looking up synced lyrics" or "Searching another source…";
         var recovery = PresentationText.Recovery(hasTrack, engine.Timeline is not null, recordingIgnored, resolution?.Outcome, lookingUp);
-        RecoveryCard.Visibility = recovery.Visible ? Visibility.Visible : Visibility.Collapsed;
-        RecoveryTitle.Text = recovery.Title; RecoveryHint.Text = recovery.Hint;
-        HomeRetryButton.Visibility = recovery.Retry ? Visibility.Visible : Visibility.Collapsed;
-        InspectorSearchButton.Visibility = recovery.Visible && !recovery.Search ? Visibility.Collapsed : Visibility.Visible;
-        HomeImportButton.Visibility = recovery.Visible && !recovery.Import ? Visibility.Collapsed : Visibility.Visible;
-        IgnoreButton.Visibility = recovery.Visible && !(recovery.Ignore || recovery.Resume) ? Visibility.Collapsed : Visibility.Visible;
-        InspectorSource.Text = resolution?.Provider ?? "—";
-        InspectorCache.Text = resolution is null ? "—" : resolution.FromCache ? "Saved / loaded"
+        var source = resolution?.Provider ?? "—";
+        var cache = resolution is null ? "—" : resolution.FromCache ? "Saved / loaded"
             : resolution.Provider == "Local LRC" ? "Local import" : resolution.Timeline is not null ? "Resolved this session" : "No usable lyrics";
-        InspectorMatch.Text = recordingIgnored ? "Ignored" : resolution?.ManualMatch == true ? "User-selected recording"
+        var match = recordingIgnored ? "Ignored" : resolution?.ManualMatch == true ? "User-selected recording"
             : resolution?.Provider == "Local LRC" ? "User-imported LRC" : resolution?.Outcome == LyricsOutcome.Found ? "Automatic match" : FriendlyLyricsStatus();
         static string Duration(double? seconds) => DurationFormatter.Format(seconds) is { Length: > 0 } text && seconds > 0 ? text : "—";
-        InspectorDuration.Text = Duration(track?.Duration) + " / " + Duration(resolution?.CandidateDuration);
         static string Offset(double seconds) => seconds.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
-        InspectorGlobalOffset.Text = Offset(settings.Offset);
-        InspectorSavedOffset.Text = savedCorrection is double correction ? Offset(correction) : "None";
-        InspectorEffectiveOffset.Text = Offset(engine.Offset);
-        InspectorManual.Text = ForgetMatchButton.IsEnabled ? "Saved choice" : "None";
-        InspectorIgnored.Text = recordingIgnored ? "Yes · lookup paused" : "No";
+        var view = new LyricsDetailsView(hasTrack, canSearch, searchHint,
+            recordingIgnored ? "Resume this recording" : "Ignore this recording", recovery, source, cache, match,
+            Duration(track?.Duration) + " / " + Duration(resolution?.CandidateDuration), Offset(settings.Offset),
+            savedCorrection is double correction ? Offset(correction) : "None", Offset(engine.Offset),
+            ForgetMatchButton.IsEnabled ? "Saved choice" : "None", recordingIgnored ? "Yes · lookup paused" : "No");
+        if (!lyricsDetailsView.ShouldApply(view)) return;
+        ImportButton.IsEnabled = view.HasTrack;
+        InspectorSearchButton.IsEnabled = view.CanSearch; InspectorSearchButton.ToolTip = view.SearchHint;
+        HomeImportButton.IsEnabled = view.HasTrack;
+        IgnoreButton.IsEnabled = view.HasTrack; IgnoreButton.Content = view.IgnoreContent;
+        RecoveryCard.Visibility = view.Recovery.Visible ? Visibility.Visible : Visibility.Collapsed;
+        RecoveryTitle.Text = view.Recovery.Title; RecoveryHint.Text = view.Recovery.Hint;
+        HomeRetryButton.Visibility = view.Recovery.Retry ? Visibility.Visible : Visibility.Collapsed;
+        InspectorSearchButton.Visibility = view.Recovery.Visible && !view.Recovery.Search ? Visibility.Collapsed : Visibility.Visible;
+        HomeImportButton.Visibility = view.Recovery.Visible && !view.Recovery.Import ? Visibility.Collapsed : Visibility.Visible;
+        IgnoreButton.Visibility = view.Recovery.Visible && !(view.Recovery.Ignore || view.Recovery.Resume) ? Visibility.Collapsed : Visibility.Visible;
+        InspectorSource.Text = view.Source; InspectorCache.Text = view.Cache; InspectorMatch.Text = view.Match;
+        InspectorDuration.Text = view.Duration; InspectorGlobalOffset.Text = view.GlobalOffset;
+        InspectorSavedOffset.Text = view.SavedOffset; InspectorEffectiveOffset.Text = view.EffectiveOffset;
+        InspectorManual.Text = view.Manual; InspectorIgnored.Text = view.Ignored;
     }
     private void ToggleIgnore(object sender, RoutedEventArgs e)
     {

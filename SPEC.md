@@ -1,5 +1,11 @@
 # LyricsChatbox MVP
 
+## v0.5.3 approved maintenance
+- Keep the 50 ms timing path for synchronization, lyric transitions, OSC scheduling, typing and manual ownership, while applying WPF presentation values only when their effective state changes. Playback progress may use an independent visual cadence; settings and profile changes remain immediate.
+- Suppress repeated identical null Apple Music observations while preserving status/revision transitions, real-session loss and all real playback updates. Suspend clears stale transient playback without using resume semantics; resume invalidates old anchors and requests fresh authoritative state.
+- Automatic OSCQuery retries every 30 seconds only while unresolved. A valid discovered destination stops periodic discovery until receiver, mode, lifecycle, manual request or destination invalidation makes discovery necessary again. Manual destination remains the fallback and discovery is not delivery acknowledgement.
+- An explicit mouse or keyboard completion of a volume adjustment consumes the pending debounce once, while later or in-flight changes remain deliverable. Tray and second-instance restoration retain the last normal or maximized state and never remember minimized as the desired visible state.
+
 ## v0.5.2 approved maintenance
 - Adaptive context is distinct from the explicit three-line mode. It keeps the current lyric, then uses available space for the next lyric, the previous lyric when the adjacent set fits, or song metadata when adjacent context does not fit. The explicit three-line mode continues to prefer previous, current and next together and removes lower-priority pieces only when required by the existing UTF-16, line, compact-suffix and grapheme limits. Custom and Status layouts do not use lyric context.
 - Recovery guidance is hidden during lookup/fallback and for resolved or instrumental states. Ignored recordings offer Resume; missing, ambiguous and rejected matches offer useful recovery; temporary failures offer retry/recovery. Home has one context-sensitive action set. User-visible status text does not expose internal outcome or provider wording.

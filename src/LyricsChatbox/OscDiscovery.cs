@@ -126,6 +126,7 @@ public sealed class OscDestinationSelection
         if (revision != Revision || !Automatic) return false;
         Discovered = result.Destination; return true;
     }
+    public bool ShouldRetry(double now, double retryAt) => Automatic && Discovered is null && now >= retryAt;
     public OscDestination Effective(AppSettings settings) => Automatic && Discovered is not null ? Discovered : new(settings.Host, settings.Port);
     public static bool InitiallyAutomatic(AppSettings settings) => settings.AutoDiscoverOsc ??
         (settings.Host is "127.0.0.1" or "localhost" && settings.Port == 9000);

@@ -11,6 +11,7 @@ public partial class MainWindow
     private Forms.NotifyIcon? tray;
     private Forms.ToolStripMenuItem? trayOutput, trayCompact;
     private bool exitRequested, changingBehavior;
+    private readonly WindowRestoreState restoreState = new();
 
     private void InitializeLifecycle()
     {
@@ -35,6 +36,7 @@ public partial class MainWindow
         DpiChanged += (_, _) => _ = Dispatcher.InvokeAsync(FitWorkArea);
         StateChanged += (_, _) =>
         {
+            restoreState.Observe(WindowState);
             MaximizeCaptionButton.Content = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
             if (WindowState == WindowState.Minimized && LifecyclePolicy.Minimize(settings) == WindowAction.Hide) Hide();
         };
@@ -43,7 +45,7 @@ public partial class MainWindow
     public void RestoreWindow()
     {
         if (closing) return;
-        Show(); WindowState = WindowState.Normal; Activate();
+        Show(); WindowState = restoreState.Desired; Activate();
     }
     public void RequestExit() { exitRequested = true; Close(); }
     private IntPtr WindowBoundsHook(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)

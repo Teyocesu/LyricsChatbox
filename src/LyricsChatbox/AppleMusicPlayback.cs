@@ -15,19 +15,26 @@ public sealed partial class AppleMusicPlayback : IAsyncDisposable
     private double settleUntil;
     private long artworkRevision = -1;
     private string? artworkKey;
+    private readonly NullPlaybackObservationDeduper nullObservations = new();
     public long Revision => Interlocked.Read(ref revision);
     public event Action<PlaybackSnapshot?, string, long>? Observed;
     public event Action<TrackIdentity, long, Windows.Storage.Streams.IRandomAccessStreamReference?>? ArtworkAvailable;
 
     public void Start() => loop ??= Task.Run(RunAsync);
+    public void Suspend() => Invalidate("Playback suspended", false);
     public void ReanchorAfterResume() => Invalidate("Refreshing playback after resume");
     private void Wake() { try { wake.Release(); } catch (SemaphoreFullException) { } catch (ObjectDisposedException) { } }
-    private void Invalidate(string status)
+    private void Invalidate(string status, bool wakeLoop = true)
     {
         var rev = Interlocked.Increment(ref revision);
         Volatile.Write(ref settleUntil, MonotonicClock.Now + 0.3);
-        Observed?.Invoke(null, status, rev);
-        Wake();
+        Emit(null, status, rev);
+        if (wakeLoop) Wake();
+    }
+    private void Emit(PlaybackSnapshot? snapshot, string status, long rev)
+    {
+        if (!nullObservations.ShouldEmit(snapshot, status, rev)) return;
+        Observed?.Invoke(snapshot, status, rev);
     }
     private void SessionsChanged(GlobalSystemMediaTransportControlsSessionManager _, SessionsChangedEventArgs __) => Invalidate("Checking Apple Music session");
     private void MediaChanged(GlobalSystemMediaTransportControlsSession _, MediaPropertiesChangedEventArgs __) => Invalidate("Updating track");
@@ -70,7 +77,7 @@ public sealed partial class AppleMusicPlayback : IAsyncDisposable
                 Select(matches.Length == 1 ? matches[0] : null, matches.Length > 1 ? "Multiple Apple Music sessions · waiting" : "No Apple Music session");
                 var active = session;
                 if (active is null)
-                    Observed?.Invoke(null, matches.Length > 1 ? "Multiple Apple Music sessions · waiting" : "No Apple Music session", Revision);
+                    Emit(null, matches.Length > 1 ? "Multiple Apple Music sessions · waiting" : "No Apple Music session", Revision);
                 else if (MonotonicClock.Now >= Volatile.Read(ref settleUntil))
                 {
                     var rev = Revision;
@@ -92,7 +99,7 @@ public sealed partial class AppleMusicPlayback : IAsyncDisposable
                         var snapshot = new PlaybackSnapshot(AppleSource + ":" + sessionNumber, track, media.Title, media.Artist,
                             media.AlbumTitle, media.TrackNumber, timeline.StartTime.TotalSeconds, timeline.EndTime.TotalSeconds,
                             timeline.Position.TotalSeconds, timeline.LastUpdatedTime, state, playback.PlaybackRate ?? 1, now, mono);
-                        Observed?.Invoke(snapshot, "Apple Music · " + state.ToString().ToLowerInvariant(), rev);
+                        Emit(snapshot, "Apple Music · " + state.ToString().ToLowerInvariant(), rev);
                         if (artworkRevision != rev || artworkKey != track.Key)
                         {
                             artworkRevision = rev; artworkKey = track.Key;

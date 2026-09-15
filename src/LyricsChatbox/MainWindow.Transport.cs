@@ -13,6 +13,9 @@ public partial class MainWindow
     private double nextVolumeRefresh;
     private long volumeGeneration;
     private bool updatingVolumeSlider;
+    private readonly DebouncedCommitState volumeCommit = new();
+    private sealed record TransportView(MediaControls Controls, bool Busy);
+    private readonly PresentationChangeGate<TransportView> transportView = new();
     private readonly System.Windows.Threading.DispatcherTimer volumeSendTimer = new() { Interval = TimeSpan.FromMilliseconds(120) };
     private bool volumeTimerInitialized;
     private void RefreshTransport(double now)
@@ -20,12 +23,16 @@ public partial class MainWindow
         if (now < nextTransportRefresh) return;
         nextTransportRefresh = now + 0.5;
         var state = playback.GetControls();
-        PlayPauseButton.IsEnabled = !changingTransport && state.PlayPause;
-        PreviousButton.IsEnabled = !changingTransport && state.Previous;
-        NextButton.IsEnabled = !changingTransport && state.Next;
-        ShuffleButton.IsEnabled = !changingTransport && state.Shuffle && state.Shuffling.HasValue;
-        RepeatButton.IsEnabled = !changingTransport && state.Repeat && state.RepeatMode.HasValue;
-        PlayPauseButton.Content = state.Playing ? "\uE769" : "\uE768";
+        var view = new TransportView(state, changingTransport);
+        if (transportView.ShouldApply(view))
+        {
+            PlayPauseButton.IsEnabled = !view.Busy && state.PlayPause;
+            PreviousButton.IsEnabled = !view.Busy && state.Previous;
+            NextButton.IsEnabled = !view.Busy && state.Next;
+            ShuffleButton.IsEnabled = !view.Busy && state.Shuffle && state.Shuffling.HasValue;
+            RepeatButton.IsEnabled = !view.Busy && state.Repeat && state.RepeatMode.HasValue;
+            PlayPauseButton.Content = state.Playing ? "\uE769" : "\uE768";
+        }
         if (now >= nextVolumeRefresh && !readingVolume && !writingVolume)
         {
             nextVolumeRefresh = now + 2;
@@ -41,13 +48,18 @@ public partial class MainWindow
             var volume = await TrackManualTask(Task.Run(AppleMusicVolume.Read));
             if (closing || generation != volumeGeneration || writingVolume) return;
             currentMusicVolume = volume;
-            MusicVolumeSlider.IsEnabled = volume is not null;
-            MusicVolumeSlider.ToolTip = volume is null ? "Apple Music audio session unavailable" : "Apple Music volume";
+            var enabled = volume is not null;
+            if (MusicVolumeSlider.IsEnabled != enabled) MusicVolumeSlider.IsEnabled = enabled;
+            var tooltip = enabled ? "Apple Music volume" : "Apple Music audio session unavailable";
+            if (!Equals(MusicVolumeSlider.ToolTip, tooltip)) MusicVolumeSlider.ToolTip = tooltip;
             if (volume is not null && !MusicVolumeSlider.IsMouseCaptureWithin && !MusicVolumeSlider.IsKeyboardFocusWithin)
             {
-                updatingVolumeSlider = true;
-                try { MusicVolumeSlider.Value = volume.Level; }
-                finally { updatingVolumeSlider = false; }
+                if (Math.Abs(MusicVolumeSlider.Value - volume.Level) > 0.0001)
+                {
+                    updatingVolumeSlider = true;
+                    try { MusicVolumeSlider.Value = volume.Level; }
+                    finally { updatingVolumeSlider = false; }
+                }
             }
         }
         finally { readingVolume = false; }
@@ -58,20 +70,27 @@ public partial class MainWindow
         if (!volumeTimerInitialized)
         {
             volumeTimerInitialized = true;
-            volumeSendTimer.Tick += (_, _) => { volumeSendTimer.Stop(); _ = SetMusicVolumeAsync(); };
+            volumeSendTimer.Tick += (_, _) => { volumeSendTimer.Stop(); if (volumeCommit.Consume()) _ = SetMusicVolumeAsync(); };
         }
         volumeGeneration++;
+        volumeCommit.Schedule();
         volumeSendTimer.Stop(); volumeSendTimer.Start();
     }
-    private void VolumeReleased(object sender, MouseButtonEventArgs e) => _ = SetMusicVolumeAsync();
+    private void CommitMusicVolume()
+    {
+        volumeSendTimer.Stop();
+        if (volumeCommit.Consume()) _ = SetMusicVolumeAsync();
+    }
+    private void VolumeReleased(object sender, MouseButtonEventArgs e) => CommitMusicVolume();
     private void VolumeKeyReleased(object sender, KeyEventArgs e)
     {
         if (e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.PageUp or Key.PageDown or Key.Home or Key.End)
-            _ = SetMusicVolumeAsync();
+            CommitMusicVolume();
     }
     private async Task SetMusicVolumeAsync()
     {
-        if (closing || writingVolume || currentMusicVolume is not { } expected) return;
+        if (closing || currentMusicVolume is not { } expected) return;
+        if (writingVolume) { volumeCommit.Schedule(); return; }
         writingVolume = true;
         var generation = ++volumeGeneration;
         var value = (float)MusicVolumeSlider.Value;
@@ -86,7 +105,7 @@ public partial class MainWindow
         {
             writingVolume = false;
             nextVolumeRefresh = 0;
-            if (!closing && generation != volumeGeneration)
+            if (!closing && (generation != volumeGeneration || volumeCommit.Pending))
             {
                 volumeSendTimer.Stop();
                 volumeSendTimer.Start();

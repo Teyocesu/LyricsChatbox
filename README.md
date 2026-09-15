@@ -2,6 +2,12 @@
 
 A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
 
+## v0.5.3
+
+This update reduces unnecessary interface work while LyricsChatbox is running. Apple Music status handling, Windows sleep and resume, VRChat automatic discovery and volume adjustments now avoid repeated work when nothing has changed.
+
+Restoring LyricsChatbox from the tray or by launching it again preserves whether the window was normal or maximized.
+
 ## v0.5.2
 
 This update makes Adaptive lyric context respond more intelligently to the available VRChat message space. Recovery options appear only when useful, Apple Music connection states are clearer, and empty Chatbox previews now show when there is nothing to send.

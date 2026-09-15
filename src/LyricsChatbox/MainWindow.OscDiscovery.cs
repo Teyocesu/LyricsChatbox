@@ -38,9 +38,10 @@ public partial class MainWindow
         discoveryCancellation?.Cancel(); destinationSelection.Invalidate(); nextDiscovery = 0;
         ConfigureEffectiveDestination();
     }
+    private void InvalidateDiscoveryForLifecycle() => DiscoveryReceiverChanged();
     private void TickDiscovery(double now)
     {
-        if (destinationSelection.Automatic && !discovering && now >= nextDiscovery) StartDiscovery();
+        if (!discovering && destinationSelection.ShouldRetry(now, nextDiscovery)) StartDiscovery();
     }
     private void DiscoverNow(object sender, RoutedEventArgs e)
     {
@@ -61,6 +62,7 @@ public partial class MainWindow
             try { result = await task; }
             finally { pending.Remove(task); }
             if (closing || token.IsCancellationRequested || !destinationSelection.Complete(revision, result)) return;
+            nextDiscovery = result.Destination is null ? MonotonicClock.Now + 30 : double.PositiveInfinity;
             DiscoveryStatus.Text = result.Status; ConfigureEffectiveDestination();
         }
         catch (OperationCanceledException) { }
@@ -77,6 +79,13 @@ public partial class MainWindow
             configuredDestination = destination; scheduler.ReceiverChanged(); typing.Reset();
         }
         catch (Exception ex) when (ex is System.Net.Sockets.SocketException or ArgumentException)
-        { DiscoveryStatus.Text = "OSC destination unavailable · check manual settings"; }
+        {
+            if (destinationSelection.Discovered is not null)
+            {
+                destinationSelection.Invalidate();
+                nextDiscovery = 0;
+            }
+            DiscoveryStatus.Text = "OSC destination unavailable · check manual settings";
+        }
     }
 }

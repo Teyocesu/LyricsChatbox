@@ -1,5 +1,6 @@
 using System.Security;
 using System.Security.Principal;
+using System.Windows;
 using Microsoft.Win32;
 
 namespace LyricsChatbox;
@@ -36,11 +37,23 @@ public sealed class SingleInstance : IDisposable
 }
 
 public enum WindowAction { Normal, Hide, Exit }
+public enum PowerTransition { Suspend, Resume }
+public enum PlaybackRefresh { Suspend, Resume }
 public static class LifecyclePolicy
 {
     public static WindowAction Close(AppSettings settings, bool exitRequested) =>
         !exitRequested && settings.CloseToTray ? WindowAction.Hide : WindowAction.Exit;
     public static WindowAction Minimize(AppSettings settings) => settings.MinimizeToTray ? WindowAction.Hide : WindowAction.Normal;
+    public static PlaybackRefresh Playback(PowerTransition transition) => transition == PowerTransition.Resume ? PlaybackRefresh.Resume : PlaybackRefresh.Suspend;
+}
+
+public sealed class WindowRestoreState
+{
+    public WindowState Desired { get; private set; } = WindowState.Normal;
+    public void Observe(WindowState state)
+    {
+        if (state is WindowState.Normal or WindowState.Maximized) Desired = state;
+    }
 }
 
 public interface IStartupStore

@@ -97,6 +97,19 @@ public class OscDiscoveryTests
         Assert.True(selection.Complete(selection.Revision,new("Unavailable")));
         Assert.Equal(9003,selection.Effective(settings).Port);
     }
+    [Fact]
+    public void AutomaticRetryStopsAfterDiscoveryUntilInvalidated()
+    {
+        var selection = new OscDestinationSelection();
+        var revision = selection.SetMode(true);
+        Assert.True(selection.ShouldRetry(30, 30));
+        Assert.True(selection.Complete(revision, new("VRChat discovered", new("127.0.0.1", 9000))));
+        Assert.False(selection.ShouldRetry(300, 30));
+        selection.Invalidate();
+        Assert.True(selection.ShouldRetry(300, 0));
+        selection.SetMode(false);
+        Assert.False(selection.ShouldRetry(300, 0));
+    }
     private static HttpResponseMessage Json(string text) => new(HttpStatusCode.OK) {Content=new StringContent(text)};
     private sealed class Handler(Func<HttpRequestMessage,CancellationToken,Task<HttpResponseMessage>> send) : HttpMessageHandler
     {
