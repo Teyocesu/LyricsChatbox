@@ -10,7 +10,7 @@ public sealed class ManualMatchTests : IDisposable
     private static readonly LyricsRecord Alternative = new(123, "Song (Live)", "Artist", "Live Album", 120, false, "[00:01]chosen timed line");
     private static HttpResponseMessage Json(object item) => new(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(item)) };
     [Fact]
-    public async Task ExplicitSelectionIsRequiredForRecordingMismatchAndReplayUsesOneCachedBody()
+    public async Task ExplicitSelectionIsRequiredAndReplayUsesTheAtomicBundle()
     {
         var data = new LocalData(root); var calls = 0;
         using var http = new HttpClient(new Handler(request =>
@@ -29,7 +29,9 @@ public sealed class ManualMatchTests : IDisposable
         Assert.Equal("chosen timed line", replay.Timeline!.Current(1)); Assert.Equal(before, calls);
         Assert.Null(data.ReadCachedLyrics(CoreTests.Track with { Artist = "Another artist" }));
         var mapping = File.ReadAllText(Path.Combine(root, "matches", CoreTests.Track.Key + ".json"));
-        Assert.DoesNotContain("chosen timed line", mapping);
+        Assert.Contains("\"Version\": 2", mapping);
+        Assert.Contains("chosen timed line", mapping);
+        Assert.False(File.Exists(Path.Combine(root, "cache", CoreTests.Track.Key + ".json")));
         Assert.True(data.ForgetManualAssociation(CoreTests.Track));
         Assert.Null(data.ReadCachedLyrics(CoreTests.Track)); Assert.Null(data.ReadManualAssociation(CoreTests.Track));
     }
@@ -38,7 +40,8 @@ public sealed class ManualMatchTests : IDisposable
     {
         var data = new LocalData(root); var choice = new ManualCandidate("LRCLIB", Alternative with { SyncedLyrics = null });
         data.SaveManualAssociation(CoreTests.Track, choice, Alternative);
-        File.Delete(Path.Combine(root, "cache", CoreTests.Track.Key + ".json"));
+        File.WriteAllText(Path.Combine(root, "matches", CoreTests.Track.Key + ".json"),
+            JsonSerializer.Serialize(new ManualAssociation(1, CoreTests.Track.Key, "LRCLIB", choice.Metadata)));
         var normal = Alternative with { Id = 3, TrackName = CoreTests.Track.Title, AlbumName = CoreTests.Track.Album, ArtistName = CoreTests.Track.Artist };
         using var http = new HttpClient(new Handler(request => request.RequestUri!.AbsolutePath.EndsWith("/get/123") ? new(HttpStatusCode.NotFound) : Json(normal)));
         using var resolver = new LyricsResolver(http, data);
@@ -63,6 +66,50 @@ public sealed class ManualMatchTests : IDisposable
         var data = new LocalData(root); using var resolver = new LyricsResolver(http, data);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resolver.FetchManualAsync(new("LRCLIB", Alternative), cancel.Token));
         Assert.Null(data.ReadManualAssociation(CoreTests.Track));
+    }
+    [Fact]
+    public void FailedAtomicReplacementPreservesThePreviousManualMatch()
+    {
+        var data = new LocalData(root);
+        var choice = new ManualCandidate("LRCLIB", Alternative with { SyncedLyrics = null });
+        Assert.True(data.SaveManualAssociation(CoreTests.Track, choice, Alternative));
+        var path = Path.Combine(root, "matches", CoreTests.Track.Key + ".json");
+        using (File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Assert.False(data.SaveManualAssociation(CoreTests.Track, choice, Alternative with { SyncedLyrics = "[00:02]replacement" }));
+
+        Assert.Equal("chosen timed line", data.ReadCachedLyrics(CoreTests.Track)!.Record.SyncedLyrics![7..]);
+        Assert.Empty(Directory.GetFiles(Path.Combine(root, "matches"), "*.tmp"));
+    }
+    [Fact]
+    public void AssociationFailureLeavesTheExistingAutomaticCacheIntact()
+    {
+        var data = new LocalData(root);
+        var automatic = new LyricsRecord(5, CoreTests.Track.Title, CoreTests.Track.Artist, CoreTests.Track.Album,
+            CoreTests.Track.Duration, false, "[00:01]automatic");
+        data.SaveCache(CoreTests.Track, automatic);
+        Directory.CreateDirectory(Path.Combine(root, "matches", CoreTests.Track.Key + ".json"));
+
+        Assert.False(data.SaveManualAssociation(CoreTests.Track,
+            new("LRCLIB", Alternative with { SyncedLyrics = null }), Alternative));
+        var cached = data.ReadCachedLyrics(CoreTests.Track);
+        Assert.False(cached!.Manual);
+        Assert.Equal("[00:01]automatic", cached.Record.SyncedLyrics);
+    }
+    [Fact]
+    public void SavedManualChoiceKeepsPriorityWhenItsBundledLyricsExpire()
+    {
+        var data = new LocalData(root);
+        var automatic = new LyricsRecord(5, CoreTests.Track.Title, CoreTests.Track.Artist, CoreTests.Track.Album,
+            CoreTests.Track.Duration, false, "[00:01]automatic");
+        data.SaveCache(CoreTests.Track, automatic);
+        var choice = new ManualCandidate("LRCLIB", Alternative with { SyncedLyrics = null });
+        Assert.True(data.SaveManualAssociation(CoreTests.Track, choice, Alternative));
+        var path = Path.Combine(root, "matches", CoreTests.Track.Key + ".json");
+        var bundle = JsonSerializer.Deserialize<ManualAssociation>(File.ReadAllText(path))!;
+        File.WriteAllText(path, JsonSerializer.Serialize(bundle with { StoredUtc = DateTimeOffset.UtcNow.AddDays(-31) }));
+
+        Assert.NotNull(data.ReadManualAssociation(CoreTests.Track));
+        Assert.Null(data.ReadCachedLyrics(CoreTests.Track));
     }
     private sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> send) : HttpMessageHandler
     { protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) => Task.FromResult(send(request)); }

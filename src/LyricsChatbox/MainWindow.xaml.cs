@@ -211,7 +211,9 @@ public partial class MainWindow : Window
         scheduler.Set(engine.Epoch, desired ?? "", engine.Enabled && desired is not null, settings.Compact, manual.PendingSend, preserveLayout);
         if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && engine.Enabled)
         {
-            output.Send(packet.Text); manual.Sent(now);
+            var sent = output.Send(packet.Text);
+            scheduler.Complete(packet, sent);
+            if (sent) manual.Sent(now);
         }
         if (typing.Take(engine.Enabled && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
             output.SendTyping(typingState);
@@ -256,6 +258,8 @@ public partial class MainWindow : Window
         if (!data.SaveSettings(settings)) ErrorText.Text = "Could not save settings; this session still works.";
         if (!data.SaveProfiles(profiles)) ProfileStatus.Text = "Could not save profiles. Changes apply only to this session.";
     }
+    private void SetError(string message) => ErrorText.Text = message;
+    private void ClearError() => ErrorText.Text = "";
     private void EnabledChanged(object sender, RoutedEventArgs e)
     {
         if (!ready) return;
@@ -322,7 +326,7 @@ public partial class MainWindow : Window
             output.SendTyping(false); output.Configure(next.Host, next.Port); settings = next;
             discoveryCancellation?.Cancel(); destinationSelection.SetMode(false); configuredDestination = new(next.Host, next.Port);
             AutoOscBox.IsChecked = false; DiscoveryStatus.Text = "Manual destination"; ConfigureEffectiveDestination();
-            scheduler.ReceiverChanged(); typing.Reset(); ErrorText.Text = ""; Save(); Tick();
+            scheduler.ReceiverChanged(); typing.Reset(); ClearError(); Save(); Tick();
         }
         catch (Exception ex) when (ex is System.Net.Sockets.SocketException or ArgumentException) { ErrorText.Text = "Could not configure OSC destination."; }
     }
@@ -342,7 +346,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { ErrorText.Text = "Could not read the LRC file."; }
     }
-    private void RetryLyrics(object sender, RoutedEventArgs e) => StartLookup(true);
+    private void RetryLyrics(object sender, RoutedEventArgs e) { ClearError(); StartLookup(true); }
     private void OpenData(object sender, RoutedEventArgs e)
     {
         try { Directory.CreateDirectory(data.Root); Process.Start(new ProcessStartInfo(data.Root) { UseShellExecute = true }); }

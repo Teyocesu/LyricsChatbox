@@ -25,8 +25,19 @@ public sealed partial class LocalData
         var json = JsonSerializer.Serialize(value, Json);
         return System.Text.Encoding.UTF8.GetByteCount(json) <= maximum && Write(Path.Combine(Root, name), json);
     }
-    private string IgnorePath(TrackIdentity track) => Path.Combine(Root,"ignored",track.Key+".json");
-    public bool IsIgnored(TrackIdentity track) => Read<IgnoreDecision>(IgnorePath(track),4096) is {Version:1,Ignored:true} decision && decision.TrackKey==track.Key;
-    public bool SetIgnored(TrackIdentity track, bool ignored) => Write(IgnorePath(track),JsonSerializer.Serialize(new IgnoreDecision(1,track.Key,ignored),Json));
+    private string IgnorePath(TrackIdentity track) => CurrentPath("ignored", track, ".json");
+    public bool IsIgnored(TrackIdentity track)
+    {
+        var path = ReadablePath("ignored", track, ".json");
+        var decision = Read<IgnoreDecision>(path, 4096);
+        if (decision is not { Version: 1, Ignored: true } || !TrackKeyMatches(decision.TrackKey, track)) return false;
+        if (decision.TrackKey != track.Key) Write(path, JsonSerializer.Serialize(decision with { TrackKey = track.Key }, Json));
+        return true;
+    }
+    public bool SetIgnored(TrackIdentity track, bool ignored)
+    {
+        if (!ClaimLegacyPath("ignored", track, ".json")) return false;
+        return Write(IgnorePath(track), JsonSerializer.Serialize(new IgnoreDecision(1, track.Key, ignored), Json));
+    }
     private record IgnoreDecision(int Version,string TrackKey,bool Ignored);
 }

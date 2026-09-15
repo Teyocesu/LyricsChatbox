@@ -21,7 +21,7 @@ public partial class App : Application
             void SendCurrent()
             {
                 if (scheduler.Take(MonotonicClock.Now) is not { } message) return;
-                output.Send(message.Text);
+                scheduler.Complete(message, output.Send(message.Text));
                 sent.Add(new { utc = DateTimeOffset.UtcNow, text = message.Text, status = output.Status });
             }
             foreach (var line in e.Args.Contains("--osc-burst") ? Array.Empty<string>() : new[] { "LyricsChatbox test 1: hello", "LyricsChatbox test 2: 日本語 テスト", "LyricsChatbox test 3: 🎵 👩‍🚀 é", "LyricsChatbox test 4: " + new string('A', 180) })

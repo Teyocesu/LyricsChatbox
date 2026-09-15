@@ -8,7 +8,8 @@ public record ManualCandidate(string Provider, LyricsRecord Metadata)
 {
     public string Display => $"{Metadata.TrackName} — {Metadata.ArtistName}\n{Metadata.AlbumName} · {TimeSpan.FromSeconds(Metadata.Duration):m\\:ss} · {Provider}";
 }
-public record ManualAssociation(int Version, string TrackKey, string Provider, LyricsRecord Metadata);
+public record ManualAssociation(int Version, string TrackKey, string Provider, LyricsRecord Metadata,
+    LyricsRecord? Record = null, DateTimeOffset? StoredUtc = null);
 public static class ManualMatching
 {
     public static bool Valid(LyricsRecord? r) => r is

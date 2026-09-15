@@ -162,9 +162,12 @@ public partial class MainWindow
     {
         var track = engine.Track; var resolution = engine.Resolution;
         var hasTrack = !string.IsNullOrWhiteSpace(track?.Title);
-        var canSearch = hasTrack && track!.Duration is > 0 and <= 3600 && !recordingIgnored;
+        var localIsAuthoritative = resolution?.Provider == "Local LRC" && resolution.Timeline is not null;
+        var canSearch = hasTrack && track!.Duration is > 0 and <= 3600 && !recordingIgnored && !localIsAuthoritative;
         ImportButton.IsEnabled = hasTrack;
         ChooseMatchButton.IsEnabled = InspectorSearchButton.IsEnabled = canSearch;
+        var searchHint = localIsAuthoritative ? "Imported Local LRC lyrics are authoritative. Remove the file from the data folder before choosing a remote match." : null;
+        ChooseMatchButton.ToolTip = InspectorSearchButton.ToolTip = searchHint;
         RecoveryImportButton.IsEnabled = hasTrack;
         RecoveryRetryButton.IsEnabled = hasTrack && !recordingIgnored;
         IgnoreButton.IsEnabled = hasTrack;
@@ -192,7 +195,8 @@ public partial class MainWindow
     {
         if (engine.Track is not { } track) return;
         var ignored = !recordingIgnored;
-        if (!data.SetIgnored(track, ignored)) { ErrorText.Text = "Could not save this recording preference."; return; }
+        if (!data.SetIgnored(track, ignored)) { SetError("Could not save this recording preference."); return; }
+        ClearError();
         recordingIgnored = ignored; lookup?.Cancel(); CancelManualMatch(); loaded.Remove(track.Key);
         engine.InvalidateLyrics(ignored ? "Lyrics ignored for this recording" : "Looking up synced lyrics");
         Tick(); StartLookup(true);

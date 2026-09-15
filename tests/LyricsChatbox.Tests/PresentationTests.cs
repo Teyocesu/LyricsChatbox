@@ -110,6 +110,17 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(1,engine.Position(0));
     }
     [Fact]
+    public void OnlyAUsableLocalLrcBlocksRemoteManualMatching()
+    {
+        var data = new LocalData(root); var track = CoreTests.Track;
+        Directory.CreateDirectory(Path.GetDirectoryName(data.LocalLrcPath(track))!);
+        File.WriteAllText(data.LocalLrcPath(track), "plain untimed text");
+        Assert.False(data.HasUsableLocalLyrics(track));
+        Assert.True(data.SaveLocal(track, "[00:01]local priority"));
+        Assert.True(data.HasUsableLocalLyrics(track));
+        Assert.False(data.HasUsableLocalLyrics(track with { Duration = track.Duration + .25 }));
+    }
+    [Fact]
     public void QuickMessagesPersistButSelectingOneIsAnUnsentDraftEvenAfterLiveEditing()
     {
         var data = new LocalData(root); var library = data.ReadQuickMessages();

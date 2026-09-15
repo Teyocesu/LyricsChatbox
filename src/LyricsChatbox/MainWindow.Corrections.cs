@@ -26,17 +26,28 @@ public partial class MainWindow
     private void SaveSongCorrection(object sender, RoutedEventArgs e)
     {
         if (engine.Track is not { } track) return;
-        if (!data.SaveCorrection(track, engine.Offset)) { ErrorText.Text = "Could not save song correction."; return; }
-        savedCorrection = engine.Offset; UpdateCorrectionLabel();
+        if (!data.SaveCorrection(track, engine.Offset)) { SetError("Could not save song correction."); return; }
+        savedCorrection = engine.Offset; ClearError(); UpdateCorrectionLabel();
     }
     private void ResetSongCorrection(object sender, RoutedEventArgs e)
     {
         if (engine.Track is not { } track) return;
-        if (!data.ResetCorrection(track)) { ErrorText.Text = "Could not reset song correction."; return; }
-        LoadCorrection(); Tick();
+        if (!data.ResetCorrection(track)) { SetError("Could not reset song correction."); return; }
+        ClearError(); LoadCorrection(); Tick();
     }
     private void UseGlobalCorrection(object sender, RoutedEventArgs e)
     {
-        settings = settings with { Offset = engine.Offset }; Save(); UpdateCorrectionLabel();
+        var previous = settings;
+        var next = settings with { Offset = engine.Offset };
+        var saved = engine.Track is { } track && savedCorrection.HasValue
+            ? data.SaveGlobalCorrection(track, previous, engine.Offset)
+            : data.SaveSettings(next);
+        if (!saved)
+        {
+            SetError("Could not save the global timing preference or remove this recording's correction.");
+            return;
+        }
+        settings = next; savedCorrection = null;
+        ClearError(); UpdateCorrectionLabel(); Tick();
     }
 }

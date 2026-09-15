@@ -36,16 +36,45 @@ public class BoundaryTests
     {
         var scheduler = new ChatboxScheduler();
         scheduler.Set(1, "A", true);
-        Assert.Equal("A", scheduler.Take(0)!.Value.Text);
+        var packet = scheduler.Take(0)!.Value; Assert.Equal("A", packet.Text); scheduler.Complete(packet, true);
         scheduler.Set(1, "B", true); Assert.Null(scheduler.Take(0.1));
         scheduler.Set(2, "C", true); Assert.Null(scheduler.Take(0.2));
-        Assert.Equal((2L, "C"), scheduler.Take(1.5));
+        packet = scheduler.Take(1.5)!.Value; Assert.Equal((2L, "C"), packet); scheduler.Complete(packet, true);
         Assert.Null(scheduler.Take(3));
         scheduler.Set(2, "queued", false); Assert.Null(scheduler.Take(4));
-        scheduler.Set(3, "new", true); Assert.Equal((3L, "new"), scheduler.Take(5));
-        scheduler.Set(3, "", true); Assert.Equal("", scheduler.Take(7)!.Value.Text);
-        scheduler.Set(4, "current", true); scheduler.Take(9);
-        scheduler.ReceiverChanged(); Assert.Equal("current", scheduler.Take(11)!.Value.Text);
+        scheduler.Set(3, "new", true); packet = scheduler.Take(5)!.Value; Assert.Equal((3L, "new"), packet); scheduler.Complete(packet, true);
+        scheduler.Set(3, "", true); packet = scheduler.Take(7)!.Value; Assert.Equal("", packet.Text); scheduler.Complete(packet, true);
+        scheduler.Set(4, "current", true); packet = scheduler.Take(9)!.Value; scheduler.Complete(packet, true);
+        scheduler.ReceiverChanged(); packet = scheduler.Take(11)!.Value; Assert.Equal("current", packet.Text); scheduler.Complete(packet, true);
+    }
+
+    [Fact]
+    public void SchedulerCommitsOnlySuccessfulSendsAndRetriesLatestStateWithoutBursting()
+    {
+        var scheduler = new ChatboxScheduler();
+        scheduler.Set(1, "A", true);
+        var failed = scheduler.Take(0)!.Value;
+        scheduler.Complete(failed, false);
+        Assert.Null(scheduler.Take(.5));
+        Assert.Equal(failed, scheduler.Take(1.05));
+
+        scheduler.Set(2, "B", true);
+        scheduler.Complete(failed, false);
+        Assert.Null(scheduler.Take(1.1));
+        var current = scheduler.Take(2.1)!.Value;
+        Assert.Equal((2L, "B"), current);
+        scheduler.Complete(current, true);
+        Assert.Null(scheduler.Take(3.2));
+
+        scheduler.Set(3, "C", true);
+        var nextFailure = scheduler.Take(3.3)!.Value;
+        scheduler.Complete(nextFailure, false);
+        scheduler.Set(4, "D", true);
+        Assert.Null(scheduler.Take(3.4));
+        var recovered = scheduler.Take(4.35)!.Value;
+        Assert.Equal((4L, "D"), recovered);
+        scheduler.Complete(recovered, true);
+        Assert.Null(scheduler.Take(5.5));
     }
 
     [Fact]
@@ -63,7 +92,8 @@ public class BoundaryTests
         {
             manual.Edit(draft, true, time);
             scheduler.Set(1, manual.Desired("old automatic", time)!, true);
-            output.Send(scheduler.Take(time)!.Value.Text); // No receiver is bound.
+            var absentAttempt = scheduler.Take(time)!.Value;
+            scheduler.Complete(absentAttempt, output.Send(absentAttempt.Text)); // UDP accepts sends even when no receiver is bound.
         }
         manual.Edit("current draft 日本語", true, 3);
         scheduler.Set(2, manual.Desired("new song", 3)!, false);
@@ -72,13 +102,15 @@ public class BoundaryTests
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         scheduler.ReceiverChanged();
         scheduler.Set(2, manual.Desired("new song", 4)!, true, compact: true);
-        output.Send(scheduler.Take(4)!.Value.Text);
+        var attempted = scheduler.Take(4)!.Value;
+        scheduler.Complete(attempted, output.Send(attempted.Text));
         Assert.Equal(ChatboxFormatter.Packet(ChatboxFormatter.Format("current draft 日本語", true)),
             (await receiver.ReceiveAsync(deadline.Token)).Buffer);
         Assert.Null(scheduler.Take(6));
         manual.Resume();
         scheduler.Set(3, manual.Desired("current lyric", 7)!, true);
-        output.Send(scheduler.Take(7)!.Value.Text);
+        attempted = scheduler.Take(7)!.Value;
+        scheduler.Complete(attempted, output.Send(attempted.Text));
         Assert.Equal(ChatboxFormatter.Packet("current lyric"), (await receiver.ReceiveAsync(deadline.Token)).Buffer);
         Assert.Null(scheduler.Take(9));
     }
@@ -88,19 +120,19 @@ public class BoundaryTests
     {
         var scheduler = new ChatboxScheduler();
         scheduler.Set(1, "previous song", true);
-        scheduler.Take(0);
+        var packet = scheduler.Take(0)!.Value; scheduler.Complete(packet, true);
         scheduler.Set(2, "", true);
         Assert.Null(scheduler.Take(0.5));
-        Assert.Equal("", scheduler.Take(1.05)!.Value.Text);
+        packet = scheduler.Take(1.05)!.Value; Assert.Equal("", packet.Text); scheduler.Complete(packet, true);
         scheduler.Set(3, "new song", true);
         Assert.Null(scheduler.Take(1.1));
-        Assert.Equal((3L, "new song"), scheduler.Take(2.1));
+        packet = scheduler.Take(2.1)!.Value; Assert.Equal((3L, "new song"), packet); scheduler.Complete(packet, true);
         var sent = new List<double>();
         for (var tick = 220; tick < 2500; tick++)
         {
             var now = tick / 100d;
             scheduler.Set(tick, tick.ToString(), true);
-            if (scheduler.Take(now) is not null) sent.Add(now);
+            if (scheduler.Take(now) is { } next) { sent.Add(now); scheduler.Complete(next, true); }
         }
         Assert.All(sent, start => Assert.InRange(sent.Count(t => t >= start && t < start + 5), 1, 5));
     }

@@ -61,17 +61,17 @@ public class DisplayTests
     {
         var scheduler = new ChatboxScheduler();
         scheduler.Set(1, "hello", true);
-        Assert.Equal("hello", scheduler.Take(0)!.Value.Text);
+        var packet = scheduler.Take(0)!.Value; Assert.Equal("hello", packet.Text); scheduler.Complete(packet, true);
         scheduler.Set(1, "hello", true, true);
         Assert.Null(scheduler.Take(0.1));
-        Assert.Equal("hello" + ChatboxFormatter.CompactSuffix, scheduler.Take(1.05)!.Value.Text);
+        packet = scheduler.Take(1.05)!.Value; Assert.Equal("hello" + ChatboxFormatter.CompactSuffix, packet.Text); scheduler.Complete(packet, true);
         scheduler.Set(1, "hello", true);
-        Assert.Equal("hello", scheduler.Take(2.1)!.Value.Text);
+        packet = scheduler.Take(2.1)!.Value; Assert.Equal("hello", packet.Text); scheduler.Complete(packet, true);
         scheduler.Set(2, "", true, true);
-        Assert.Equal("", scheduler.Take(3.2)!.Value.Text);
+        packet = scheduler.Take(3.2)!.Value; Assert.Equal("", packet.Text); scheduler.Complete(packet, true);
         scheduler.ReceiverChanged();
         scheduler.Set(2, "", true, true, forceSend: true);
-        Assert.Equal("", scheduler.Take(4.3)!.Value.Text); // Explicit manual clear works even before any text.
+        packet = scheduler.Take(4.3)!.Value; Assert.Equal("", packet.Text); scheduler.Complete(packet, true); // Explicit manual clear works even before any text.
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class DisplayTests
             manual.Edit(draft, true, 0.3);
             scheduler.Set(1, manual.Desired("ignored lyrics", 0.3)!, true, true);
         }
-        Assert.Equal("Hello" + ChatboxFormatter.CompactSuffix, scheduler.Take(0.3)!.Value.Text);
+        var packet = scheduler.Take(0.3)!.Value; Assert.Equal("Hello" + ChatboxFormatter.CompactSuffix, packet.Text); scheduler.Complete(packet, true);
         manual.Send();
         Assert.False(manual.Typing(0.4));
         Assert.Equal("Hello", manual.Desired("C", 20)); // Hold starts after emission, not button click.

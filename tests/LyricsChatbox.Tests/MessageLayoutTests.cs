@@ -50,13 +50,13 @@ public sealed class MessageLayoutTests
     {
         var scheduler = new ChatboxScheduler();
         scheduler.Set(1, "A", true, preserveLayout: true);
-        Assert.Equal("A", scheduler.Take(0)!.Value.Text);
+        var packet = scheduler.Take(0)!.Value; Assert.Equal("A", packet.Text); scheduler.Complete(packet, true);
         var centered = MessageLayout.Align("A", "Center");
         scheduler.Set(1, centered, true, preserveLayout: true);
         Assert.Null(scheduler.Take(1));
-        Assert.Equal(centered, scheduler.Take(1.05)!.Value.Text);
+        packet = scheduler.Take(1.05)!.Value; Assert.Equal(centered, packet.Text); scheduler.Complete(packet, true);
         scheduler.Set(1, "  ", true, compact: true, preserveLayout: true);
-        Assert.Equal("", scheduler.Take(2.1)!.Value.Text);
+        packet = scheduler.Take(2.1)!.Value; Assert.Equal("", packet.Text); scheduler.Complete(packet, true);
     }
 
     [Fact]

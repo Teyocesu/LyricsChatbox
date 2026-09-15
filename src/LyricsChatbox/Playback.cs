@@ -8,8 +8,16 @@ namespace LyricsChatbox;
 public record TrackIdentity(string Title, string Artist, string Album, double Duration)
 {
     // Length-safe serialization avoids separator collisions; raw metadata remains in the snapshot.
-    public string Key => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-        JsonSerializer.Serialize(new[] { Title, Artist, Album, Math.Round(Duration).ToString(System.Globalization.CultureInfo.InvariantCulture) }))));
+    public string Key => Hash("2", Title, Artist, Album,
+        Duration.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+
+    // v0.5.0 rounded duration to a whole second. LocalData uses this only to claim and migrate
+    // an existing recording file when no current-key file exists.
+    public string LegacyKey => Hash(Title, Artist, Album,
+        Math.Round(Duration).ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+    private static string Hash(params string[] parts) => Convert.ToHexString(SHA256.HashData(
+        Encoding.UTF8.GetBytes(JsonSerializer.Serialize(parts))));
 
     public static TrackIdentity FromApple(string title, string artist, string album, double duration)
     {

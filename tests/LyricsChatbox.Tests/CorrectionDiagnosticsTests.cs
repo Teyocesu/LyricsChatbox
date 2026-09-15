@@ -23,6 +23,32 @@ public sealed class CorrectionDiagnosticsTests : IDisposable
         Assert.Null(data.ReadCorrection(track));
     }
     [Fact]
+    public void UseGloballyPersistsTheValueAndRemovesTheRecordingOverrideCoherently()
+    {
+        var data = new LocalData(root); var track = CoreTests.Track;
+        var settings = new AppSettings(Offset: .2);
+        Assert.True(data.SaveSettings(settings));
+        Assert.True(data.SaveCorrection(track, .7));
+
+        Assert.True(data.SaveGlobalCorrection(track, settings, -.4));
+        Assert.Equal(-.4, data.ReadSettings().Offset);
+        Assert.Null(data.ReadCorrection(track));
+    }
+    [Fact]
+    public void UseGloballyRollsBackSettingsWhenTheOverrideCannotBeCleared()
+    {
+        var data = new LocalData(root); var track = CoreTests.Track;
+        var settings = new AppSettings(Offset: .2);
+        Assert.True(data.SaveSettings(settings));
+        Assert.True(data.SaveCorrection(track, .7));
+        var path = Path.Combine(root, "corrections", track.Key + ".json");
+
+        using (File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Assert.False(data.SaveGlobalCorrection(track, settings, -.4));
+        Assert.Equal(.2, data.ReadSettings().Offset);
+        Assert.Equal(.7, data.ReadCorrection(track));
+    }
+    [Fact]
     public void DiagnosticsWhitelistExcludesDraftTemplateSecretsAndBoundsHistory()
     {
         var diagnostics = new Diagnostics();

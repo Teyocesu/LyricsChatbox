@@ -2,6 +2,12 @@
 
 A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
 
+## v0.5.1
+
+This maintenance patch separates recordings whose durations differ within the same rounded second while safely migrating v0.5.0 local lyrics, caches, corrections, manual matches and ignore decisions. It retries the latest OSC payload after a local UDP send failure without building a queue or exceeding the 1.05-second cadence.
+
+Manual match updates now commit as one atomic local bundle. **Use globally** also removes the current recording's saved correction so the selected value takes effect immediately. Imported Local LRC lyrics remain authoritative; remote-match controls are blocked with an explanation until that local file is deliberately removed. Successful correction, match, ignore/resume and manual OSC retries clear stale global errors.
+
 ## v0.5.0
 
 The WPF interface now has a larger Now Playing area, saved profile cards, lyric context controls and a secondary Lyrics Details panel.
@@ -32,9 +38,9 @@ v0.4 adds a per-user Inno Setup installer alongside the portable ZIP, with a Sta
 
 **Settings → Updates → Check now** checks the project's latest stable GitHub release. Checks at startup default **off**. Downloads and installer launch each require a deliberate action. Failed checks do not interrupt playback.
 
-The offset slider shows the effective value. Adjustments are temporary until **Save for this song** or **Use globally** is selected. Song values override the global value for the exact title/artist/album/duration identity, within ±5 seconds. **Reset song** restores the global preference. Positive values delay lyrics; no audio analysis is performed.
+The offset slider shows the effective value. Adjustments are temporary until **Save for this song** or **Use globally** is selected. Song values override the global value for the exact title/artist/album/duration identity, within ±5 seconds. **Use globally** clears the current song override; **Reset song** restores the global preference. Positive values delay lyrics; no audio analysis is performed.
 
-When automatic matching fails, **Choose another match…** searches up to five candidates, showing recording metadata instead of lyrics. An explicit choice is saved only after verifying timed lyrics. Imported local LRC remains first, followed by validated cache/saved association, then normal strict matching. Missing or changed saved candidates fall back safely. **Forget manual match** removes the association.
+When automatic matching fails, **Choose another match…** searches up to five candidates, showing recording metadata instead of lyrics. An explicit choice is saved only after verifying timed lyrics. Imported local LRC remains first and blocks remote selection until its file is deliberately removed, followed by validated cache/saved association, then normal strict matching. Missing or changed saved candidates fall back safely. **Forget manual match** removes the association.
 
 Home displays the Windows media thumbnail from Apple Music, with no separate artwork service or disk history. **Settings → Diagnostics** copies or exports current playback/provider/output state and up to 100 recent status events. No lyric bodies, drafts, custom messages or credentials are included; review metadata before sharing. Nothing is uploaded automatically.
 

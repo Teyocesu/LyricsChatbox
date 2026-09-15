@@ -20,6 +20,12 @@ public partial class MainWindow
     private void OpenMatches(object sender, RoutedEventArgs e)
     {
         if (engine.Track is not { } track || recordingIgnored) return;
+        if (data.HasUsableLocalLyrics(track))
+        {
+            SetError("This recording uses an imported Local LRC. Remove that file from the data folder before choosing a remote match.");
+            return;
+        }
+        ClearError();
         ShowPage("Home");
         HomeSectionBox.SelectedIndex = 5;
         MatchPanel.Visibility = Visibility.Visible; MatchQuery.Text = track.Title + " " + track.Artist;
@@ -30,6 +36,11 @@ public partial class MainWindow
     private async void SearchMatches(object sender, RoutedEventArgs e)
     {
         if (engine.Track is not { } track || closing || recordingIgnored) return;
+        if (data.HasUsableLocalLyrics(track))
+        {
+            MatchStatus.Text = "This recording uses an imported Local LRC. Remote matches cannot replace it.";
+            return;
+        }
         matchCancellation?.Cancel(); matchCancellation?.Dispose();
         matchCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         var token = matchCancellation.Token; var epoch = engine.Epoch; var query = MatchQuery.Text;
@@ -55,6 +66,11 @@ public partial class MainWindow
     private async void UseMatch(object sender, RoutedEventArgs e)
     {
         if (engine.Track is not { } track || MatchChoices.SelectedItem is not ManualCandidate choice || closing || recordingIgnored) return;
+        if (data.HasUsableLocalLyrics(track))
+        {
+            MatchStatus.Text = "This recording uses an imported Local LRC. Remove that file from the data folder before choosing a remote match.";
+            return;
+        }
         matchCancellation?.Cancel(); matchCancellation?.Dispose();
         matchCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         var token = matchCancellation.Token; var epoch = engine.Epoch;
@@ -66,7 +82,10 @@ public partial class MainWindow
             if (closing || token.IsCancellationRequested || engine.Epoch != epoch) return;
             if (result.Outcome != LyricsOutcome.Found || result.Record is not { } record)
             { MatchStatus.Text = "That candidate has no available synchronized lyrics. Choose another."; return; }
+            if (data.HasUsableLocalLyrics(track))
+            { MatchStatus.Text = "A Local LRC was imported while this match was loading. It remains authoritative."; return; }
             if (!data.SaveManualAssociation(track, choice, record)) { MatchStatus.Text = "Could not save the manual match."; return; }
+            ClearError();
             loaded.Remove(track.Key);
             engine.Complete(epoch, new(LrcParser.Parse(record.SyncedLyrics), "Synced lyrics loaded · manual match · " + choice.Provider, Provider: choice.Provider, Outcome: LyricsOutcome.Found, CandidateDuration: record.Duration, ManualMatch: true));
             // Local imports remain authoritative, even after explicitly selecting a remote association.
@@ -87,7 +106,8 @@ public partial class MainWindow
     {
         if (engine.Track is not { } track) return;
         CancelManualMatch();
-        if (!data.ForgetManualAssociation(track)) { ErrorText.Text = "Could not forget the manual match."; return; }
+        if (!data.ForgetManualAssociation(track)) { SetError("Could not forget the manual match."); return; }
+        ClearError();
         ForgetMatchButton.IsEnabled = false; loaded.Remove(track.Key); StartLookup(true);
     }
 }

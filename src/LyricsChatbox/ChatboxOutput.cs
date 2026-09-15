@@ -66,17 +66,24 @@ public sealed class ChatboxScheduler
     private double next;
     private bool enabled;
     private bool force;
+    private bool retry;
     public void Set(long activeEpoch, string text, bool isEnabled, bool compact = false, bool forceSend = false, bool preserveLayout = false)
     {
         epoch = activeEpoch; desired = ChatboxFormatter.Format(text, compact, preserveLayout); enabled = isEnabled;
         force = forceSend;
     }
-    public void ReceiverChanged() => last = null;
+    public void ReceiverChanged() { last = null; retry = true; }
     public (long Epoch, string Text)? Take(double now)
     {
-        if (!enabled || now < next || !force && (desired == last || last is null && desired.Length == 0)) return null;
-        last = desired; next = now + IntervalSeconds; force = false;
+        if (!enabled || now < next || !force && !retry && (desired == last || last is null && desired.Length == 0)) return null;
+        // Attempts are paced here, but delivery dedupe advances only after SendTo succeeds.
+        next = now + IntervalSeconds; force = false; retry = false;
         return (epoch, desired);
+    }
+    public void Complete((long Epoch, string Text) attempted, bool succeeded)
+    {
+        if (succeeded) last = attempted.Text;
+        else if (attempted.Epoch == epoch && attempted.Text == desired) retry = true;
     }
 }
 
@@ -96,15 +103,18 @@ public sealed class ChatboxOutput : IDisposable
         socket = nextSocket;
         Status = "OSC ready · delivery unconfirmed";
     }
-    public void Send(string text)
+    public bool Send(string text)
     {
         try
         {
-            socket?.SendTo(ChatboxFormatter.Packet(text), destination);
+            if (socket is null) return false;
+            var packet = ChatboxFormatter.Packet(text);
+            if (socket.SendTo(packet, destination) != packet.Length) return false;
             Status = "OSC sent · delivery unconfirmed";
+            return true;
         }
-        catch (SocketException) { Status = "OSC unavailable · next current line will be attempted"; }
-        catch (ObjectDisposedException) { }
+        catch (SocketException) { Status = "OSC unavailable · next current line will be attempted"; return false; }
+        catch (ObjectDisposedException) { return false; }
     }
     public void SendTyping(bool typing)
     {
