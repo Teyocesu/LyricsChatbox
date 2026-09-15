@@ -1,4 +1,18 @@
-# Current handoff — v0.5.2 published
+# Current handoff — v0.5.3 published
+
+Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.3
+
+Application/tag source: `c49696ca7669dec7832b69882a66647dd39ccf22`. Windows CI 35002827288 on the maintenance branch and 35003203697 on `main` succeeded for that exact commit. Final local locked restore, warning-free Release build and 217/217 tests passed; 31 focused maintenance tests passed. Native WPF Apple Music, sleep/resume, OSC, volume and window-state checks were not observable in this runtime and are not claimed.
+
+P3-01 through P3-06 shipped: unchanged presentation values no longer cause repeated WPF assignments; identical null Apple Music status/revision events are suppressed without delaying real observations; suspend and resume use separate playback behavior; successful OSCQuery discovery stops periodic retry until invalidated or explicitly requested; final volume input consumes the pending debounce; and restoration retains normal/maximized window state. Timing-sensitive 50 ms work and the 1.05 s OSC schedule remain in place.
+
+The portable ZIP SHA256 is `23119b756b4d7813057020db5af0dfd60b8e8e0026e08e95b49a1ba2978815c5` (84,101,933 bytes); the installer SHA256 is `949ecdc48ec417d1b438755b30cd14500b15b6602194d1405205f6c2c9dfa5c1` (58,209,107 bytes). Both checksum assets are uploaded; GitHub reports matching digests. The ZIP's 488 files match publish output, all seven license copies match, and no user-data/test paths were found. The public release body matches the reviewed user notes. Both application and installer are unsigned.
+
+All development branches were verified reachable from `main` or immutable tags, then removed locally and remotely. The original worktree's metadata-only mark had identical content to HEAD and became clean when its index was refreshed. Three clean stale worktrees were removed; only the canonical `LyricsChatbox` worktree on `main` remains. GitHub automatic deletion of merged head branches is enabled. The publication-record commit is documentation-only after the v0.5.3 tag. No v0.5.4 work has started.
+
+## Previous stable release
+
+### v0.5.2 published
 
 Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.2
 
