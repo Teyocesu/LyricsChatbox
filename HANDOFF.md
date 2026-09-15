@@ -1,15 +1,8 @@
-# Current handoff — 2026-09-14
+# Current handoff — v0.5.0 published
 
-Goal remains the full v0.5.0 specification in attachment 958819d8-f82a-4208-8888-82c7d59397ec. Branch codex/v0.5.0; stable v0.4 is unchanged. Final publication is authorized after the required checks, explicitly reiterated by the user.
+Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.0
+Tag source: e3d2effdb131e280843f5c9cd7da017c4e542d3d. Windows CI 34904645187 succeeded. Installer, portable ZIP and both SHA256 files are uploaded; GitHub asset digests match prepared checksum values. PLAN.md records exact sizes and hashes.
 
-Visual acceptance is positive: "Sí, ahora se ve bien". User confirmed the context-mode/Adaptive Floating real-song sequence and AFK draft->Send->automatic return with "si todo bien". The Music Info->Lyrics and High Ignore/Resume sequence ran correctly in the native sender; its separate headset question is still pending. User explicitly says the caratula changes and further repetition is unnecessary. Do not claim unperformed physical checks.
+User explicitly requested final publication without more tests. Remaining physical validation was waived, not reported as passed. Previously completed validation includes 178 tests, clean Release build, accepted visual layout, real VRChat context/AFK sequence, RC install/uninstall/reinstall preservation and verified official installer download. Detailed limitations remain in PLAN.md. Seeking stays explicitly deferred.
 
-Source now has final0.5.0 version/caption and release notes. Locked restore, Release build zero warnings/errors and178tests passed in artifacts/test-results/v05-final-version.trx. Latest previously pushed source ea007e4 passed CI34872358933 including locked publication. Final-version changes must be committed/pushed and checked before final tagging.
-
-The RC f8a3893 installer was installed, compared to all488 ZIP payloads, uninstalled and reinstalled: all process exit codes0, all235 pre-existing data files unchanged, app exe removed by uninstall. Installed RC then launched, and a second launch left one process. Logs and hashes are ignored under artifacts/v05-validation/install-lifecycle. User closed the installed copy's firewall dialog. Current app is the installed RC at LocalAppData/Programs/LyricsChatbox, not the portable executable.
-
-Actual production InstallerDownloader fetched official v0.4.0,57385737bytes, and verified SHA256 twice without executing it. SHA256 F14ACDDB8B167E74DEEBC8BA1B4BA3B22C8092A560790CB6AA849BF57B9A8F08. Probe is artifacts/VerifiedDownloadReview. Deterministic mismatch/cancellation coverage remains in tests.
-
-Native appearance checks covered Rose/Purple/Blue/Green, white and black custom colors, and all four backgrounds. Restored Rose/Midnight and the prior custom field#FF647E; artwork tint remains off. User changed the selected profile to Custom; preserve current settings rather than stale Lyrics/Adaptive assumptions. Output is on. Native OSCQuery discovered127.0.0.1:9000, manual fallback retained it, and Auto rediscovered. Apple Music was reopened for an artwork check but user said to skip repeating it; no further artwork work is needed.
-
-Pending: reconcile remaining physical evidence (including the open profile/ignore answer and relevant Unicode coverage), finish final release audit, commit/push/CI, create exact final portable+installer/checksums, verify and publish. Do not interpret version metadata as a published release. No v0.5 tag/release yet. PLAN has detailed evidence and limitations. No subagents authorized. Seek remains explicitly deferred under the user's delegated choice.
+No further testing or user confirmation is pending for this publication. The installed RC was left running with current user settings; the final installer was published but not installed again. Existing main's Linguist change was preserved. Old release tags and assets remain unchanged.
