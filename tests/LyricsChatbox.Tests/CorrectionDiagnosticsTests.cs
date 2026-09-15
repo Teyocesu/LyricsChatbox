@@ -19,6 +19,7 @@ public sealed class CorrectionDiagnosticsTests : IDisposable
         Assert.False(data.SaveCorrection(track, 300)); Assert.False(data.SaveCorrection(track, double.NaN));
         Assert.Equal(0.7, data.ReadCorrection(track));
         Assert.True(data.ResetCorrection(track)); Assert.Null(data.ReadCorrection(track));
+        Assert.False(File.Exists(Path.Combine(root, "corrections", track.Key + ".json")));
         File.WriteAllText(Path.Combine(root, "corrections", track.Key + ".json"), "{bad json");
         Assert.Null(data.ReadCorrection(track));
     }

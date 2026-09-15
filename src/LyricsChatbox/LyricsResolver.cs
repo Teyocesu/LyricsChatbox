@@ -143,7 +143,7 @@ public sealed partial class LyricsResolver(HttpClient http, LocalData data, ISyn
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
             timeout.CancelAfter(PrimaryDeadline);
             using var request = new HttpRequestMessage(HttpMethod.Get, "https://lrclib.net/api/" + path);
-            request.Headers.UserAgent.ParseAdd($"LyricsChatbox/{typeof(LyricsResolver).Assembly.GetName().Version?.ToString(3)} (+https://github.com/Teyocesu/LyricsChatbox)");
+            request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent);
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
             if (response.StatusCode == HttpStatusCode.TooManyRequests || response.StatusCode == HttpStatusCode.ServiceUnavailable && response.Headers.RetryAfter is not null)
             {

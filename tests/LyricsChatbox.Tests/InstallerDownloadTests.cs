@@ -14,6 +14,8 @@ public class InstallerDownloadTests : IDisposable
     private static string Hash => Convert.ToHexString(SHA256.HashData(Binary));
     private static HttpResponseMessage Response(byte[] bytes) => new(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) };
     private static HttpResponseMessage Text(string text) => Response(Encoding.UTF8.GetBytes(text));
+    private static string ManagedName(string version = "0.5.3") => "0123456789abcdef0123456789abcdef-LyricsChatbox-Setup-" + version + ".exe";
+    private static string PartName => "fedcba9876543210fedcba9876543210.part";
     private static string Release(string? url = null, bool duplicate = false) => JsonSerializer.Serialize(new
     {
         draft = false, prerelease = false, tag_name = Asset.Tag, body = "Fixes for Japanese lyrics\nNew profile controls",
@@ -41,19 +43,55 @@ public class InstallerDownloadTests : IDisposable
     [Fact]
     public async Task VerifiedDownloadIsRetainedButChangedFileCannotBeLaunched()
     {
+        Directory.CreateDirectory(root);
+        var old = Path.Combine(root, ManagedName());
+        var stalePart = Path.Combine(root, PartName);
+        File.WriteAllText(old, "old installer"); File.WriteAllText(stalePart, "partial");
         var requests = new List<Uri>();
         using var http = new HttpClient(new Handler((request,_) =>
         {
             requests.Add(request.RequestUri!);
+            Assert.Equal(ProductIdentity.UserAgent, request.Headers.UserAgent.ToString());
             return Task.FromResult(request.RequestUri!.AbsolutePath.EndsWith(".sha256") ? Text(Hash+"  "+Asset.FileName+"\r\n") : Response(Binary));
         }));
         var result = await new InstallerDownloader(http).DownloadAsync(Asset,root,null,default);
         var installer = Assert.IsType<VerifiedInstaller>(result.Installer);
         Assert.Equal(new[] {Asset.ChecksumUri,Asset.DownloadUri},requests);
-        Assert.Equal(Binary,await File.ReadAllBytesAsync(installer.Path)); Assert.Empty(Directory.GetFiles(root,"*.part"));
+        Assert.Equal(Binary,await File.ReadAllBytesAsync(installer.Path)); Assert.Empty(Directory.GetFiles(root,"*.part")); Assert.False(File.Exists(old));
         using (var readable = await installer.OpenVerifiedAsync(default)) Assert.NotNull(readable);
         var changed=Binary.ToArray(); changed[0]=(byte)'X'; await File.WriteAllBytesAsync(installer.Path,changed);
         Assert.Null(await installer.OpenVerifiedAsync(default));
+    }
+    [Fact]
+    public void CleanupRemovesOnlyManagedDirectFilesAndPreservesTheActiveInstaller()
+    {
+        Directory.CreateDirectory(root);
+        var current = Path.Combine(root, ManagedName("0.5.4"));
+        var old = Path.Combine(root, ManagedName());
+        var part = Path.Combine(root, PartName);
+        var unrelated = Path.Combine(root, "notes.exe");
+        var nested = Path.Combine(root, "nested");
+        Directory.CreateDirectory(nested);
+        var nestedManaged = Path.Combine(nested, ManagedName());
+        var matchingDirectory = Path.Combine(root, ManagedName("9.9.9"));
+        Directory.CreateDirectory(matchingDirectory);
+        File.WriteAllText(current, "current"); File.WriteAllText(old, "old"); File.WriteAllText(part, "part");
+        File.WriteAllText(unrelated, "keep"); File.WriteAllText(nestedManaged, "keep");
+
+        InstallerDownloader.CleanupManagedDownloads(root, current);
+
+        Assert.True(File.Exists(current)); Assert.False(File.Exists(old)); Assert.False(File.Exists(part));
+        Assert.True(File.Exists(unrelated)); Assert.True(File.Exists(nestedManaged)); Assert.True(Directory.Exists(matchingDirectory));
+    }
+    [Fact]
+    public void CleanupDeleteFailureDoesNotThrowOrClaimSuccess()
+    {
+        Directory.CreateDirectory(root);
+        var locked = Path.Combine(root, ManagedName());
+        File.WriteAllText(locked, "locked");
+        using (File.Open(locked, FileMode.Open, FileAccess.Read, FileShare.Read))
+            InstallerDownloader.CleanupManagedDownloads(root);
+        Assert.True(File.Exists(locked));
     }
     [Theory]
     [InlineData("mismatch")]

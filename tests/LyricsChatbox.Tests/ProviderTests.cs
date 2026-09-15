@@ -20,7 +20,7 @@ public sealed class ProviderTests : IDisposable
         using var handler = new Handler((request, _) =>
         {
             Assert.Equal("https", request.RequestUri!.Scheme);
-            Assert.Contains("LyricsChatbox/", request.Headers.UserAgent.ToString());
+            Assert.Equal(ProductIdentity.UserAgent, request.Headers.UserAgent.ToString());
             Assert.Contains("duration=120", request.RequestUri.Query);
             return Task.FromResult(Json(Record));
         });
@@ -208,6 +208,7 @@ public sealed class ProviderTests : IDisposable
         Data.SaveCache(CoreTests.Track, Record);
         Assert.Equal(Record, Data.ReadCache(CoreTests.Track));
         var path = Path.Combine(root, "cache", CoreTests.Track.Key + ".json");
+        Assert.True(File.Exists(path));
         foreach (var invalid in new[] { "{", "null", JsonSerializer.Serialize(new { Version = 1, TrackKey = CoreTests.Track.Key, StoredUtc = DateTimeOffset.UtcNow, Record = (object?)null }) })
         {
             File.WriteAllText(path, invalid);
@@ -218,6 +219,43 @@ public sealed class ProviderTests : IDisposable
         Assert.False(Data.SaveLocal(CoreTests.Track, "plain lyrics"));
         var other = CoreTests.Track with { Album = "Different release" };
         Assert.Null(Data.ReadLocal(other));
+    }
+
+    [Fact]
+    public void ExpiredAutomaticCacheIsAColdMissAndOnlyItsExactFileIsRemoved()
+    {
+        Directory.CreateDirectory(Path.Combine(root, "cache"));
+        Directory.CreateDirectory(Path.Combine(root, "lyrics"));
+        Assert.True(Data.SaveLocal(CoreTests.Track, "[00:01]local"));
+        var path = Path.Combine(root, "cache", CoreTests.Track.Key + ".json");
+        var unrelated = Path.Combine(root, "cache", "unrelated.json");
+        File.WriteAllText(path, JsonSerializer.Serialize(new
+        {
+            Version = 1, TrackKey = CoreTests.Track.Key, StoredUtc = DateTimeOffset.UtcNow.AddDays(-31),
+            Record, Provider = "LRCLIB", Manual = false
+        }));
+        File.WriteAllText(unrelated, "keep");
+
+        Assert.Null(Data.ReadCachedLyrics(CoreTests.Track));
+        Assert.False(File.Exists(path));
+        Assert.True(File.Exists(unrelated));
+        Assert.Equal("[00:01]local", Data.ReadLocal(CoreTests.Track));
+    }
+
+    [Fact]
+    public void ExpiredCacheCleanupFailureRemainsAColdMiss()
+    {
+        Directory.CreateDirectory(Path.Combine(root, "cache"));
+        var path = Path.Combine(root, "cache", CoreTests.Track.Key + ".json");
+        File.WriteAllText(path, JsonSerializer.Serialize(new
+        {
+            Version = 1, TrackKey = CoreTests.Track.Key, StoredUtc = DateTimeOffset.UtcNow.AddDays(-31),
+            Record, Provider = "LRCLIB", Manual = false
+        }));
+
+        using (File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Assert.Null(Data.ReadCachedLyrics(CoreTests.Track));
+        Assert.True(File.Exists(path));
     }
 
     public void Dispose()

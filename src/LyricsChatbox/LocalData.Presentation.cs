@@ -37,6 +37,7 @@ public sealed partial class LocalData
     public bool SetIgnored(TrackIdentity track, bool ignored)
     {
         if (!ClaimLegacyPath("ignored", track, ".json")) return false;
+        if (!ignored) return DeleteIfExists(IgnorePath(track));
         return Write(IgnorePath(track), JsonSerializer.Serialize(new IgnoreDecision(1, track.Key, ignored), Json));
     }
     private record IgnoreDecision(int Version,string TrackKey,bool Ignored);

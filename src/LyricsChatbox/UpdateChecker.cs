@@ -30,7 +30,7 @@ public sealed class UpdateChecker(HttpClient http)
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/Teyocesu/LyricsChatbox/releases/latest");
-            request.Headers.UserAgent.ParseAdd("LyricsChatbox/" + current.ToString(3));
+            request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent);
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token);
             if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)

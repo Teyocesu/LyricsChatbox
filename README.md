@@ -2,6 +2,15 @@
 
 A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
 
+## v0.5.4
+
+This maintenance update keeps local data cleaner and fixes a few small inconsistencies.
+
+- Old LyricsChatbox installer downloads are cleaned up automatically.
+- Expired lyric cache files no longer accumulate unnecessarily.
+- Resetting song-specific corrections, manual lyric choices or ignored-lyrics preferences no longer leaves unused local files behind.
+- LyricsChatbox reports its current version consistently when contacting supported online services.
+
 ## v0.5.3
 
 This update reduces unnecessary interface work while LyricsChatbox is running. Apple Music status handling, Windows sleep and resume, VRChat automatic discovery and volume adjustments now avoid repeated work when nothing has changed.
@@ -138,8 +147,8 @@ For explicit physical diagnostics:
 
 ```powershell
 dotnet run --project spikes/AppleMusicPlaybackSpike -- 60
-.\artifacts\v0.4.0\win-x64\LyricsChatbox.exe --osc-test
-.\artifacts\v0.4.0\win-x64\LyricsChatbox.exe --osc-burst
+dotnet run --project src/LyricsChatbox -- --osc-test
+dotnet run --project src/LyricsChatbox -- --osc-burst
 ```
 
 The playback spike reads metadata/timing/events and compares the production clock to Windows. Its optional `--exercise` flag changes playback through public GSMTC controls; on the tested Apple Music version, seek calls reported success without actually seeking. Use native player controls for real seek validation.

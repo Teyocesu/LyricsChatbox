@@ -34,6 +34,7 @@ public sealed class ManualMatchTests : IDisposable
         Assert.False(File.Exists(Path.Combine(root, "cache", CoreTests.Track.Key + ".json")));
         Assert.True(data.ForgetManualAssociation(CoreTests.Track));
         Assert.Null(data.ReadCachedLyrics(CoreTests.Track)); Assert.Null(data.ReadManualAssociation(CoreTests.Track));
+        Assert.False(File.Exists(Path.Combine(root, "matches", CoreTests.Track.Key + ".json")));
     }
     [Fact]
     public async Task MissingSavedCandidateFallsBackAndLocalImportWins()
@@ -110,6 +111,26 @@ public sealed class ManualMatchTests : IDisposable
 
         Assert.NotNull(data.ReadManualAssociation(CoreTests.Track));
         Assert.Null(data.ReadCachedLyrics(CoreTests.Track));
+    }
+    [Fact]
+    public void ExpiredLegacyManualCacheIsNotRemovedByAutomaticCacheCleanup()
+    {
+        var data = new LocalData(root);
+        var choice = new ManualCandidate("LRCLIB", Alternative with { SyncedLyrics = null });
+        var cachePath = Path.Combine(root, "cache", CoreTests.Track.Key + ".json");
+        Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
+        Directory.CreateDirectory(Path.Combine(root, "matches"));
+        File.WriteAllText(Path.Combine(root, "matches", CoreTests.Track.Key + ".json"),
+            JsonSerializer.Serialize(new ManualAssociation(1, CoreTests.Track.Key, "LRCLIB", choice.Metadata)));
+        File.WriteAllText(cachePath, JsonSerializer.Serialize(new
+        {
+            Version = 1, TrackKey = CoreTests.Track.Key, StoredUtc = DateTimeOffset.UtcNow.AddDays(-31),
+            Record = Alternative, Provider = "LRCLIB", Manual = true
+        }));
+
+        Assert.Null(data.ReadCachedLyrics(CoreTests.Track));
+        Assert.True(File.Exists(cachePath));
+        Assert.NotNull(data.ReadManualAssociation(CoreTests.Track));
     }
     private sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> send) : HttpMessageHandler
     { protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) => Task.FromResult(send(request)); }

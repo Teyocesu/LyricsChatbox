@@ -67,9 +67,31 @@ public record InstallerDownloadResult(string Status, VerifiedInstaller? Installe
 public sealed class InstallerDownloader(HttpClient http)
 {
     public static readonly TimeSpan Deadline = TimeSpan.FromMinutes(3);
+    private static readonly Regex ManagedPart = new(@"\A[0-9a-fA-F]{32}\.part\z", RegexOptions.CultureInvariant);
+    private static readonly Regex ManagedInstaller = new(@"\A[0-9a-fA-F]{32}-LyricsChatbox-Setup-[0-9]+\.[0-9]+\.[0-9]+\.exe\z", RegexOptions.CultureInvariant);
+
+    public static void CleanupManagedDownloads(string directory, string? preservePath = null)
+    {
+        try
+        {
+            if (!Directory.Exists(directory) || (File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) return;
+            var preserved = preservePath is null ? null : Path.GetFullPath(preservePath);
+            foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly))
+            {
+                var name = Path.GetFileName(path);
+                if (!ManagedPart.IsMatch(name) && !ManagedInstaller.IsMatch(name)) continue;
+                if (preserved is not null && string.Equals(Path.GetFullPath(path), preserved, StringComparison.OrdinalIgnoreCase)) continue;
+                try { File.Delete(path); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+    }
+
     public async Task<InstallerDownloadResult> DownloadAsync(InstallerAsset asset, string directory, IProgress<double>? progress, CancellationToken token)
     {
         if (!asset.IsValid) return new("No verifiable installer is available for this release.");
+        CleanupManagedDownloads(directory);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
         deadline.CancelAfter(Deadline);
         string? temporary = null;
@@ -98,6 +120,7 @@ public sealed class InstallerDownloader(HttpClient http)
             deadline.Token.ThrowIfCancellationRequested();
             var target = System.IO.Path.Combine(directory, Guid.NewGuid().ToString("N") + "-" + asset.FileName);
             File.Move(temporary, target); temporary = null;
+            CleanupManagedDownloads(directory, target);
             return new("SHA256 verified. Ready to open the installer.", new(target, hash, asset.Size));
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
@@ -119,7 +142,7 @@ public sealed class InstallerDownloader(HttpClient http)
         for (var hop = 0; hop < 4; hop++)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            request.Headers.UserAgent.ParseAdd("LyricsChatbox/0.5.3");
+            request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent);
             var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
             if (response.StatusCode is HttpStatusCode.Moved or HttpStatusCode.Redirect or HttpStatusCode.TemporaryRedirect or HttpStatusCode.PermanentRedirect)
             {

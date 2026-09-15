@@ -116,12 +116,23 @@ public sealed class PresentationTests : IDisposable
         using var http = new HttpClient(new NoNetwork()); using var resolver = new LyricsResolver(http,data);
         Assert.Equal(LyricsOutcome.Ignored,(await resolver.ResolveAsync(track,default)).Outcome);
         Assert.Equal("[00:01]local",data.ReadLocal(track));
-        Assert.True(data.SetIgnored(track,false)); Assert.Equal(LyricsOutcome.Found,(await resolver.ResolveAsync(track,default)).Outcome);
+        Assert.True(data.SetIgnored(track,false)); Assert.False(File.Exists(Path.Combine(root,"ignored",track.Key+".json")));
+        Assert.Equal(LyricsOutcome.Found,(await resolver.ResolveAsync(track,default)).Outcome);
         File.WriteAllText(Path.Combine(root,"ignored",track.Key+".json"),"{bad"); Assert.False(data.IsIgnored(track));
         var engine = new SynchronizationEngine {Enabled=true}; engine.Observe(CoreTests.Snapshot(1)); var oldEpoch=engine.Epoch;
         engine.InvalidateLyrics("Lyrics ignored for this recording");
         Assert.False(engine.Complete(oldEpoch,new(LrcParser.Parse("[00:01]stale"),"Synced"))); Assert.Equal("",engine.Output(0));
         Assert.Equal(1,engine.Position(0));
+    }
+    [Fact]
+    public void ResumeFailsClosedWhenTheIgnoreDecisionCannotBeDeleted()
+    {
+        var data = new LocalData(root); var track = CoreTests.Track;
+        Assert.True(data.SetIgnored(track, true));
+        var path = Path.Combine(root, "ignored", track.Key + ".json");
+        using (File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Assert.False(data.SetIgnored(track, false));
+        Assert.True(data.IsIgnored(track));
     }
     [Fact]
     public void OnlyAUsableLocalLrcBlocksRemoteManualMatching()

@@ -79,13 +79,19 @@ public sealed partial class LocalData(string root)
         var path = ReadablePath("cache", track, ".json");
         var entry = Read<CacheEntry>(path, 2_100_000);
         if (entry is not { Version: 1, Record: not null } || !TrackKeyMatches(entry.TrackKey, track) ||
-            !Fresh(entry.StoredUtc) || entry.Provider is not ("LRCLIB" or "NetEase")) return null;
+            entry.Provider is not ("LRCLIB" or "NetEase")) return null;
+        if (!entry.Manual && Expired(entry.StoredUtc))
+        {
+            _ = DeleteIfExists(path);
+            return null;
+        }
+        if (!Fresh(entry.StoredUtc)) return null;
         if (entry.Manual)
         {
             if (association is null || association.Provider != entry.Provider || !ManualMatching.Same(association.Metadata, entry.Record)) return null;
             var upgraded = new ManualAssociation(2, track.Key, association.Provider,
                 association.Metadata with { SyncedLyrics = null }, entry.Record, entry.StoredUtc);
-            if (Write(AssociationPath(track), JsonSerializer.Serialize(upgraded, Json))) TryDelete(path);
+            if (Write(AssociationPath(track), JsonSerializer.Serialize(upgraded, Json))) _ = DeleteIfExists(path);
         }
         else if (association is not null || !LyricsMatching.Score(track, entry.Record).HasValue) return null;
         if (!entry.Manual && entry.TrackKey != track.Key)
@@ -94,6 +100,7 @@ public sealed partial class LocalData(string root)
     }
     private static bool Fresh(DateTimeOffset storedUtc) => storedUtc <= DateTimeOffset.UtcNow.AddMinutes(5) &&
         storedUtc > DateTimeOffset.UtcNow.AddDays(-30);
+    private static bool Expired(DateTimeOffset storedUtc) => storedUtc <= DateTimeOffset.UtcNow.AddDays(-30);
     private static bool TrackKeyMatches(string key, TrackIdentity track) => key == track.Key || key == track.LegacyKey;
     public void SaveCache(TrackIdentity track, LyricsRecord record, string provider = "LRCLIB")
     {
@@ -120,7 +127,7 @@ public sealed partial class LocalData(string root)
     public bool ResetCorrection(TrackIdentity track)
     {
         if (!ClaimLegacyPath("corrections", track, ".json")) return false;
-        return Write(CorrectionPath(track), JsonSerializer.Serialize(new Correction(1, track.Key, null), Json));
+        return DeleteIfExists(CorrectionPath(track));
     }
     public bool SaveGlobalCorrection(TrackIdentity track, AppSettings current, double seconds)
     {
@@ -154,7 +161,7 @@ public sealed partial class LocalData(string root)
     public bool ForgetManualAssociation(TrackIdentity track)
     {
         if (!ClaimLegacyPath("matches", track, ".json")) return false;
-        return Write(AssociationPath(track), "null");
+        return DeleteIfExists(AssociationPath(track));
     }
 
     private static T? Read<T>(string path, int max)
@@ -188,10 +195,14 @@ public sealed partial class LocalData(string root)
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
         finally { try { if (File.Exists(temp)) File.Delete(temp); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
     }
-    private static void TryDelete(string path)
+    private static bool DeleteIfExists(string path)
     {
-        try { File.Delete(path); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        try
+        {
+            File.Delete(path);
+            return !File.Exists(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
     }
     private record CacheEntry(int Version, string TrackKey, DateTimeOffset StoredUtc, LyricsRecord Record, string Provider = "LRCLIB", bool Manual = false);
     public record CachedLyrics(LyricsRecord Record, string Provider, bool Manual = false);

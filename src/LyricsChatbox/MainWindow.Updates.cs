@@ -19,9 +19,11 @@ public partial class MainWindow
     private bool downloading;
     private void InitializeUpdates()
     {
+        InstallerDownloader.CleanupManagedDownloads(Path.Combine(data.Root, "downloads"));
         updates = new(http);
         AutoUpdateBox.IsChecked = settings.AutomaticUpdateChecks;
-        UpdateStatus.Text = "Version " + typeof(App).Assembly.GetName().Version!.ToString(3);
+        VersionCaption.Text = "v" + ProductIdentity.VersionText;
+        UpdateStatus.Text = "Version " + ProductIdentity.VersionText;
         if (settings.AutomaticUpdateChecks) Loaded += CheckUpdatesOnce;
     }
     private async void CheckUpdatesOnce(object sender, RoutedEventArgs e)
@@ -43,8 +45,8 @@ public partial class MainWindow
         updateBusy = true; CheckUpdatesButton.IsEnabled = false; UpdateStatus.Text = "Checking GitHub…";
         try
         {
-            var request = automatic ? updates.CheckAtStartupAsync(settings.AutomaticUpdateChecks, typeof(App).Assembly.GetName().Version!, lifetime.Token, settings.SkippedUpdateVersion)
-                : updates.CheckAsync(typeof(App).Assembly.GetName().Version!, lifetime.Token);
+            var request = automatic ? updates.CheckAtStartupAsync(settings.AutomaticUpdateChecks, ProductIdentity.Version, lifetime.Token, settings.SkippedUpdateVersion)
+                : updates.CheckAsync(ProductIdentity.Version, lifetime.Token);
             pending.Add(request);
             UpdateResult result;
             try { result = await request; }

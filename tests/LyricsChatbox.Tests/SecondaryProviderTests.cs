@@ -19,6 +19,7 @@ public sealed class SecondaryProviderTests : IDisposable
     {
         using var handler = new Handler((request, _) =>
         {
+            Assert.Equal(ProductIdentity.UserAgent, request.Headers.UserAgent.ToString());
             if (request.RequestUri!.Host == "lrclib.net") return Task.FromResult(request.RequestUri.AbsolutePath.EndsWith("get")
                 ? new HttpResponseMessage(HttpStatusCode.NotFound) : Json(Array.Empty<object>()));
             Assert.Equal("https", request.RequestUri.Scheme);

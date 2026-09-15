@@ -84,6 +84,25 @@ public sealed class TrackIdentityMigrationTests : IDisposable
         }
     }
 
+    [Fact]
+    public void ResetOperationsClaimLegacyFilesBeforeDeletingThem()
+    {
+        WriteLegacy("corrections", ".json", JsonSerializer.Serialize(new { Version = 1, TrackKey = First.LegacyKey, Seconds = .7 }));
+        WriteLegacy("matches", ".json", JsonSerializer.Serialize(new ManualAssociation(1, First.LegacyKey, "LRCLIB", Manual with { SyncedLyrics = null })));
+        WriteLegacy("ignored", ".json", JsonSerializer.Serialize(new { Version = 1, TrackKey = First.LegacyKey, Ignored = true }));
+
+        var data = new LocalData(root);
+        Assert.True(data.ResetCorrection(First));
+        Assert.True(data.ForgetManualAssociation(First));
+        Assert.True(data.SetIgnored(First, false));
+
+        foreach (var (directory, extension) in new[] { ("corrections", ".json"), ("matches", ".json"), ("ignored", ".json") })
+        {
+            Assert.False(File.Exists(Path.Combine(root, directory, First.Key + extension)));
+            Assert.False(File.Exists(Path.Combine(root, directory, First.LegacyKey + extension)));
+        }
+    }
+
     private void WriteLegacy(string directory, string extension, string contents)
     {
         var folder = Path.Combine(root, directory);

@@ -111,7 +111,7 @@ public sealed partial class NetEaseLyricsProvider(HttpClient http) : ISyncedLyri
             var delay = nextRequest - DateTimeOffset.UtcNow;
             if (delay > TimeSpan.Zero) await Task.Delay(delay, token);
             request.Headers.Referrer = new Uri("https://music.163.com/");
-            request.Headers.UserAgent.ParseAdd("LyricsChatbox/0.3 (+https://github.com/Teyocesu/LyricsChatbox)");
+            request.Headers.UserAgent.ParseAdd(ProductIdentity.UserAgent);
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
             if (response.StatusCode == HttpStatusCode.TooManyRequests ||
                 response.StatusCode == HttpStatusCode.ServiceUnavailable && response.Headers.RetryAfter is not null)
