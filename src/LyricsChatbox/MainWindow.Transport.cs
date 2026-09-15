@@ -45,8 +45,10 @@ public partial class MainWindow
         var generation = volumeGeneration;
         try
         {
-            var volume = await TrackManualTask(Task.Run(AppleMusicVolume.Read));
-            if (closing || generation != volumeGeneration || writingVolume) return;
+            var provider = playback.Volume;
+            var sourceRevision = playback.Revision;
+            var volume = provider is null ? null : await TrackManualTask(Task.Run(provider.Read));
+            if (closing || generation != volumeGeneration || writingVolume || sourceRevision != playback.Revision) return;
             currentMusicVolume = volume;
             var enabled = volume is not null;
             if (MusicVolumeSlider.IsEnabled != enabled) MusicVolumeSlider.IsEnabled = enabled;
@@ -96,8 +98,11 @@ public partial class MainWindow
         var value = (float)MusicVolumeSlider.Value;
         try
         {
-            var accepted = await TrackManualTask(Task.Run(() => AppleMusicVolume.Set(expected, value)));
-            if (closing) return;
+            var provider = playback.Volume;
+            var sourceRevision = playback.Revision;
+            var accepted = provider is not null && await TrackManualTask(Task.Run(() =>
+                sourceRevision == playback.Revision && ReferenceEquals(provider, playback.Volume) && provider.Set(expected, value)));
+            if (closing || generation != volumeGeneration || sourceRevision != playback.Revision) return;
             TransportStatus.Text = accepted ? "" : "Apple Music volume unavailable; try again.";
             TransportStatus.Visibility = accepted ? Visibility.Collapsed : Visibility.Visible;
         }
@@ -118,8 +123,9 @@ public partial class MainWindow
         changingTransport = true;
         try
         {
-            var accepted = await playback.ControlAsync(command, playback.Revision);
-            if (closing) return;
+            var sourceRevision = playback.Revision;
+            var accepted = await playback.ControlAsync(command, sourceRevision);
+            if (closing || sourceRevision != playback.Revision) return;
             TransportStatus.Text = accepted ? "" : "Apple Music did not accept the command.";
             TransportStatus.Visibility = accepted ? Visibility.Collapsed : Visibility.Visible;
         }

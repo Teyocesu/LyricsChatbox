@@ -2,9 +2,12 @@ using Windows.Media.Control;
 
 namespace LyricsChatbox;
 
-public sealed partial class AppleMusicPlayback : IAsyncDisposable
+public sealed partial class AppleMusicPlayback : IPlaybackSource
 {
     public const string AppleSource = "AppleInc.AppleMusicWin_nzyj5cx40ttqa!App";
+    public PlaybackSourceKind Kind => PlaybackSourceKind.AppleMusic;
+    public string DisplayName => "Apple Music";
+    public IPlaybackVolume? Volume { get; } = new AppleMusicPlaybackVolume();
     private readonly CancellationTokenSource stop = new();
     private readonly SemaphoreSlim wake = new(0, 1);
     private GlobalSystemMediaTransportControlsSessionManager? manager;
@@ -98,7 +101,8 @@ public sealed partial class AppleMusicPlayback : IAsyncDisposable
                     {
                         var snapshot = new PlaybackSnapshot(AppleSource + ":" + sessionNumber, track, media.Title, media.Artist,
                             media.AlbumTitle, media.TrackNumber, timeline.StartTime.TotalSeconds, timeline.EndTime.TotalSeconds,
-                            timeline.Position.TotalSeconds, timeline.LastUpdatedTime, state, playback.PlaybackRate ?? 1, now, mono);
+                            timeline.Position.TotalSeconds, timeline.LastUpdatedTime, state, playback.PlaybackRate ?? 1, now, mono,
+                            PlaybackSourceKind.AppleMusic);
                         Emit(snapshot, "Apple Music · " + state.ToString().ToLowerInvariant(), rev);
                         if (artworkRevision != rev || artworkKey != track.Key)
                         {

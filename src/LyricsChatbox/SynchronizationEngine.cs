@@ -3,10 +3,12 @@ namespace LyricsChatbox;
 // Owned by one dispatcher. External/async results enter only through epoch-checked Complete.
 public sealed class SynchronizationEngine
 {
-    private readonly PlaybackClock clock = new();
+    private PlaybackClock clock = new();
     private string? sessionId;
+    private PlaybackSourceKind? source;
     public long Epoch { get; private set; }
     public TrackIdentity? Track { get; private set; }
+    public PlaybackSourceKind? Source => source;
     public PlaybackSnapshot? Snapshot { get; private set; }
     public LyricTimeline? Timeline { get; private set; }
     public LyricsResolution? Resolution { get; private set; }
@@ -16,11 +18,13 @@ public sealed class SynchronizationEngine
     public double Offset { get; set; }
     public bool Observe(PlaybackSnapshot? next)
     {
-        var changed = next?.SessionId != sessionId || next?.Track != Track;
+        var changed = next?.Source != source || next?.SessionId != sessionId || next?.Track != Track;
         if (changed)
         {
+            if (next?.Source != source)
+                clock = new PlaybackClock(PlaybackTimingPolicy.For(next?.Source ?? PlaybackSourceKind.AppleMusic));
             Epoch++; Timeline = null; Resolution = null; RetryAt = null;
-            Track = next?.Track; sessionId = next?.SessionId;
+            Track = next?.Track; sessionId = next?.SessionId; source = next?.Source;
             LyricsStatus = Track is null ? "Waiting for a track" : "Looking up synced lyrics";
             clock.Reset();
         }

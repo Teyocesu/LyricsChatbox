@@ -20,6 +20,16 @@ public static partial class PresentationText
 {
     public const string EmptyPreview = "Nothing to send";
 
+    public static string PlaybackStatus(PlaybackSourceKind source, PlaybackSnapshot? snapshot, string status) =>
+        source switch
+        {
+            PlaybackSourceKind.AppleMusic => AppleMusicStatus(snapshot, status),
+            PlaybackSourceKind.Spotify => snapshot is not null
+                ? "Spotify · " + snapshot.State.ToString().ToLowerInvariant()
+                : "Spotify · not detected",
+            _ => ""
+        };
+
     public static string AppleMusicStatus(PlaybackSnapshot? snapshot, string status) => snapshot is not null
         ? "Apple Music · " + snapshot.State.ToString().ToLowerInvariant()
         : status switch

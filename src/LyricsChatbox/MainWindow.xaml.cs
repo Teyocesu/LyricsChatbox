@@ -16,7 +16,7 @@ public partial class MainWindow : Window
     private static readonly System.Windows.Media.FontFamily TextFont = new("Segoe UI"), LayoutFont = new("Consolas");
     private readonly LocalData data = new(LocalData.DefaultRoot);
     private readonly HttpClient http = new(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false });
-    private readonly AppleMusicPlayback playback = new();
+    private readonly PlaybackSourceHost playback = new(new AppleMusicPlayback());
     private readonly SynchronizationEngine engine = new();
     private readonly ChatboxScheduler scheduler = new();
     private readonly ChatboxOutput output = new();
@@ -85,7 +85,12 @@ public partial class MainWindow : Window
         {
             if (closing || revision != playback.Revision) return;
             acceptedPlaybackRevision = revision;
-            SourceText.Text = PresentationText.AppleMusicStatus(snapshot, status);
+            SourceText.Text = PresentationText.PlaybackStatus(playback.Kind, snapshot, status);
+            if (status == "Refreshing playback source")
+            {
+                currentMusicVolume = null; volumeGeneration++; MusicVolumeSlider.IsEnabled = false;
+                nextTransportRefresh = nextVolumeRefresh = 0;
+            }
             if (engine.Observe(snapshot))
             {
                 lookup?.Cancel();

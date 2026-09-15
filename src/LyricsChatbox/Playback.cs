@@ -5,6 +5,9 @@ using System.Text.Json;
 
 namespace LyricsChatbox;
 
+// Explicit product scope; no arbitrary player discovery.
+public enum PlaybackSourceKind { AppleMusic, Spotify }
+
 public record TrackIdentity(string Title, string Artist, string Album, double Duration)
 {
     // Length-safe serialization avoids separator collisions; raw metadata remains in the snapshot.
@@ -32,7 +35,23 @@ public record TrackIdentity(string Title, string Artist, string Album, double Du
 public enum PlaybackState { Stopped, Paused, Playing }
 public record PlaybackSnapshot(string SessionId, TrackIdentity Track, string RawTitle, string RawArtist,
     string RawAlbum, int TrackNumber, double Start, double End, double Position,
-    DateTimeOffset LastUpdated, PlaybackState State, double Rate, DateTimeOffset ObservedUtc, double ObservedMono);
+    DateTimeOffset LastUpdated, PlaybackState State, double Rate, DateTimeOffset ObservedUtc, double ObservedMono,
+    PlaybackSourceKind Source = PlaybackSourceKind.AppleMusic);
+
+public sealed record PlaybackTimingPolicy(double FreshnessSeconds, double DiscontinuitySeconds,
+    bool IntegerPositionCeiling, bool RequireFreshAnchorAfterResume)
+{
+    public static PlaybackTimingPolicy AppleMusic { get; } = new(2, 1.25, true, false);
+    // 4.617s measured p95 anchor cadence, 4.512s maximum healthy timestamp age,
+    // 225ms polling: 5.25s retains bounded margin without changing Apple's policy.
+    public static PlaybackTimingPolicy Spotify { get; } = new(5.25, 1.25, false, true);
+    public static PlaybackTimingPolicy For(PlaybackSourceKind source) => source switch
+    {
+        PlaybackSourceKind.AppleMusic => AppleMusic,
+        PlaybackSourceKind.Spotify => Spotify,
+        _ => throw new ArgumentOutOfRangeException(nameof(source))
+    };
+}
 
 public static class MonotonicClock
 {
@@ -41,17 +60,26 @@ public static class MonotonicClock
 
 public sealed class PlaybackClock
 {
-    // Spike: ~280ms events, integer Position; 250ms polling, 2s freshness budget, 1.25s quantization tolerance.
+    // Public constants retain the v0.5.4 Apple contract.
     public const double FreshnessSeconds = 2;
     public const double DiscontinuitySeconds = 1.25;
+    private readonly PlaybackTimingPolicy policy;
     private PlaybackSnapshot? snapshot;
     private double anchor;
     private double anchorMono;
     private double ceiling;
     private bool valid;
+    private DateTimeOffset? pausedAnchorForResume;
     public bool Discontinuity { get; private set; }
+    public PlaybackClock(PlaybackTimingPolicy? policy = null)
+    {
+        this.policy = policy ?? PlaybackTimingPolicy.AppleMusic;
+        if (!double.IsFinite(this.policy.FreshnessSeconds) || this.policy.FreshnessSeconds <= 0 ||
+            !double.IsFinite(this.policy.DiscontinuitySeconds) || this.policy.DiscontinuitySeconds <= 0)
+            throw new ArgumentOutOfRangeException(nameof(policy));
+    }
 
-    public void Reset() { snapshot = null; valid = false; }
+    public void Reset() { snapshot = null; valid = false; pausedAnchorForResume = null; }
 
     public void Observe(PlaybackSnapshot next)
     {
@@ -61,26 +89,33 @@ public sealed class PlaybackClock
         var nextValid = double.IsFinite(candidate) && double.IsFinite(next.Start) && double.IsFinite(next.End) &&
             double.IsFinite(next.ObservedMono) && next.End > next.Start && next.Position >= next.Start &&
             next.Position <= next.End && next.State != PlaybackState.Stopped;
+        if (policy.RequireFreshAnchorAfterResume && next.State == PlaybackState.Paused)
+            pausedAnchorForResume = next.LastUpdated;
         if (next.State == PlaybackState.Playing)
         {
-            nextValid &= rateValid && age >= -0.5 && age <= FreshnessSeconds;
-            candidate += Math.Clamp(age, 0, FreshnessSeconds) * (rateValid ? next.Rate : 1);
+            nextValid &= rateValid && age >= -0.5 && age <= policy.FreshnessSeconds;
+            if (policy.RequireFreshAnchorAfterResume && pausedAnchorForResume is { } pausedAnchor)
+            {
+                nextValid &= next.LastUpdated > pausedAnchor;
+                if (nextValid) pausedAnchorForResume = null;
+            }
+            candidate += Math.Clamp(age, 0, policy.FreshnessSeconds) * (rateValid ? next.Rate : 1);
         }
         var previous = Position(next.ObservedMono);
         var same = snapshot?.SessionId == next.SessionId && snapshot.Track == next.Track;
         Discontinuity = same && previous.HasValue &&
-            (next.Position < snapshot!.Position || Math.Abs(candidate - previous.Value) > DiscontinuitySeconds);
+            (next.Position < snapshot!.Position || Math.Abs(candidate - previous.Value) > policy.DiscontinuitySeconds);
         var samePlayingPosition = same && valid && nextValid && snapshot!.State == PlaybackState.Playing &&
             next.State == PlaybackState.Playing && snapshot.Position == next.Position && snapshot.Rate == next.Rate;
         var integerPosition = Math.Abs(next.Position - Math.Round(next.Position)) < 0.000001;
         // Apple republishes integer Position about every 280ms. Those heartbeat timestamps do not create
         // a new fractional position. Keep interpolation within this confirmed second, never across its end.
         // Reanchor from scratch when Position advances, so no extrapolated lead carries into the next second.
-        if (!(samePlayingPosition && integerPosition))
+        if (!(samePlayingPosition && integerPosition && policy.IntegerPositionCeiling))
         {
             anchor = nextValid ? Math.Clamp(candidate, 0, next.End - next.Start) : 0;
             anchorMono = next.ObservedMono;
-            ceiling = !nextValid ? 0 : next.State == PlaybackState.Playing && integerPosition
+            ceiling = !nextValid ? 0 : next.State == PlaybackState.Playing && integerPosition && policy.IntegerPositionCeiling
                 ? Math.Min(next.End - next.Start, next.Position - next.Start + 0.999999)
                 : next.End - next.Start;
             anchor = Math.Min(anchor, ceiling);
@@ -93,10 +128,10 @@ public sealed class PlaybackClock
     {
         if (!valid || snapshot is null || !double.IsFinite(now)) return null;
         var elapsed = now - snapshot.ObservedMono;
-        if (elapsed < 0 || elapsed > FreshnessSeconds) return null;
+        if (elapsed < 0 || elapsed > policy.FreshnessSeconds) return null;
         if (snapshot.State == PlaybackState.Paused) return anchor;
         var age = Math.Max(0, (snapshot.ObservedUtc - snapshot.LastUpdated).TotalSeconds);
-        if (age + elapsed > FreshnessSeconds) return null;
+        if (age + elapsed > policy.FreshnessSeconds) return null;
         return Math.Clamp(anchor + (now - anchorMono) * snapshot.Rate, 0, ceiling);
     }
 }

@@ -5,6 +5,11 @@ namespace LyricsChatbox;
 
 // Only per-session ISimpleAudioVolume; never obtain IAudioEndpointVolume (system master).
 public sealed record MusicVolume(int ProcessId, string SessionId, float Level);
+public sealed class AppleMusicPlaybackVolume : IPlaybackVolume
+{
+    public MusicVolume? Read() => AppleMusicVolume.Read();
+    public bool Set(MusicVolume expected, float level) => AppleMusicVolume.Set(expected, level);
+}
 public static class AppleMusicVolume
 {
     public static MusicVolume? Read() => Access(null, null);
