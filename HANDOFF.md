@@ -1,8 +1,17 @@
-# Current handoff — v0.5.0 published
+# Current handoff — v0.5.1 published
 
-Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.0
-Tag source: e3d2effdb131e280843f5c9cd7da017c4e542d3d. Windows CI 34904645187 succeeded. Installer, portable ZIP and both SHA256 files are uploaded; GitHub asset digests match prepared checksum values. PLAN.md records exact sizes and hashes.
+Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.1
 
-User explicitly requested final publication without more tests. Remaining physical validation was waived, not reported as passed. Previously completed validation includes 178 tests, clean Release build, accepted visual layout, real VRChat context/AFK sequence, RC install/uninstall/reinstall preservation and verified official installer download. Detailed limitations remain in PLAN.md. Seeking stays explicitly deferred.
+Application/tag source: `fd2beab239abba57479a28a25959f8ea8284cb05`. Windows CI runs 34995871836 on `codex/v0.5.1` and 34996365603 on `main` both succeeded for that exact commit, including locked publication. Final local validation passed locked restore, a Release build with zero warnings/errors and 189/189 tests.
 
-No further testing or user confirmation is pending for this publication. The installed RC was left running with current user settings; the final installer was published but not installed again. Existing main's Linguist change was preserved. Old release tags and assets remain unchanged.
+All six maintenance fixes shipped. Track identity now hashes the round-trip duration under identity version 2. When current-key state is absent, a v0.5 whole-second-key file is atomically renamed to the new key; the first claimant owns it, so a formerly colliding recording cannot receive a duplicate. Cache records are revalidated, JSON keys normalize where practical, and legacy manual association/cache pairs upgrade to one atomic version-2 bundle. New writes use only the current key.
+
+OSC dedupe advances only after local UDP `SendTo` succeeds; attempts remain spaced by 1.05 seconds and failures retry only the latest desired state. Manual matches commit as one atomically replaced bundle. Use globally clears the active recording override. Usable Local LRC remains authoritative and blocks remote selection with a removal explanation. Relevant successful retry paths clear stale global errors.
+
+Published assets:
+
+- `LyricsChatbox-0.5.1-win-x64.zip`: 84,086,145 bytes; SHA256 `9c8e7ae9264b38cb1e9f0b9cf7ab8040a00e51ec73e08cc8dd683d7cd088825e`.
+- `LyricsChatbox-Setup-0.5.1.exe`: 58,191,056 bytes; SHA256 `ecbd58f8b55ed49e8a2256486c90924487f9ea906c9de7a6ada0a5183cabb2c8`.
+- Both SHA256 files are uploaded; GitHub asset digests match local values.
+
+The ZIP contains 488 files matching the publish directory, matching license copies and no user-data/diagnostic files. Application and installer are unsigned as documented. v0.5.0 and older releases are unchanged. No unresolved v0.5.1 gate remains, and no v0.5.2 work has started.
