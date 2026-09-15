@@ -1,4 +1,10 @@
-# Current handoff — v0.5.4 published
+# Current handoff — v0.6.0 Phase 0 spike preparation
+
+Research-only development is on `codex/v0.6.0`; v0.5.4 remains stable, and `main` remains at `4df40710e673a7c6f585b6eb04f6b866f44aa909`. The isolated `spikes/SpotifyPlaybackSpike` GSMTC probe is observation-only by default. Run `dotnet run --project spikes/SpotifyPlaybackSpike -c Release -- --duration 90 --interactive` from the repository root after the user opens/signs into Spotify Desktop and plays an ordinary song. The probe writes ignored JSON/text under `artifacts/spikes/spotify/<UTC timestamp>`; retain the report locally for assessment, do not commit listening data. Type labels in the console to mark manually performed pause/resume/next/previous/scrubs/close/reopen. `--self-test` verifies spike statistics and exercise opt-in bounds.
+
+The only native evidence so far is a five-second Spotify-closed run with zero GSMTC sessions and no errors. Spotify Windows package is installed but not running; actual SourceAppUserModelId, metadata, anchors and all viability requirements are unproven. Stop at user-assisted physical testing; do not start Phase 1 or claim Spotify support. PLAN.md holds baseline and current evidence.
+
+## Previous stable release — v0.5.4 published
 
 Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.4
 

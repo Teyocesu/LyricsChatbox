@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/spikes/">
     <Project Path="spikes/AppleMusicPlaybackSpike/AppleMusicPlaybackSpike.csproj" />
+    <Project Path="spikes/SpotifyPlaybackSpike/SpotifyPlaybackSpike.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/LyricsChatbox/LyricsChatbox.csproj" />

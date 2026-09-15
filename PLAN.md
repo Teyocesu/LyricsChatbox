@@ -1,5 +1,13 @@
 # Execution state
 
+## v0.6.0 Phase 0 — Spotify Desktop GSMTC discovery (research only)
+
+2026-09-15 baseline: clean `main` and `origin/main` at `4df40710e673a7c6f585b6eb04f6b866f44aa909`; annotated `v0.5.4` resolves to tested application source `6f45d8ff7062f203e30cfa771123fdef6ec2eb8b`. GitHub labels v0.5.4 latest; only main existed locally/remotely. Locked restore, warning-free Release build and 225/225 tests passed before changes. Created the sole development branch `codex/v0.6.0` from main; stable release and main remain unchanged.
+
+The isolated `spikes/SpotifyPlaybackSpike` project enumerates all GSMTC sessions without GetCurrentSession, collects metadata, playback capabilities, 225 ms timeline observations, event timestamps, bounded artwork decode summaries and per-run session instances, plus longest contiguous same-recording playing-segment statistics (scrubs require raw-sample/marker inspection). Default is observation-only; `--interactive` permits human-labelled transitions and `--source <observed exact ID> --exercise <command>` opt-in commands require a unique session, do not seek, and record acceptance separately from subsequent observed state. JSON/text reports go under ignored `artifacts/spikes/spotify/<UTC timestamp>`; no lyrics, OSC, production LocalData or Spotify API access. Local audio-session identity is not yet tested.
+
+Focused spike build and self-checks passed; a 5-second native closed-state observation recorded zero GSMTC sessions, zero errors and no Spotify identifier. Final locked solution restore, warning-free Release build and 225/225 production tests passed. Spotify Desktop Windows package `SpotifyAB.SpotifyMusic_1.299.317.0_x64__zpdnekdrzrea0` is installed but no Spotify process was running. No listening, timeline, transition, pause, scrub, reopen, simultaneous-player or Free/ad evidence exists. Spotify viability is **not yet proven**. Physical testing requires the user to open/sign in and play Spotify Desktop; do not mark unobserved matrix cells complete. Phase 1 requires separate explicit approval and scope revision.
+
 ## v0.5.4 maintenance and publication
 
 2026-09-15 publication verified: stable non-draft/non-prerelease release https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.4. Annotated tag `v0.5.4` dereferences to the tested application commit `6f45d8ff7062f203e30cfa771123fdef6ec2eb8b`; the release contains the exact application source from that commit. Windows CI `35006554119` passed for the release branch, including locked restore, Release build, the complete test suite and locked Windows publication verification.
