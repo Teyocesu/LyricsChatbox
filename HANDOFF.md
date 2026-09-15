@@ -1,4 +1,18 @@
-# Current handoff — v0.5.3 published
+# Current handoff — v0.5.4 published
+
+Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.4
+
+Application/tag source: `6f45d8ff7062f203e30cfa771123fdef6ec2eb8b`. Windows CI `35006554119` passed for that exact application commit, including locked publication verification. Final local locked restore, warning-free Release build and 225/225 tests passed; 108 focused maintenance tests passed.
+
+P4-01 through P4-06 shipped as a focused cleanup patch. Installer cleanup is direct-file, app-managed-name-only and limited to LocalData `downloads`, with active-installer preservation and best-effort failure handling. Parsed automatic cache entries older than 30 days are removed only at the exact evaluated cache path; local LRC, manual matches, corrections and unrelated files are not touched. Correction reset, manual forget and ignore resume delete their recording files and fail closed when deletion fails, including safe legacy-key claiming. LRCLIB, NetEase, update and installer requests share the deterministic runtime product User-Agent derived from assembly version `0.5.4`. Production seek support is removed; the playback spike retains its native seek evidence. README OSC diagnostics now use version-independent `dotnet run` commands.
+
+The ZIP is 84,104,645 bytes with SHA256 `da495c8dfa4d421154ac0b220249bd4eb988eaaf28cb6a4b8fc5aa5ec024d88c`; the installer is 58,202,300 bytes with SHA256 `45cd1d4db52cbf2defd8697620eba2b8800203ed41669df1308c05f2f928aa49`. GitHub reports matching binary digests for the four uploaded assets. The ZIP's 488 files match publish output, seven license copies match their sources, no user-data/test paths are packaged, and the executable reports `0.5.4+6f45d8ff7062f203e30cfa771123fdef6ec2eb8b`. Both binaries are unsigned. The public release body is the reviewed end-user copy.
+
+All filesystem tests used unique temporary roots; no real user LocalData was touched. The documented OSC `dotnet run` invocation is supported by `App.OnStartup`; runtime execution was blocked by the already-running installed single-instance process and did not change user data.
+
+After publication, `codex/v0.5.4` was verified fully preserved by `main`, deleted locally and remotely, and stale worktree metadata was pruned. The documentation-only publication record follows the immutable application tag. No v0.5.5 work has started.
+
+## Previous stable release
 
 Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.3
 
