@@ -1,10 +1,22 @@
-# Current handoff — v0.5.2 in validation
+# Current handoff — v0.5.2 published
 
-Branch `codex/v0.5.2` starts from post-v0.5.1 main commit `c73f55ce55ea3108b06a26035062ad5137e72e07`. U2-01 through U2-08 are implemented, versioned as 0.5.2, and focused presentation/update tests pass. The v0.5.1 public release body was rewritten for users; title, tag, state, URL and assets were verified unchanged.
+Stable release: https://github.com/Teyocesu/LyricsChatbox/releases/tag/v0.5.2
+
+Application/tag source: `b86ea34a6e6fe0d0f62a12e77fae226ffcee792f`. Windows CI runs 34999373205 on `codex/v0.5.2` and 34999799897 on `main` both succeeded for that exact commit, including locked publication. Final local validation passed locked restore, a Release build with zero warnings/errors and 209/209 tests.
+
+U2-01 through U2-08 shipped. Adaptive composition is distinct from the explicit three-line mode; context and Compact help are attached correctly; recovery state and Home actions are outcome-aware without duplication; null Apple Music states retain user-facing detail; empty previews use a non-payload placeholder; durations share hour-aware formatting; and updater Markdown becomes bounded plain text.
+
+Published assets:
+
+- `LyricsChatbox-0.5.2-win-x64.zip`: 84,093,306 bytes; SHA256 `6c013518cd26d49e452a0aafc7999d8260aa1b6f07b4407354ac345c87d482a2`.
+- `LyricsChatbox-Setup-0.5.2.exe`: 58,208,097 bytes; SHA256 `460e643337adf9103247b662fcdbcc6570af8b418a4058f0db415f5a74a37b0c`.
+- Both SHA256 files are uploaded; all GitHub asset digests match local values.
+
+The ZIP contains 488 files matching the publish directory, matching license copies and no user-data files. The fetched release body exactly matches the reviewed public notes. Application and installer are unsigned as documented.
 
 Native targeted UI validation could not be observed because the available computer-use runtime exposed browser surfaces only. The source executable did launch; VRChat output was disabled for the attempt, the process was closed, and the original settings file was restored. Do not claim the requested native state matrix as performed.
 
-Final locked restore passed, the Release build completed with zero warnings/errors, and the complete suite passed 209/209 with no skips. CI, packaging, artifact consistency/digests and publication are pending. The intended public notes are in `docs/RELEASE-NOTES-v0.5.2.md`.
+The v0.5.1 public release body was rewritten for users before v0.5.2 work; its title, tag, state, URL and assets remained unchanged. No v0.5.3 work has started.
 
 ## Previous stable release
 
