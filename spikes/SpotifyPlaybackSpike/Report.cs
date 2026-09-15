@@ -1,4 +1,4 @@
-internal sealed record Options(int Duration, bool Interactive, string? Source, string? Exercise)
+internal sealed record Options(int Duration, bool Interactive, string? Source, string? Exercise, bool AutoValidate)
 {
     public static Options? Parse(string[] args)
     {
@@ -6,11 +6,13 @@ internal sealed record Options(int Duration, bool Interactive, string? Source, s
         {
             Console.WriteLine("Usage: dotnet run --project spikes/SpotifyPlaybackSpike -c Release -- --duration 90 [--interactive]");
             Console.WriteLine("Optional opt-in: --source <observed exact SourceAppUserModelId> --exercise play|pause|next|previous|shuffle|repeat");
+            Console.WriteLine("Automated research run: --auto-validate (Spotify Desktop launch, GSMTC-only exercises, bounded report)");
             Console.WriteLine("No seek, lyrics, OSC, production LocalData, or network requests. Default is observation-only.");
             return null;
         }
         int duration = 90;
         bool interactive = false;
+        bool autoValidate = false;
         string? source = null, exercise = null;
         for (var i = 0; i < args.Length; i++)
         {
@@ -19,6 +21,7 @@ internal sealed record Options(int Duration, bool Interactive, string? Source, s
                 case "--duration" when i + 1 < args.Length && int.TryParse(args[++i], out var seconds) && seconds is >= 5 and <= 1800:
                     duration = seconds; break;
                 case "--interactive": interactive = true; break;
+                case "--auto-validate": autoValidate = true; break;
                 case "--source" when i + 1 < args.Length: source = args[++i]; break;
                 case "--exercise" when i + 1 < args.Length: exercise = args[++i].ToLowerInvariant(); break;
                 default: throw new ArgumentException("Invalid argument. Use --help.");
@@ -26,7 +29,9 @@ internal sealed record Options(int Duration, bool Interactive, string? Source, s
         }
         if (exercise is not null && (source is null || exercise is not ("play" or "pause" or "next" or "previous" or "shuffle" or "repeat")))
             throw new ArgumentException("Exercise requires an observed exact --source and one supported transport command.");
-        return new(duration, interactive, source, exercise);
+        if (autoValidate && (interactive || source is not null || exercise is not null))
+            throw new ArgumentException("--auto-validate is a separate mode; no interactive/one-shot options.");
+        return new(duration, interactive, source, exercise, autoValidate);
     }
 }
 
@@ -47,8 +52,16 @@ internal sealed class Report(string windowsVersion, string repositoryCommit, Dat
     public List<ExerciseRow> Exercises { get; } = [];
     public List<string> Errors { get; } = [];
     public int DroppedEvents { get; set; }
-    public string VolumeSessionObservation { get; } = "Not tested (read-only audio-session investigation deferred)";
+    public string VolumeSessionObservation { get; set; } = "Not tested";
     public string FreeAdObservation { get; } = "Not classified; inspect raw metadata if naturally encountered";
+    public string? AutoOutcome { get; set; }
+    public string? SpotifyIdentifier { get; set; }
+    public List<AutoStepRow> AutoSteps { get; } = [];
+    public int MaximumOtherGsmtcSessionsSeen { get; set; }
+    public bool? BaselineHealthy { get; set; }
+    public double? BaselineDurationSeconds { get; set; }
+    public StatsRow? BaselineStatistics { get; set; }
+    public string? BaselineTitle { get; set; }
 }
 
 internal sealed class TrackedSession(string id, string source, double appearedMono)
@@ -79,6 +92,9 @@ internal sealed record EventRow(string Name, string? SessionId, string? Source, 
 internal sealed record MarkRow(string Label, DateTimeOffset ObservedUtc, double ObservedMono);
 internal sealed record ExerciseRow(string Command, string Source, bool Advertised, bool? GsmtcReturn,
     string? Error, DateTimeOffset RequestedUtc, double RequestedMono);
+internal sealed record AutoStepRow(string Name, DateTimeOffset RequestedUtc, double RequestedMono,
+    bool? Advertised, bool? GsmtcReturn, string? RequestedTarget, string? PreviousObserved,
+    DateTimeOffset? ObservedUtc, double? ObservedMono, string? SubsequentObserved, string? Error);
 internal sealed record ArtworkRow(bool Present, bool DecodeSucceeded, string? ContentType, long? BoundedBytes, string? Error);
 internal sealed record CapabilityRow(bool Play, bool Pause, bool PlayPauseToggle, bool Previous, bool Next,
     bool Shuffle, bool Repeat, bool PlaybackPosition, bool? ShuffleActive, string? RepeatMode);

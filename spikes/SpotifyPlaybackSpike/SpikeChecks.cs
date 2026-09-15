@@ -17,6 +17,7 @@ internal static class SpikeChecks
         Assert(stats.MedianPositionUpdateIntervalSeconds == .5);
         Assert(Statistics.Calculate([]).MedianPositionUpdateIntervalSeconds is null);
         Assert(Options.Parse(["--duration", "60", "--interactive"])?.Duration == 60);
+        Assert(Options.Parse(["--auto-validate"])?.AutoValidate == true);
         try { Options.Parse(["--exercise", "next"]); throw new Exception("Exercise without source accepted"); }
         catch (ArgumentException) { }
         return;

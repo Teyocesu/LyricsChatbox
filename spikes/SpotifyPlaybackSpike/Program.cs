@@ -18,6 +18,11 @@ if (args.SequenceEqual(["--self-test"]))
 }
 var options = Options.Parse(args);
 if (options is null) return;
+if (options.AutoValidate)
+{
+    await AutoValidation.RunAsync();
+    return;
+}
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 var started = DateTimeOffset.UtcNow;
 var stopwatch = Stopwatch.StartNew();
