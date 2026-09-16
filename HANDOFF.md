@@ -1,4 +1,12 @@
-# Current handoff — v0.6.0 Phase 3 daily-use state implemented
+# Current handoff — v0.6.0 Phase 4 packaging hardening completed
+
+Phase 4 is implemented on `codex/v0.6.0` in `354034bfc13e269ed6ae5253c8a689e7c8000161`. Packaging now cleans only a validated direct child of `artifacts/`, publishes runtime output plus an explicit public-doc/license allowlist, and verifies staging, ZIP parity, checksums, public copy, user-data exclusions and the Inno installer source boundary. `PLAN.md`, `HANDOFF.md`, `AGENTS.md` and `SPEC.md` cannot enter the portable or installer input tree. The README's internal validation references were removed; no Spotify/v0.6 marketing or release-note work was done.
+
+The isolated validation package at `artifacts/phase4-validation` has 487 staging files, 487 ZIP entries, seven licenses and zero forbidden paths. ZIP SHA256 is `e0703a0fdfbe6490b45cb7970d9283b36a68626fdfea2a4ce033687259788830`; the ZIP matches staging byte-for-byte. The executable reports `0.5.4+354034bfc13e269ed6ae5253c8a689e7c8000161`, is `NotSigned` as documented, and launched/closed cleanly under an isolated `LOCALAPPDATA`. No Inno compiler or installer introspection tool is installed; installer source/payload routing passed, but no compiled-installer result is claimed.
+
+The focused package-policy checks, locked restore, Release build (0 warnings/errors), full 284-test suite (no skips) and `git diff --check` pass. AUD-01 is closed for both portable output and the installer input boundary. v0.5.4, `main`, tags and public releases remain unchanged. Do not merge, tag, publish v0.6.0 or start the final independent/second-machine gates from this handoff. See the Phase 4 section in `PLAN.md` for the complete audit evidence.
+
+# Previous handoff — v0.6.0 Phase 3 daily-use state implemented
 
 Phase 3 is implemented on `codex/v0.6.0`: Output Pause has 5/15/30-minute, until-next-track and until-resumed modes distinct from master Enabled; all text/typing paths share one output eligibility gate, entry clears once best-effort, Manual ownership/drafts and remaining hold survive, and resume has no replay. Until-next-track persists only a TrackIdentity hash and expires only on a different coherent accepted recording. Playback, multi-player timing/arbitration, lyrics and artwork are unchanged.
 
