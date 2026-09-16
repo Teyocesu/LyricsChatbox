@@ -105,7 +105,7 @@ A primary hit, local LRC, cache hit or instrumental result never calls the fallb
 
 The NetEase adapter uses community-documented HTTPS REST endpoints, with no login, cookies, shared secret, encrypted endpoint emulation or HTML scraping. It is **not an official supported developer integration**. It can stop working, be blocked by region or change without notice. Public endpoint access does not establish a lyric redistribution license; no permission or service guarantee is asserted. Full current service-terms review remains unverified because the official terms page was blocked by browser site-safety during this evaluation. No provider lyric bodies are shipped in this repository or release archive. Local LRC remains available.
 
-The evaluation compared Musixmatch, NetEase, QQ Music and Kugou. The final uncached chain confirmed 12 incremental timed results over confirmed LRCLIB misses/ambiguity and kept 11 LRCLIB-hit controls primary-only. Measured median total fallback was 2.48 seconds; small-sample nearest-rank p95 was 3.99 seconds. These are measurements from one network, not availability promises or proof of audio alignment. Exact metadata, counts, timing and limitations are in PLAN.md.
+Fallback availability depends on the external service and network. The app keeps strict metadata checks and may report unavailable or ambiguous lyrics instead of guessing; local LRC import remains available.
 
 ## Desktop layout
 
@@ -127,7 +127,7 @@ Settings, profiles, reusable quick messages, exact-recording ignore decisions, i
 - VRChat process restarts reset output deduplication for the current line. Arbitrary remote receiver restarts cannot be detected through UDP.
 - No system-audio capture, automatic transcription/alignment, other music players or Apple UI scraping.
 
-See `PLAN.md` for the exact automated and physical validation evidence. A passing build or UDP test is not proof of complete headset/end-to-end validation.
+For troubleshooting, verify that VRChat OSC is enabled and that no other application is competing for the Chatbox destination.
 
 ## Build and test
 
