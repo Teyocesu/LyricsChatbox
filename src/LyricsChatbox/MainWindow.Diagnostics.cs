@@ -9,7 +9,8 @@ public partial class MainWindow
 {
     private readonly Diagnostics diagnostics = new();
     private string DiagnosticText() => diagnostics.Export(engine.Snapshot, settings, engine.LyricsStatus, output.Status,
-        engine.Offset, manual.IsManual, ErrorText.Text, playback.ActiveKind, SourceText.Text, playback.Ambiguous);
+        engine.Offset, manual.IsManual, ErrorText.Text, playback.ActiveKind, SourceText.Text, playback.Ambiguous,
+        IsOutputPaused(DateTimeOffset.UtcNow), outputPause.Mode.ToString(), outputPause.Summary(DateTimeOffset.UtcNow));
     private void CopyDiagnostics(object sender, RoutedEventArgs e)
     {
         try { Clipboard.SetText(DiagnosticText()); DiagnosticsStatus.Text = "Copied. Review before sharing."; }

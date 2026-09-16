@@ -55,8 +55,9 @@ public partial class App : Application
         MainWindow = window;
         instance.Listen(() => _ = Dispatcher.InvokeAsync(window.RestoreWindow));
         SessionEnding += (_, _) => window.RequestExit();
+        var startsHidden = window.ApplyInitialWindowState();
         window.Show();
-        window.ApplyInitialWindowState();
+        if (startsHidden) window.Hide();
     }
     protected override void OnExit(ExitEventArgs e) { instance?.Dispose(); base.OnExit(e); }
 }

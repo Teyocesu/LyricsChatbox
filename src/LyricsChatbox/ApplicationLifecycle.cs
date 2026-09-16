@@ -50,6 +50,7 @@ public static class LifecyclePolicy
 public sealed class WindowRestoreState
 {
     public WindowState Desired { get; private set; } = WindowState.Normal;
+    public void Restore(WindowState state) => Desired = state == WindowState.Maximized ? WindowState.Maximized : WindowState.Normal;
     public void Observe(WindowState state)
     {
         if (state is WindowState.Normal or WindowState.Maximized) Desired = state;

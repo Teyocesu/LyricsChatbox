@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     private readonly ChatboxOutput output = new();
     private readonly ManualChat manual = new();
     private readonly TypingSignal typing = new();
+    private readonly DispatcherTimer runtimeSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(50) };
     private readonly DispatcherTimer saveTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
     private readonly LyricsResolver resolver;
@@ -30,6 +31,8 @@ public partial class MainWindow : Window
     private readonly HashSet<Task> pending = new();
     private CancellationTokenSource? lookup;
     private AppSettings settings;
+    private RuntimeState runtimeState;
+    private readonly OutputPauseController outputPause;
     private bool ready, closing, closed;
     private int receiverPid;
     private double nextReceiverCheck;
@@ -40,6 +43,8 @@ public partial class MainWindow : Window
         secondary = new(http);
         resolver = new(http, data, secondary);
         settings = data.ReadSettings();
+        runtimeState = data.ReadRuntimeState();
+        outputPause = new(runtimeState.OutputPause, DateTimeOffset.UtcNow);
         playback = new(PlaybackSourceSetting.Parse(settings.PlaybackSource));
         profiles = data.ReadProfiles(settings);
         settings = profiles.Selected.Apply(settings);
@@ -79,9 +84,12 @@ public partial class MainWindow : Window
         InitializeUpdates();
         InitializeDiscovery();
         InitializePresentation();
+        InitializeOutputPause();
         LoadCorrection();
         diagnostics.Add(DiagnosticCategory.Lifecycle, "Application started");
-        ready = true; timer.Start(); playback.Start();
+        ready = true;
+        RestoreRuntimeSection();
+        timer.Start(); playback.Start();
     }
 
     private void OnObserved(PlaybackSnapshot? snapshot, string status, long revision)
@@ -162,6 +170,9 @@ public partial class MainWindow : Window
     {
         if (closing) return;
         var now = MonotonicClock.Now;
+        var nowUtc = DateTimeOffset.UtcNow;
+        TickOutputPause(nowUtc);
+        var outputPaused = IsOutputPaused(nowUtc);
         // A native metadata event can arrive before its dispatcher callback; never send the old track in that gap.
         if (acceptedPlaybackRevision != playback.Revision)
         {
@@ -201,14 +212,15 @@ public partial class MainWindow : Window
         var manualLayout = MessageLayout.Align(manual.Draft, settings.ManualAlignment);
         var manualPayload = ChatboxFormatter.Format(manualLayout, settings.Compact, true);
         ApplyManualView(manualLayout, manualPayload, desired, now);
-        scheduler.Set(engine.Epoch, desired ?? "", engine.Enabled && desired is not null, settings.Compact, manual.PendingSend, preserveLayout);
-        if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && engine.Enabled)
+        var outputEligible = OutputEligibility.CanSend(engine.Enabled, outputPaused);
+        scheduler.Set(engine.Epoch, desired ?? "", outputEligible && desired is not null, settings.Compact, manual.PendingSend, preserveLayout);
+        if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && outputEligible)
         {
             var sent = output.Send(packet.Text);
             scheduler.Complete(packet, sent);
             if (sent) manual.Sent(now);
         }
-        if (typing.Take(engine.Enabled && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
+        if (typing.Take(outputEligible && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
             output.SendTyping(typingState);
         ApplyOscView();
     }
@@ -238,11 +250,13 @@ public partial class MainWindow : Window
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
         PageTitle.Text = page;
         WindowLayout.Apply(this, ContentRoot.ActualHeight);
+        activeSection = page;
+        SaveRuntimeStateNow();
     }
     private void DraftKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control && engine.Enabled)
-        { manual.Send(); Tick(); e.Handled = true; }
+        { RequestManualSend(); e.Handled = true; }
     }
 
     private void Save()
@@ -300,14 +314,14 @@ public partial class MainWindow : Window
     {
         if (!ready || loadingQuickDraft) return;
         manual.Focus(DraftBox.IsKeyboardFocusWithin);
-        manual.Edit(DraftBox.Text, settings.LiveEdit, MonotonicClock.Now); Tick();
+        manual.Edit(DraftBox.Text, settings.LiveEdit && !IsOutputPaused(DateTimeOffset.UtcNow), MonotonicClock.Now); Tick();
     }
     private void LiveChanged(object sender, RoutedEventArgs e)
     {
         if (!ready) return;
-        manual.LiveChanged(LiveBox.IsChecked == true); DisplayChanged(sender, e);
+        manual.LiveChanged(LiveBox.IsChecked == true && !IsOutputPaused(DateTimeOffset.UtcNow)); DisplayChanged(sender, e);
     }
-    private void SendManual(object sender, RoutedEventArgs e) { manual.Send(); Tick(); }
+    private void SendManual(object sender, RoutedEventArgs e) => RequestManualSend();
     private void InsertAscii(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: string target }) return;
@@ -321,7 +335,13 @@ public partial class MainWindow : Window
         ErrorText.Text = "";
         box.Focus();
     }
-    private void ClearManual(object sender, RoutedEventArgs e) { DraftBox.Clear(); manual.Edit("", settings.LiveEdit, MonotonicClock.Now); manual.Send(); Tick(); }
+    private void ClearManual(object sender, RoutedEventArgs e)
+    {
+        DraftBox.Clear();
+        manual.Edit("", settings.LiveEdit && !IsOutputPaused(DateTimeOffset.UtcNow), MonotonicClock.Now);
+        if (IsOutputPaused(DateTimeOffset.UtcNow)) manual.SuppressOutput(); else manual.Send();
+        Tick();
+    }
     private void ResumeAutomatic(object sender, RoutedEventArgs e) { manual.Resume(); Tick(); }
     private void OffsetChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
@@ -369,9 +389,10 @@ public partial class MainWindow : Window
     {
         if (closed) return;
         e.Cancel = true;
-        if (LifecyclePolicy.Close(settings, exitRequested) == WindowAction.Hide) { Hide(); return; }
+        if (LifecyclePolicy.Close(settings, exitRequested) == WindowAction.Hide) { SaveRuntimeStateNow(); Hide(); return; }
         if (closing) return;
-        closing = true; ready = false; timer.Stop(); saveTimer.Stop(); Save();
+        SaveRuntimeStateNow();
+        closing = true; ready = false; timer.Stop(); saveTimer.Stop(); runtimeSaveTimer.Stop(); Save();
         DisposeTray();
         lifetime.Cancel();
         CancelManualMatch();

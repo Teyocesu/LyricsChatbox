@@ -29,9 +29,25 @@
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom">
           <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Padding="10,12">
-            <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output">
-              <TextBlock Text="Output" FontSize="12"/>
-            </CheckBox>
+            <StackPanel>
+              <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"><TextBlock Text="Output" FontSize="12"/></CheckBox>
+              <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource Caption}" Margin="22,5,0,8"/>
+              <WrapPanel>
+              <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="0,0,6,0" AutomationProperties.Name="Resume Chatbox output"/>
+              <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource SmallButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
+                <Button.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="Pause for 5 minutes" Tag="5" Click="PauseOutputSelected"/>
+                    <MenuItem Header="Pause for 15 minutes" Tag="15" Click="PauseOutputSelected"/>
+                    <MenuItem Header="Pause for 30 minutes" Tag="30" Click="PauseOutputSelected"/>
+                    <Separator/>
+                    <MenuItem x:Name="PauseUntilTrackMenuItem" Header="Pause until next track" Tag="track" Click="PauseOutputSelected"/>
+                    <MenuItem Header="Pause until I resume" Tag="resume" Click="PauseOutputSelected"/>
+                  </ContextMenu>
+                </Button.ContextMenu>
+              </Button>
+              </WrapPanel>
+            </StackPanel>
           </Border>
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">

@@ -73,6 +73,11 @@ public sealed partial class LocalData(string root)
     public bool SaveSettings(AppSettings settings) => settings.IsValid && Write(Path.Combine(Root, "settings.json"),
         JsonSerializer.Serialize(settings with { Appearance = settings.Appearance is null ? null : AppearanceSettings.Normalize(settings.Appearance),
             PlaybackSource = PlaybackSourceSetting.Normalize(settings.PlaybackSource) }, Json));
+    public RuntimeState ReadRuntimeState(DateTimeOffset? nowUtc = null) => RuntimeStatePolicy.Normalize(
+        Read<RuntimeState>(Path.Combine(Root, "runtime-state.json"), 16_384), nowUtc ?? DateTimeOffset.UtcNow);
+    public bool SaveRuntimeState(RuntimeState state, DateTimeOffset? nowUtc = null) => Write(
+        Path.Combine(Root, "runtime-state.json"), JsonSerializer.Serialize(
+            RuntimeStatePolicy.Normalize(state, nowUtc ?? DateTimeOffset.UtcNow), Json));
     public string? ReadLocal(TrackIdentity track) => ReadText(ReadablePath("lyrics", track, ".lrc"), LrcParser.MaxCharacters * 4);
     public bool HasUsableLocalLyrics(TrackIdentity track) => LrcParser.Parse(ReadLocal(track)).Lines.Count > 0;
     public bool SaveLocal(TrackIdentity track, string lrc)

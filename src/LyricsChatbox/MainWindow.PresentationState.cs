@@ -49,7 +49,7 @@ public partial class MainWindow
         var preview = PresentationText.Preview(visible);
         var profile = (manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
             : profiles.Selected.Name + " · " + (structured ? contextMode : settings.Preset)) + (settings.Compact ? " · Floating" : "");
-        var owner = !engine.Enabled ? "Output off · preview" : manual.IsManual
+        var owner = !engine.Enabled ? "Output off · preview" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output paused · preview" : manual.IsManual
             ? desired is null ? "Manual · unsent draft" : "Manual · preview" : "Automatic · preview";
         var view = new PreviewView(preview.Text, preview.IsPlaceholder, preserveLayout, payloadLength, profile, settings.Compact, owner);
         if (!previewView.ShouldApply(view)) return;
@@ -69,11 +69,12 @@ public partial class MainWindow
     {
         var budget = manualPayload.Length + " / 144" +
             (ChatboxFormatter.Visible(manualPayload).Length < manualLayout.Trim('\r', '\n').Length ? " · trimmed" : "");
-        var state = manual.RemainingHold(now) is double remaining
+        var paused = IsOutputPaused(DateTimeOffset.UtcNow);
+        var state = paused ? "Output paused · your draft stays here" : manual.RemainingHold(now) is double remaining
             ? $"Sent · automatic resumes in {Math.Ceiling(remaining):0} s"
             : manual.IsManual ? manual.PendingSend ? "Sending your message…" : desired is null ? "Unsent draft · automatic lyrics are paused" : "Manual owns the Chatbox · automatic lyrics are paused"
             : "Automatic mode · editing a draft takes priority";
-        var view = new ManualView(budget, state, engine.Enabled);
+        var view = new ManualView(budget, state, engine.Enabled && !paused);
         if (!manualView.ShouldApply(view)) return;
         ManualBudgetText.Text = view.Budget; ManualStateText.Text = view.State;
         SendButton.IsEnabled = ClearButton.IsEnabled = view.Enabled;
@@ -81,7 +82,8 @@ public partial class MainWindow
 
     private void ApplyOscView()
     {
-        var text = !engine.Enabled ? "Output paused" : output.Status.StartsWith("OSC unavailable") ? "OSC unavailable · check Settings" : "OSC ready · no delivery receipt";
+        var text = !engine.Enabled ? "Output off" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output paused" :
+            output.Status.StartsWith("OSC unavailable") ? "OSC unavailable · check Settings" : "OSC ready · no delivery receipt";
         if (oscView.ShouldApply(text)) OscText.Text = text;
     }
 }
