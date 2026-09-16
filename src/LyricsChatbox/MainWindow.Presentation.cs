@@ -144,7 +144,13 @@ public partial class MainWindow
 
     private string FriendlyLyricsStatus()
     {
-        if (engine.Track is null || string.IsNullOrWhiteSpace(engine.Track.Title)) return "Play a song in Apple Music";
+        if (engine.Track is null || string.IsNullOrWhiteSpace(engine.Track.Title))
+            return playback.Mode switch
+            {
+                PlaybackSourceMode.Spotify => "Play a song in Spotify",
+                PlaybackSourceMode.Automatic => playback.Ambiguous ? "Choose a playback source" : "Waiting for music",
+                _ => "Play a song in Apple Music"
+            };
         if (recordingIgnored) return "Lyrics ignored for this recording";
         if (engine.LyricsStatus is "Looking up synced lyrics" or "Searching another source…")
             return engine.LyricsStatus == "Looking up synced lyrics" ? "Finding lyrics…" : engine.LyricsStatus;

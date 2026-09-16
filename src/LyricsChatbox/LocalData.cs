@@ -4,13 +4,25 @@ using System.Text.Json;
 
 namespace LyricsChatbox;
 
+public enum PlaybackSourceMode { AppleMusic, Spotify, Automatic }
+public static class PlaybackSourceSetting
+{
+    public static PlaybackSourceMode Parse(string? value) => value switch
+    {
+        nameof(PlaybackSourceMode.Spotify) => PlaybackSourceMode.Spotify,
+        nameof(PlaybackSourceMode.Automatic) => PlaybackSourceMode.Automatic,
+        _ => PlaybackSourceMode.AppleMusic
+    };
+    public static string Normalize(string? value) => Parse(value).ToString();
+}
+
 public record AppSettings(bool Enabled = false, double Offset = 0, string Host = "127.0.0.1", int Port = 9000,
     string Preset = "Lyrics Only", string CustomTemplate = "{lyrics}", string Message = "",
     bool Compact = false, bool TypingIndicator = false, bool LiveEdit = false,
     string CustomAlignment = "Left", string ManualAlignment = "Left",
     bool StartWithWindows = false, bool StartMinimized = false, bool MinimizeToTray = false,
     bool CloseToTray = false, bool AutomaticUpdateChecks = false, AppearanceSettings? Appearance = null,
-    bool? AutoDiscoverOsc = null, string? SkippedUpdateVersion = null)
+    bool? AutoDiscoverOsc = null, string? SkippedUpdateVersion = null, string PlaybackSource = "AppleMusic")
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => double.IsFinite(Offset) && Offset is >= -5 and <= 5 && Port is >= 1 and <= 65535 &&
@@ -55,10 +67,12 @@ public sealed partial class LocalData(string root)
     public AppSettings ReadSettings()
     {
         var settings = Read<AppSettings>(Path.Combine(Root, "settings.json"), 16_384);
-        return settings is { IsValid: true } ? settings with { Appearance = settings.Appearance is null ? null : AppearanceSettings.Normalize(settings.Appearance) } : new();
+        return settings is { IsValid: true } ? settings with { Appearance = settings.Appearance is null ? null : AppearanceSettings.Normalize(settings.Appearance),
+            PlaybackSource = PlaybackSourceSetting.Normalize(settings.PlaybackSource) } : new();
     }
     public bool SaveSettings(AppSettings settings) => settings.IsValid && Write(Path.Combine(Root, "settings.json"),
-        JsonSerializer.Serialize(settings with { Appearance = settings.Appearance is null ? null : AppearanceSettings.Normalize(settings.Appearance) }, Json));
+        JsonSerializer.Serialize(settings with { Appearance = settings.Appearance is null ? null : AppearanceSettings.Normalize(settings.Appearance),
+            PlaybackSource = PlaybackSourceSetting.Normalize(settings.PlaybackSource) }, Json));
     public string? ReadLocal(TrackIdentity track) => ReadText(ReadablePath("lyrics", track, ".lrc"), LrcParser.MaxCharacters * 4);
     public bool HasUsableLocalLyrics(TrackIdentity track) => LrcParser.Parse(ReadLocal(track)).Lines.Count > 0;
     public bool SaveLocal(TrackIdentity track, string lrc)

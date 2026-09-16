@@ -54,7 +54,7 @@
               <TextBlock Text="Manual"/>
             </StackPanel>
           </RadioButton>
-          <RadioButton Tag="Settings" AutomationProperties.Name="Settings" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
+          <RadioButton x:Name="SettingsNav" Tag="Settings" AutomationProperties.Name="Settings" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
               <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <TextBlock Text="Settings"/>
@@ -93,7 +93,7 @@
               <Grid.ColumnDefinitions><ColumnDefinition x:Name="ArtworkColumn" Width="216"/><ColumnDefinition/></Grid.ColumnDefinitions>
               <Border x:Name="ArtworkFrame" Width="194" Height="194" CornerRadius="10" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{DynamicResource AccentMutedBrush}">
                 <Grid><Grid.OpacityMask><VisualBrush><VisualBrush.Visual><Border Width="194" Height="194" CornerRadius="10" Background="White"/></VisualBrush.Visual></VisualBrush></Grid.OpacityMask>
-                  <Image x:Name="ArtImage" Stretch="UniformToFill" AutomationProperties.Name="Apple Music album artwork"/>
+                  <Image x:Name="ArtImage" Stretch="UniformToFill" AutomationProperties.Name="Album artwork"/>
                   <TextBlock x:Name="ArtFallback" Text="♫" FontSize="56" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
               </Border>
@@ -101,6 +101,7 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <DockPanel x:Name="HeroStatusRow" LastChildFill="False" Margin="0,0,0,8">
                   <TextBlock Text="NOW PLAYING" FontSize="11" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                  <Button x:Name="ChoosePlaybackSourceButton" DockPanel.Dock="Right" Content="Choose source" Click="GoToPlaybackSourceSettings" Visibility="Collapsed" Margin="8,0,0,0"/>
                   <Border DockPanel.Dock="Right" Style="{StaticResource StatusPill}"><TextBlock x:Name="SourceText" FontSize="11" Foreground="{DynamicResource MutedBrush}"/></Border>
                 </DockPanel>
                 <Grid x:Name="HeroContentGrid" Grid.Row="1">
@@ -120,16 +121,16 @@
                   </Border>
                 </Grid>
                 <StackPanel Grid.Row="2" Margin="0,14,0,0">
-                  <ProgressBar x:Name="PositionProgress" Maximum="1" Height="4" BorderThickness="0" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Playback progress" ToolTip="Apple Music does not currently expose seeking through Windows"/>
+                  <ProgressBar x:Name="PositionProgress" Maximum="1" Height="4" BorderThickness="0" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Playback progress" ToolTip="Seeking is not available here"/>
                   <TextBlock x:Name="PositionText" Style="{StaticResource Caption}" Margin="0,7,0,0"/>
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0">
-                    <Button x:Name="ShuffleButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8B1;" FontFamily="Segoe Fluent Icons" Tag="Shuffle" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Shuffle is not exposed by Apple Music" AutomationProperties.Name="Shuffle"/>
+                    <Button x:Name="ShuffleButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8B1;" FontFamily="Segoe Fluent Icons" Tag="Shuffle" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Shuffle is unavailable" AutomationProperties.Name="Shuffle"/>
                     <Button x:Name="PreviousButton" Style="{StaticResource MusicTransportButton}" Content="&#xE892;" FontFamily="Segoe Fluent Icons" Tag="Previous" Click="TransportClicked" ToolTip="Previous track" AutomationProperties.Name="Previous track"/>
                     <Button x:Name="PlayPauseButton" Style="{StaticResource MusicPlayButton}" Content="&#xE768;" FontFamily="Segoe Fluent Icons" Tag="PlayPause" Click="TransportClicked" Foreground="{DynamicResource AccentBrush}" BorderBrush="{DynamicResource AccentBrush}" Margin="8,0" ToolTip="Play or pause" AutomationProperties.Name="Play or pause"/>
                     <Button x:Name="NextButton" Style="{StaticResource MusicTransportButton}" Content="&#xE893;" FontFamily="Segoe Fluent Icons" Tag="Next" Click="TransportClicked" ToolTip="Next track" AutomationProperties.Name="Next track"/>
-                    <Button x:Name="RepeatButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8EE;" FontFamily="Segoe Fluent Icons" Tag="Repeat" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Repeat is not exposed by Apple Music" AutomationProperties.Name="Repeat" Margin="8,0,16,0"/>
+                    <Button x:Name="RepeatButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8EE;" FontFamily="Segoe Fluent Icons" Tag="Repeat" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Repeat is unavailable" AutomationProperties.Name="Repeat" Margin="8,0,16,0"/>
                     <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE767;" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <Slider x:Name="MusicVolumeSlider" ValueChanged="MusicVolumeChanged" Minimum="0" Maximum="1" Width="90" IsEnabled="False" IsMoveToPointEnabled="True" SmallChange="0.02" LargeChange="0.1" AutomationProperties.Name="Apple Music volume" ToolTip="Apple Music volume" PreviewMouseLeftButtonUp="VolumeReleased" KeyUp="VolumeKeyReleased"/>
+                    <Slider x:Name="MusicVolumeSlider" ValueChanged="MusicVolumeChanged" Minimum="0" Maximum="1" Width="90" IsEnabled="False" IsMoveToPointEnabled="True" SmallChange="0.02" LargeChange="0.1" AutomationProperties.Name="Music volume" ToolTip="Music volume" PreviewMouseLeftButtonUp="VolumeReleased" KeyUp="VolumeKeyReleased"/>
                   </StackPanel>
                   <TextBlock x:Name="TransportStatus" Style="{StaticResource Caption}" FontSize="10" Visibility="Collapsed"/>
                 </StackPanel>
@@ -178,7 +179,7 @@
 <TextBlock Grid.Row="4" Text="Saved offset" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="4" Grid.Column="1" x:Name="InspectorSavedOffset" Text="—" FontSize="12" Margin="0,0,0,4" />
 <TextBlock Grid.Row="5" Text="Effective offset" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="5" Grid.Column="1" x:Name="InspectorEffectiveOffset" Text="—" FontSize="12" Margin="0,0,0,4" Foreground="{DynamicResource AccentBrush}" />
 </Grid>
-                <TextBlock Text="¹ Apple Music / lyrics candidate" Style="{StaticResource Caption}" FontSize="10" Margin="0,0,0,10"/>
+                <TextBlock Text="¹ Music source / lyrics candidate" Style="{StaticResource Caption}" FontSize="10" Margin="0,0,0,10"/>
                 <Expander Header="Recording &amp; timing" FontSize="12">
                   <StackPanel Margin="0,12,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Grid.Row="0" Text="Match" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="0" Grid.Column="1" x:Name="InspectorMatch" Text="—" FontSize="12" Margin="0,0,0,4" />
 <TextBlock Grid.Row="1" Text="Manual match" Style="{StaticResource Caption}" Margin="0,0,12,4"/><TextBlock Grid.Row="1" Grid.Column="1" x:Name="InspectorManual" Text="—" FontSize="12" Margin="0,0,0,4" />
@@ -356,6 +357,14 @@
       </ScrollViewer>
       <ScrollViewer x:Name="SettingsPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Playback source" Style="{StaticResource SectionTitle}"/>
+              <TextBlock Text="Choose which music app LyricsChatbox follows." Style="{StaticResource Caption}" Margin="0,0,0,10"/>
+              <ComboBox x:Name="PlaybackSourceBox" SelectionChanged="PlaybackSourceChanged" AutomationProperties.Name="Playback source" MinWidth="180" HorizontalAlignment="Left"/>
+              <TextBlock Text="Automatic follows the only playing app. If both play, choose one here." Style="{StaticResource Caption}" Margin="0,10,0,0"/>
+            </StackPanel>
+          </Border>
           <Border Style="{StaticResource Card}" Margin="0,0,8,16">
             <StackPanel>
               <TextBlock Text="Appearance" Style="{StaticResource SectionTitle}"/>

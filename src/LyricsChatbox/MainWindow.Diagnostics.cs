@@ -8,7 +8,8 @@ namespace LyricsChatbox;
 public partial class MainWindow
 {
     private readonly Diagnostics diagnostics = new();
-    private string DiagnosticText() => diagnostics.Export(engine.Snapshot, settings, engine.LyricsStatus, output.Status, engine.Offset, manual.IsManual, ErrorText.Text);
+    private string DiagnosticText() => diagnostics.Export(engine.Snapshot, settings, engine.LyricsStatus, output.Status,
+        engine.Offset, manual.IsManual, ErrorText.Text, playback.ActiveKind, SourceText.Text, playback.Ambiguous);
     private void CopyDiagnostics(object sender, RoutedEventArgs e)
     {
         try { Clipboard.SetText(DiagnosticText()); DiagnosticsStatus.Text = "Copied. Review before sharing."; }

@@ -55,7 +55,7 @@ public sealed class PlaybackSourceHost : IAsyncDisposable
         return expectedRevision == Revision && ReferenceEquals(source, active)
             ? source.ControlAsync(command, local) : Task.FromResult(false);
     }
-    public async Task SwitchAsync(IPlaybackSource next)
+    public async Task SwitchAsync(IPlaybackSource next, bool disposePrevious = true)
     {
         if (ReferenceEquals(next, active)) return;
         var old = active;
@@ -67,7 +67,7 @@ public sealed class PlaybackSourceHost : IAsyncDisposable
         Attach();
         Observed?.Invoke(null, "Refreshing playback source", Revision);
         if (started) next.Start();
-        await old.DisposeAsync();
+        if (disposePrevious) await old.DisposeAsync();
     }
     private void Attach()
     {

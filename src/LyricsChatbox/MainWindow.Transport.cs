@@ -52,7 +52,8 @@ public partial class MainWindow
             currentMusicVolume = volume;
             var enabled = volume is not null;
             if (MusicVolumeSlider.IsEnabled != enabled) MusicVolumeSlider.IsEnabled = enabled;
-            var tooltip = enabled ? "Apple Music volume" : "Apple Music audio session unavailable";
+            var player = playback.ActiveKind == PlaybackSourceKind.Spotify ? "Spotify" : "Apple Music";
+            var tooltip = enabled ? player + " volume" : player + " audio session unavailable";
             if (!Equals(MusicVolumeSlider.ToolTip, tooltip)) MusicVolumeSlider.ToolTip = tooltip;
             if (volume is not null && !MusicVolumeSlider.IsMouseCaptureWithin && !MusicVolumeSlider.IsKeyboardFocusWithin)
             {
@@ -103,7 +104,7 @@ public partial class MainWindow
             var accepted = provider is not null && await TrackManualTask(Task.Run(() =>
                 sourceRevision == playback.Revision && ReferenceEquals(provider, playback.Volume) && provider.Set(expected, value)));
             if (closing || generation != volumeGeneration || sourceRevision != playback.Revision) return;
-            TransportStatus.Text = accepted ? "" : "Apple Music volume unavailable; try again.";
+            TransportStatus.Text = accepted ? "" : (playback.ActiveKind == PlaybackSourceKind.Spotify ? "Spotify" : "Apple Music") + " volume unavailable; try again.";
             TransportStatus.Visibility = accepted ? Visibility.Collapsed : Visibility.Visible;
         }
         finally
@@ -126,7 +127,7 @@ public partial class MainWindow
             var sourceRevision = playback.Revision;
             var accepted = await playback.ControlAsync(command, sourceRevision);
             if (closing || sourceRevision != playback.Revision) return;
-            TransportStatus.Text = accepted ? "" : "Apple Music did not accept the command.";
+            TransportStatus.Text = accepted ? "" : (playback.ActiveKind == PlaybackSourceKind.Spotify ? "Spotify" : "Apple Music") + " did not accept the command.";
             TransportStatus.Visibility = accepted ? Visibility.Collapsed : Visibility.Visible;
         }
         finally { changingTransport = false; nextTransportRefresh = 0; }

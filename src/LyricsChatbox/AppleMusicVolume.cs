@@ -10,10 +10,32 @@ public sealed class AppleMusicPlaybackVolume : IPlaybackVolume
     public MusicVolume? Read() => AppleMusicVolume.Read();
     public bool Set(MusicVolume expected, float level) => AppleMusicVolume.Set(expected, level);
 }
+public sealed class SpotifyPlaybackVolume : IPlaybackVolume
+{
+    public MusicVolume? Read() => SpotifyMusicVolume.Read();
+    public bool Set(MusicVolume expected, float level) => SpotifyMusicVolume.Set(expected, level);
+}
+public static class SpotifyMusicVolume
+{
+    public static MusicVolume? Read() => AppleMusicVolume.Access(null, null, IsSpotify);
+    public static bool Set(MusicVolume expected, float level) => float.IsFinite(level) && level is >= 0 and <= 1 &&
+        AppleMusicVolume.Access(expected, level, IsSpotify) is not null;
+    public static MusicVolume? SelectSession(IEnumerable<(MusicVolume State, bool Active)> sessions, MusicVolume? expected = null) =>
+        AppleMusicVolume.SelectSession(sessions, expected);
+    private static bool IsSpotify(int pid)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(pid);
+            return AppleMusicVolume.PackageFamily(process.Handle) == "SpotifyAB.SpotifyMusic_zpdnekdrzrea0";
+        }
+        catch { return false; }
+    }
+}
 public static class AppleMusicVolume
 {
-    public static MusicVolume? Read() => Access(null, null);
-    public static bool Set(MusicVolume expected, float level) => float.IsFinite(level) && level is >= 0 and <= 1 && Access(expected, level) is not null;
+    public static MusicVolume? Read() => Access(null, null, IsAppleMusic);
+    public static bool Set(MusicVolume expected, float level) => float.IsFinite(level) && level is >= 0 and <= 1 && Access(expected, level, IsAppleMusic) is not null;
     public static MusicVolume? SelectSession(IEnumerable<(MusicVolume State, bool Active)> sessions, MusicVolume? expected = null)
     {
         var candidates = sessions.ToArray();
@@ -24,7 +46,7 @@ public static class AppleMusicVolume
         return expected is null || (selected.ProcessId == expected.ProcessId && selected.SessionId == expected.SessionId)
             ? selected : null;
     }
-    private static MusicVolume? Access(MusicVolume? expected, float? level)
+    internal static MusicVolume? Access(MusicVolume? expected, float? level, Func<int, bool> ownsProcess)
     {
         var owned = new List<object>();
         T Own<T>(T value) where T : class { owned.Add(value); return value; }
@@ -50,7 +72,7 @@ public static class AppleMusicVolume
                     var processResult = control.GetProcessId(out var pid);
                     // Apple's active renderer uses a cross-process session. This success code still
                     // identifies its creating process; require the installed Apple package below.
-                    if (processResult is not (0 or 0x0889000D) || pid == 0 || !IsAppleMusic((int)pid)) continue;
+                    if (processResult is not (0 or 0x0889000D) || pid == 0 || !ownsProcess((int)pid)) continue;
                     if (control.GetState(out var state) != 0 || state == 2) continue;
                     Check(control.GetSessionInstanceIdentifier(out var id));
                     var volume = (IVolume)controlObject;
@@ -64,7 +86,7 @@ public static class AppleMusicVolume
             var match = matches.Single(match => ReferenceEquals(match.State, selected));
             if (level.HasValue)
             {
-                if (!IsAppleMusic(match.State.ProcessId)) return null;
+                if (!ownsProcess(match.State.ProcessId)) return null;
                 var context = Guid.Empty; Check(match.Volume.SetMasterVolume(level.Value, ref context));
                 Check(match.Volume.GetMasterVolume(out var confirmed));
                 return Math.Abs(confirmed - level.Value) < 0.001f ? match.State with { Level = confirmed } : null;
@@ -80,12 +102,16 @@ public static class AppleMusicVolume
         {
             using var process = Process.GetProcessById(pid);
             if (process.ProcessName is not ("AppleMusic" or "AMPLibraryAgent")) return false;
-            uint length = 0;
-            if (GetPackageFamilyName(process.Handle, ref length, null) != 122 || length > 256) return false;
-            var name = new System.Text.StringBuilder((int)length);
-            return GetPackageFamilyName(process.Handle, ref length, name) == 0 && name.ToString() == "AppleInc.AppleMusicWin_nzyj5cx40ttqa";
+            return PackageFamily(process.Handle) == "AppleInc.AppleMusicWin_nzyj5cx40ttqa";
         }
         catch { return false; }
+    }
+    internal static string? PackageFamily(IntPtr handle)
+    {
+        uint length = 0;
+        if (GetPackageFamilyName(handle, ref length, null) != 122 || length > 256) return null;
+        var name = new System.Text.StringBuilder((int)length);
+        return GetPackageFamilyName(handle, ref length, name) == 0 ? name.ToString() : null;
     }
     private static void Check(int result) => Marshal.ThrowExceptionForHR(result);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern int GetPackageFamilyName(IntPtr process, ref uint length, System.Text.StringBuilder? name);

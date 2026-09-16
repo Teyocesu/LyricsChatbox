@@ -30,6 +30,24 @@ public static partial class PresentationText
             _ => ""
         };
 
+    public static string PlaybackStatus(PlaybackSourceMode mode, PlaybackSourceKind? active,
+        PlaybackSnapshot? snapshot, string status)
+    {
+        if (mode == PlaybackSourceMode.Automatic && active is null) return status;
+        var source = active ?? (mode == PlaybackSourceMode.Spotify ? PlaybackSourceKind.Spotify : PlaybackSourceKind.AppleMusic);
+        if (source == PlaybackSourceKind.AppleMusic) return AppleMusicStatus(snapshot, status);
+        if (snapshot is not null) return "Spotify · " + snapshot.State.ToString().ToLowerInvariant();
+        return status switch
+        {
+            "Multiple Spotify sessions · waiting" => "Spotify · multiple sessions open",
+            "Spotify unavailable · reconnecting" => "Spotify · reconnecting",
+            "Reading Spotify" or "Checking Spotify session" or "Updating Spotify track" or
+                "Updating Spotify playback" or "Settling Spotify track" or "Refreshing Spotify playback" or
+                "Refreshing playback source" => "Spotify · reconnecting",
+            _ => "Spotify · not detected"
+        };
+    }
+
     public static string AppleMusicStatus(PlaybackSnapshot? snapshot, string status) => snapshot is not null
         ? "Apple Music · " + snapshot.State.ToString().ToLowerInvariant()
         : status switch

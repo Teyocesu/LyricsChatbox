@@ -24,10 +24,13 @@ public sealed class Diagnostics
         text = new string(text.Where(c => !char.IsControl(c)).Take(512).ToArray());
         return text;
     }
-    public string Export(PlaybackSnapshot? snapshot, AppSettings settings, string lyricsStatus, string oscStatus, double effectiveOffset, bool manualMode = false, string? applicationStatus = null)
+    public string Export(PlaybackSnapshot? snapshot, AppSettings settings, string lyricsStatus, string oscStatus, double effectiveOffset,
+        bool manualMode = false, string? applicationStatus = null, PlaybackSourceKind? selectedSource = null,
+        string? sourceStatus = null, bool sourceAmbiguous = false)
     {
         DiagnosticEvent[] recent;
         lock (events) recent = events.ToArray();
+        var appleSnapshot = snapshot?.Source == PlaybackSourceKind.AppleMusic ? snapshot : null;
         // Explicit whitelist: never serialize AppSettings, Timeline, controller or HTTP objects.
         var report = new
         {
@@ -37,21 +40,27 @@ public sealed class Diagnostics
             Windows = Environment.OSVersion.VersionString,
             Runtime = RuntimeInformation.FrameworkDescription,
             ApplicationStatus = Clean(applicationStatus),
+            PlaybackSource = new { Configured = PlaybackSourceSetting.Normalize(settings.PlaybackSource),
+                Selected = selectedSource?.ToString(), Status = Clean(sourceStatus), Ambiguous = sourceAmbiguous },
+            Music = new { SessionPresent = snapshot is not null, Source = snapshot?.Source.ToString(),
+                RawTitle = Clean(snapshot?.RawTitle), RawArtist = Clean(snapshot?.RawArtist), RawAlbum = Clean(snapshot?.RawAlbum),
+                Title = Clean(snapshot?.Track.Title), Artist = Clean(snapshot?.Track.Artist), Album = Clean(snapshot?.Track.Album),
+                Duration = snapshot?.Track.Duration, Position = snapshot?.Position, State = snapshot?.State.ToString() },
             AppleMusic = new
             {
-                SessionPresent = snapshot is not null,
-                Source = snapshot is null ? null : AppleMusicPlayback.AppleSource,
-                RawTitle = Clean(snapshot?.RawTitle),
-                RawArtist = Clean(snapshot?.RawArtist),
-                RawAlbum = Clean(snapshot?.RawAlbum),
-                Title = Clean(snapshot?.Track.Title),
-                Artist = Clean(snapshot?.Track.Artist),
-                Album = Clean(snapshot?.Track.Album),
-                NormalizedTitle = Clean(LyricsMatching.Normalize(snapshot?.Track.Title)),
-                NormalizedArtist = Clean(LyricsMatching.Normalize(snapshot?.Track.Artist)),
-                Duration = snapshot?.Track.Duration,
-                Position = snapshot?.Position,
-                State = snapshot?.State.ToString()
+                SessionPresent = appleSnapshot is not null,
+                Source = appleSnapshot is null ? null : AppleMusicPlayback.AppleSource,
+                RawTitle = Clean(appleSnapshot?.RawTitle),
+                RawArtist = Clean(appleSnapshot?.RawArtist),
+                RawAlbum = Clean(appleSnapshot?.RawAlbum),
+                Title = Clean(appleSnapshot?.Track.Title),
+                Artist = Clean(appleSnapshot?.Track.Artist),
+                Album = Clean(appleSnapshot?.Track.Album),
+                NormalizedTitle = Clean(LyricsMatching.Normalize(appleSnapshot?.Track.Title)),
+                NormalizedArtist = Clean(LyricsMatching.Normalize(appleSnapshot?.Track.Artist)),
+                Duration = appleSnapshot?.Track.Duration,
+                Position = appleSnapshot?.Position,
+                State = appleSnapshot?.State.ToString()
             },
             Lyrics = new { Status = Clean(lyricsStatus), EffectiveOffset = effectiveOffset },
             Output = new { settings.Enabled, Mode = manualMode ? "Manual" : "Automatic", settings.Compact, settings.Host, settings.Port, settings.Preset, Status = Clean(oscStatus) },

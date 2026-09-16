@@ -16,7 +16,7 @@ public partial class MainWindow : Window
     private static readonly System.Windows.Media.FontFamily TextFont = new("Segoe UI"), LayoutFont = new("Consolas");
     private readonly LocalData data = new(LocalData.DefaultRoot);
     private readonly HttpClient http = new(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false });
-    private readonly PlaybackSourceHost playback = new(new AppleMusicPlayback());
+    private readonly PlaybackSourceCoordinator playback;
     private readonly SynchronizationEngine engine = new();
     private readonly ChatboxScheduler scheduler = new();
     private readonly ChatboxOutput output = new();
@@ -40,6 +40,7 @@ public partial class MainWindow : Window
         secondary = new(http);
         resolver = new(http, data, secondary);
         settings = data.ReadSettings();
+        playback = new(PlaybackSourceSetting.Parse(settings.PlaybackSource));
         profiles = data.ReadProfiles(settings);
         settings = profiles.Selected.Apply(settings);
         contextMode = profiles.Selected.ContextMode;
@@ -49,6 +50,11 @@ public partial class MainWindow : Window
         InitializeAppearance();
         engine.Enabled = settings.Enabled; engine.Offset = settings.Offset;
         EnabledBox.IsChecked = settings.Enabled; OffsetSlider.Value = settings.Offset;
+        PlaybackSourceBox.ItemsSource = new[] { "Apple Music", "Spotify", "Automatic" };
+        PlaybackSourceBox.SelectedItem = PlaybackSourceSetting.Parse(settings.PlaybackSource) switch
+        {
+            PlaybackSourceMode.Spotify => "Spotify", PlaybackSourceMode.Automatic => "Automatic", _ => "Apple Music"
+        };
         HostBox.Text = settings.Host; PortBox.Text = settings.Port.ToString(CultureInfo.InvariantCulture);
         PresetBox.ItemsSource = ChatboxComposer.Presets; PresetBox.SelectedItem = settings.Preset;
         CustomAlignmentBox.ItemsSource = ManualAlignmentBox.ItemsSource = MessageLayout.Alignments;
@@ -85,11 +91,13 @@ public partial class MainWindow : Window
         {
             if (closing || revision != playback.Revision) return;
             acceptedPlaybackRevision = revision;
-            SourceText.Text = PresentationText.PlaybackStatus(playback.Kind, snapshot, status);
-            if (status == "Refreshing playback source")
+            SourceText.Text = PresentationText.PlaybackStatus(playback.Mode, playback.ActiveKind, snapshot, status);
+            ChoosePlaybackSourceButton.Visibility = playback.Ambiguous ? Visibility.Visible : Visibility.Collapsed;
+            if (status == "Refreshing playback source" || playback.ActiveKind is null)
             {
                 currentMusicVolume = null; volumeGeneration++; MusicVolumeSlider.IsEnabled = false;
                 nextTransportRefresh = nextVolumeRefresh = 0;
+                TransportStatus.Text = ""; TransportStatus.Visibility = Visibility.Collapsed;
             }
             if (engine.Observe(snapshot))
             {
@@ -242,6 +250,26 @@ public partial class MainWindow : Window
         settings = settings with { Enabled = engine.Enabled };
         if (!data.SaveSettings(settings)) ErrorText.Text = "Could not save settings; this session still works.";
         if (!data.SaveProfiles(profiles)) ProfileStatus.Text = "Could not save profiles. Changes apply only to this session.";
+    }
+    private async void PlaybackSourceChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!ready) return;
+        var mode = (PlaybackSourceBox.SelectedItem as string) switch
+        {
+            "Spotify" => PlaybackSourceMode.Spotify,
+            "Automatic" => PlaybackSourceMode.Automatic,
+            _ => PlaybackSourceMode.AppleMusic
+        };
+        if (mode == playback.Mode) return;
+        settings = settings with { PlaybackSource = mode.ToString() };
+        Save();
+        await playback.SetModeAsync(mode);
+        Tick();
+    }
+    private void GoToPlaybackSourceSettings(object sender, RoutedEventArgs e)
+    {
+        SettingsNav.IsChecked = true;
+        PlaybackSourceBox.Focus();
     }
     private void SetError(string message) => ErrorText.Text = message;
     private void ClearError() => ErrorText.Text = "";
