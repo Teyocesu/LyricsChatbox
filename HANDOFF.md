@@ -1,4 +1,14 @@
-# Current handoff — v0.6.0 post-audit correction pack completed
+# Current handoff — v0.6.0 second post-audit correction pack completed
+
+AUD6R-01 and Windows PowerShell package-policy compatibility are corrected on `codex/v0.6.0`; `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`. No RC, version, tag, release, installer build/install or public-copy work was started.
+
+Spotify accepted observations now carry the immutable source revision under which the gate proved them. An invalidation before publication drops the old result; an invalidation after the last current check can only leave an old-revision callback, never restamp it as current. Snapshot/status and artwork use the same token, with a revision recheck before artwork and no external callback under the transition lock. Deterministic media/session tests reproduce the former `null(N+1) -> old snapshot(N+1)` failure, prove it impossible after the fix, and show the allowed `null(N+1) -> old snapshot(N)` callback is rejected by the production host/coordinator path. Old track, lyrics epoch, artwork and UntilNextTrack cannot re-enter/change. The full previous Spotify settlement matrix remains green.
+
+`PackagePolicy.ps1` no longer depends on .NET-only `Path.GetRelativePath` or `Convert.ToHexString`. Its Windows-only compatibility helper uses canonical full paths plus a separator-bounded OrdinalIgnoreCase child prefix and rejects exact-root, sibling, outside, similar-prefix and canonicalized escape cases before returning normalized `/` paths. Expanded tests also cover nested/space/case paths and duplicate ZIP entries. The package matrix passes under both Windows PowerShell 5.1 and PowerShell 7; the existing 487-file Phase 4 staging/ZIP/checksum/installer-source verification passes under Windows PowerShell 5.1 with unchanged SHA-256.
+
+Race tests passed 4/4, multiplayer/Spotify settlement 48/48 and the relevant subsystem 170/170. Final locked restore passed, the Release solution built with zero warnings/errors, all 324 tests passed with no skips, both PowerShell package tests passed, the real Phase 4 verification path passed under Windows PowerShell 5.1, and `git diff --check` passed. No physical Spotify run was needed because the concurrency path is deterministic. Remaining gates are final independent confirmation, second-machine Spotify QA, explicit RC authorization and the later authorized RC installer/physical matrix. Stop before all RC, installer, second-machine, version/tag/release work.
+
+# Previous handoff — v0.6.0 post-audit correction pack completed
 
 AUD6-01 through AUD6-03 are corrected on `codex/v0.6.0`; `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`, and no RC, tag, version, release or public-copy work was started.
 

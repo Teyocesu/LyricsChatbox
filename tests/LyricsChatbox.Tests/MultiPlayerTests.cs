@@ -445,6 +445,101 @@ public sealed class MultiPlayerTests : IDisposable
         Assert.DoesNotContain(PlaybackSourceKind.AppleMusic, seen.Skip(beforeLoss));
     }
 
+    [Theory]
+    [InlineData("Updating Spotify track")]
+    [InlineData("No Spotify session")]
+    public async Task AcceptedSpotifyObservationCannotReenterAfterSourceInvalidation(string invalidationStatus)
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new RacySpotifySource();
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Spotify, apple, spotify);
+        var engine = new SynchronizationEngine { Enabled = true };
+        var observed = new List<(string? Track, long Revision)>();
+        var artwork = new List<(string Track, long Revision)>();
+        coordinator.Observed += (snapshot, _, revision) =>
+        {
+            observed.Add((snapshot?.Track.Key, revision));
+            engine.Observe(snapshot);
+        };
+        coordinator.ArtworkAvailable += (track, revision, _) => artwork.Add((track.Key, revision));
+
+        var current = CoreTests.Snapshot() with { Source = PlaybackSourceKind.Spotify };
+        spotify.RaiseCurrent(current);
+        var oldEpoch = engine.Epoch;
+        Assert.True(engine.Complete(oldEpoch, new(LrcParser.Parse("[00:01]old"), "old")));
+        var pause = new OutputPauseController(null, current.ObservedUtc);
+        pause.BeginUntilTrackChanges(current.Track);
+        var stale = current with { Track = current.Track with { Title = "Pre-event accepted" },
+            RawTitle = "Pre-event accepted" };
+        var acceptedRevision = spotify.CaptureAcceptance();
+
+        spotify.Invalidate(invalidationStatus);
+        var invalidatedRevision = spotify.Revision;
+        spotify.PublishAccepted(stale, acceptedRevision);
+
+        Assert.Equal((null, invalidatedRevision), observed[^1]);
+        Assert.Null(engine.Track);
+        Assert.Empty(artwork);
+        Assert.False(engine.Complete(oldEpoch, new(LrcParser.Parse("[00:01]stale"), "stale")));
+        Assert.False(pause.Evaluate(current.ObservedUtc.AddSeconds(1), engine.Track));
+
+        var freshRevision = spotify.CaptureAcceptance();
+        spotify.PublishAccepted(stale, freshRevision);
+        Assert.Equal(stale.Track, engine.Track);
+        Assert.Equal((stale.Track.Key, freshRevision), artwork[^1]);
+
+        var artworkCount = artwork.Count;
+        var concurrentlyAcceptedRevision = spotify.CaptureAcceptance();
+        spotify.PublishWhileInvalidating(stale, concurrentlyAcceptedRevision, invalidationStatus);
+        Assert.Equal((null, spotify.Revision), observed[^1]);
+        Assert.Null(engine.Track);
+        Assert.Equal(artworkCount, artwork.Count);
+        Assert.Equal([("null", spotify.Revision), ("snapshot", concurrentlyAcceptedRevision)],
+            spotify.RawPublications.TakeLast(2));
+    }
+
+    [Fact]
+    public void SpotifyPublicationTokenKeepsSnapshotAndArtworkOnOneRevision()
+    {
+        var currentRevision = 7L;
+        var snapshots = new List<long>();
+        var artworks = new List<long>();
+        Assert.True(SpotifyAcceptedPublication.Publish(7, () => currentRevision,
+            snapshots.Add, artworks.Add));
+        Assert.Equal([7], snapshots); Assert.Equal([7], artworks);
+
+        snapshots.Clear(); artworks.Clear(); currentRevision = 8;
+        Assert.False(SpotifyAcceptedPublication.Publish(7, () => currentRevision,
+            snapshots.Add, artworks.Add));
+        Assert.Empty(snapshots); Assert.Empty(artworks);
+
+        snapshots.Clear(); artworks.Clear(); currentRevision = 9;
+        Assert.True(SpotifyAcceptedPublication.Publish(9, () => currentRevision,
+            revision => { snapshots.Add(revision); currentRevision++; }, artworks.Add));
+        Assert.Equal([9], snapshots); Assert.Empty(artworks);
+    }
+
+    [Fact]
+    public void ConcurrentInvalidationAfterRevisionCheckCannotRestampAcceptedSnapshot()
+    {
+        var currentRevision = 11L;
+        var firstCheck = true;
+        var sequence = new List<(string Kind, long Revision)>();
+        Assert.True(SpotifyAcceptedPublication.Publish(11, () =>
+        {
+            var observed = currentRevision;
+            if (firstCheck)
+            {
+                firstCheck = false;
+                currentRevision++;
+                sequence.Add(("null", currentRevision));
+            }
+            return observed;
+        }, revision => sequence.Add(("snapshot", revision)),
+            revision => sequence.Add(("artwork", revision))));
+        Assert.Equal([("null", 12L), ("snapshot", 11L)], sequence);
+    }
+
     [Fact]
     public void SourcePresentationAndDiagnosticsStayTruthfulAndPrivate()
     {
@@ -496,6 +591,59 @@ public sealed class MultiPlayerTests : IDisposable
         public void Raise(PlaybackSnapshot? snapshot, string status = "test")
         { Revision++; Observed?.Invoke(snapshot, status, Revision); }
         public void RaiseArtwork(TrackIdentity track) => ArtworkAvailable?.Invoke(track, Revision, null);
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class RacySpotifySource : IPlaybackSource
+    {
+        public PlaybackSourceKind Kind => PlaybackSourceKind.Spotify;
+        public string DisplayName => "Spotify";
+        public long Revision { get; private set; }
+        public IPlaybackVolume? Volume => null;
+        public List<(string Kind, long Revision)> RawPublications { get; } = [];
+        public event Action<PlaybackSnapshot?, string, long>? Observed;
+        public event Action<TrackIdentity, long, IRandomAccessStreamReference?>? ArtworkAvailable;
+        public void Start() { }
+        public void Suspend() => Invalidate("Playback suspended");
+        public void ReanchorAfterResume() => Invalidate("Refreshing Spotify playback");
+        public MediaControls GetControls() => new();
+        public Task<bool> ControlAsync(MediaCommand _, long expectedRevision) => Task.FromResult(expectedRevision == Revision);
+        public void RaiseCurrent(PlaybackSnapshot snapshot)
+        {
+            Revision++;
+            Observed?.Invoke(snapshot, "Spotify · playing", Revision);
+        }
+        public long CaptureAcceptance() => Revision;
+        public void Invalidate(string status)
+        {
+            Revision++;
+            RawPublications.Add(("null", Revision));
+            Observed?.Invoke(null, status, Revision);
+        }
+        public void PublishAccepted(PlaybackSnapshot snapshot, long acceptedRevision)
+        {
+            SpotifyAcceptedPublication.Publish(acceptedRevision, () => Revision,
+                revision => Observed?.Invoke(snapshot, "Spotify · playing", revision),
+                revision => ArtworkAvailable?.Invoke(snapshot.Track, revision, null));
+        }
+        public void PublishWhileInvalidating(PlaybackSnapshot snapshot, long acceptedRevision, string status)
+        {
+            var firstCheck = true;
+            SpotifyAcceptedPublication.Publish(acceptedRevision, () =>
+            {
+                var observed = Revision;
+                if (firstCheck)
+                {
+                    firstCheck = false;
+                    Invalidate(status);
+                }
+                return observed;
+            }, revision =>
+            {
+                RawPublications.Add(("snapshot", revision));
+                Observed?.Invoke(snapshot, "Spotify · playing", revision);
+            }, revision => ArtworkAvailable?.Invoke(snapshot.Track, revision, null));
+        }
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

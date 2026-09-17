@@ -75,9 +75,27 @@ function Get-PackageRelativePath {
         [Parameter(Mandatory = $true)][string]$Path
     )
 
-    $relative = [IO.Path]::GetRelativePath(
-        [IO.Path]::GetFullPath($BasePath),
-        [IO.Path]::GetFullPath($Path))
+    $trim = [char[]]@([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $base = [IO.Path]::GetFullPath($BasePath)
+    $baseRoot = [IO.Path]::GetPathRoot($base)
+    if ($base.Length -gt $baseRoot.Length) { $base = $base.TrimEnd($trim) }
+    $candidate = [IO.Path]::GetFullPath($Path)
+    if ($candidate.Equals($base, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Package path must be a child of the staging root: $candidate"
+    }
+    $basePrefix = if ($base.EndsWith([IO.Path]::DirectorySeparatorChar.ToString()) -or
+        $base.EndsWith([IO.Path]::AltDirectorySeparatorChar.ToString())) {
+        $base
+    } else {
+        $base + [IO.Path]::DirectorySeparatorChar
+    }
+    if (-not $candidate.StartsWith($basePrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Package path is outside the staging root: $candidate"
+    }
+    $relative = $candidate.Substring($basePrefix.Length)
+    if ([string]::IsNullOrWhiteSpace($relative)) {
+        throw "Package path must identify a child file: $candidate"
+    }
     return $relative.Replace('\', '/')
 }
 
@@ -287,7 +305,7 @@ function Get-ZipEntryHash {
         $stream = $entry[0].Open()
         $sha = [Security.Cryptography.SHA256]::Create()
         try {
-            return [Convert]::ToHexString($sha.ComputeHash($stream)).ToLowerInvariant()
+            return (($sha.ComputeHash($stream) | ForEach-Object { $_.ToString('x2') }) -join '')
         } finally {
             $sha.Dispose()
             $stream.Dispose()

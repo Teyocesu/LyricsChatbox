@@ -2,6 +2,21 @@ using Windows.Media.Control;
 
 namespace LyricsChatbox;
 
+public static class SpotifyAcceptedPublication
+{
+    // The revision captured by the observation/gate decision is the publication token.
+    // A later invalidation either drops the publication or leaves it stamped stale;
+    // it can never promote old data into the newer revision.
+    public static bool Publish(long acceptedRevision, Func<long> currentRevision,
+        Action<long> publishSnapshot, Action<long> publishArtwork)
+    {
+        if (currentRevision() != acceptedRevision) return false;
+        publishSnapshot(acceptedRevision);
+        if (currentRevision() == acceptedRevision) publishArtwork(acceptedRevision);
+        return true;
+    }
+}
+
 public sealed partial class SpotifyPlayback : IPlaybackSource
 {
     public const string VerifiedSource = "SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify";
@@ -125,15 +140,18 @@ public sealed partial class SpotifyPlayback : IPlaybackSource
                         SpotifyGateResult result;
                         lock (transitionLock) result = transitions.Observe(snapshot);
                         if (result == SpotifyGateResult.Invalidate) Invalidate("Updating Spotify playback");
-                        else if (result == SpotifyGateResult.Settling) Emit(null, "Settling Spotify track", Revision);
+                        else if (result == SpotifyGateResult.Settling) Emit(null, "Settling Spotify track", rev);
                         else
                         {
-                            Emit(snapshot, "Spotify · " + state.ToString().ToLowerInvariant(), Revision);
-                            if (artworkRevision != Revision || artworkKey != track.Key)
-                            {
-                                artworkRevision = Revision; artworkKey = track.Key;
-                                ArtworkAvailable?.Invoke(track, Revision, media.Thumbnail);
-                            }
+                            SpotifyAcceptedPublication.Publish(rev, () => Revision,
+                                acceptedRevision => Emit(snapshot,
+                                    "Spotify · " + state.ToString().ToLowerInvariant(), acceptedRevision),
+                                acceptedRevision =>
+                                {
+                                    if (artworkRevision == acceptedRevision && artworkKey == track.Key) return;
+                                    artworkRevision = acceptedRevision; artworkKey = track.Key;
+                                    ArtworkAvailable?.Invoke(track, acceptedRevision, media.Thumbnail);
+                                });
                         }
                     }
                 }

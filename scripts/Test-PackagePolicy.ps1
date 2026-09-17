@@ -27,6 +27,35 @@ function New-TestZip {
 
 try {
     $null = Reset-ManagedPackageDirectory -RepositoryRoot $repositoryRoot -Path $testRoot
+    $relativeRoot = Join-Path $managedTestRoot 'relative path root'
+    $nested = Join-Path $relativeRoot 'nested child'
+    New-Item -ItemType Directory -Path $nested -Force | Out-Null
+    $spaceFile = Join-Path $relativeRoot 'file with spaces.txt'
+    $nestedFile = Join-Path $nested 'child.dll'
+    Set-Content -LiteralPath $spaceFile -Value 'space' -Encoding utf8
+    Set-Content -LiteralPath $nestedFile -Value 'nested' -Encoding utf8
+    if ((Get-PackageRelativePath -BasePath $relativeRoot -Path $spaceFile) -ne 'file with spaces.txt') {
+        throw 'Child relative path or space handling failed.'
+    }
+    if ((Get-PackageRelativePath -BasePath ($relativeRoot.ToUpperInvariant()) -Path $nestedFile) -ne 'nested child/child.dll') {
+        throw 'Nested relative path, case-insensitive containment, or slash normalization failed.'
+    }
+    $canonicalized = Join-Path $nested '..\file with spaces.txt'
+    if ((Get-PackageRelativePath -BasePath $relativeRoot -Path $canonicalized) -ne 'file with spaces.txt') {
+        throw 'Canonical child path normalization failed.'
+    }
+    Assert-ExpectedFailure -Name 'relative path exact base rejection' -Action {
+        Get-PackageRelativePath -BasePath $relativeRoot -Path $relativeRoot
+    }
+    Assert-ExpectedFailure -Name 'relative path sibling rejection' -Action {
+        Get-PackageRelativePath -BasePath $relativeRoot -Path (Join-Path $managedTestRoot 'sibling/file.txt')
+    }
+    Assert-ExpectedFailure -Name 'relative path similar-prefix rejection' -Action {
+        Get-PackageRelativePath -BasePath $relativeRoot -Path ($relativeRoot + '-other\file.txt')
+    }
+    Assert-ExpectedFailure -Name 'relative path canonical outside rejection' -Action {
+        Get-PackageRelativePath -BasePath $relativeRoot -Path (Join-Path $nested '..\..\outside.txt')
+    }
     $staging = Join-Path $managedTestRoot 'win-x64'
     New-Item -ItemType Directory -Path $staging -Force | Out-Null
 
@@ -107,8 +136,12 @@ try {
     New-TestZip -Path $absoluteZip -EntryNames @('C:/Users/example/secret.txt')
     Assert-ExpectedFailure -Name 'ZIP absolute-path rejection' -Action { Assert-ZipMatchesStaging -StagingPath $staging -ZipPath $absoluteZip }
 
+    $duplicateZip = Join-Path $managedTestRoot 'duplicate.zip'
+    New-TestZip -Path $duplicateZip -EntryNames @('win-x64/LyricsChatbox.exe', 'win-x64/LyricsChatbox.exe')
+    Assert-ExpectedFailure -Name 'ZIP duplicate entry rejection' -Action { Assert-ZipMatchesStaging -StagingPath $staging -ZipPath $duplicateZip }
+
     Assert-ExpectedFailure -Name 'managed cleanup path guard' -Action { Resolve-ManagedArtifactsPath -RepositoryRoot $repositoryRoot -Path (Join-Path $repositoryRoot 'outside-package-root') }
-    Write-Output 'PACKAGE-POLICY TEST PASS: allowlist, stale cleanup, manifest, ZIP parity, traversal and path-safety checks'
+    Write-Output 'PACKAGE-POLICY TEST PASS: relative containment, allowlist, stale cleanup, manifest, ZIP parity, duplicates, traversal and path-safety checks'
 } finally {
     if (Test-Path -LiteralPath $managedTestRoot) {
         Remove-Item -LiteralPath $managedTestRoot -Recurse -Force -ErrorAction Stop
