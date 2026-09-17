@@ -37,6 +37,51 @@ public sealed class OutputPauseTests : IDisposable
     }
 
     [Fact]
+    public void ImplausiblyFarFuturePersistedTimedPauseIsRejected()
+    {
+        var restored = new OutputPauseController(
+            new(1, nameof(OutputPauseKind.Timed), DateTimeOffset.MaxValue), Now);
+        Assert.Equal(OutputPauseKind.None, restored.Mode);
+    }
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(15)]
+    [InlineData(30)]
+    [InlineData(34.999)]
+    [InlineData(35)]
+    public void PersistedTimedPauseAtOrWithinClockSkewBoundRestores(double minutes)
+    {
+        var restored = new OutputPauseController(
+            new(1, nameof(OutputPauseKind.Timed), Now.AddMinutes(minutes)), Now);
+        Assert.Equal(OutputPauseKind.Timed, restored.Mode);
+        Assert.Equal(Now.AddMinutes(minutes), restored.State.ExpiresUtc);
+    }
+
+    [Theory]
+    [InlineData(35.001)]
+    [InlineData(525600)]
+    public void PersistedTimedPauseBeyondClockSkewBoundIsRejected(double minutes)
+    {
+        var restored = new OutputPauseController(
+            new(1, nameof(OutputPauseKind.Timed), Now.AddMinutes(minutes)), Now);
+        Assert.Equal(OutputPauseKind.None, restored.Mode);
+    }
+
+    [Fact]
+    public void ExpiredAndOtherPersistedPauseModesKeepTheirExistingSemantics()
+    {
+        Assert.Equal(OutputPauseKind.None, new OutputPauseController(
+            new(1, nameof(OutputPauseKind.Timed), Now), Now).Mode);
+        Assert.Equal(OutputPauseKind.None, new OutputPauseController(
+            new(1, nameof(OutputPauseKind.Timed), Now.AddTicks(-1)), Now).Mode);
+        Assert.Equal(OutputPauseKind.UntilResumed, new OutputPauseController(
+            new(1, nameof(OutputPauseKind.UntilResumed)), Now).Mode);
+        Assert.Equal(OutputPauseKind.UntilTrackChanges, new OutputPauseController(
+            new(1, nameof(OutputPauseKind.UntilTrackChanges), TriggerTrackKey: CoreTests.Track.Key), Now).Mode);
+    }
+
+    [Fact]
     public void CorruptUnknownAndIncompletePauseStateFailsSafe()
     {
         Assert.Equal(OutputPauseKind.None, new OutputPauseController(new(2, "UntilResumed"), Now).Mode);

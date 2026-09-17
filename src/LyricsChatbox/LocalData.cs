@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace LyricsChatbox;
 
@@ -16,13 +17,31 @@ public static class PlaybackSourceSetting
     public static string Normalize(string? value) => Parse(value).ToString();
 }
 
+public sealed class PlaybackSourceJsonConverter : JsonConverter<string>
+{
+    public override bool HandleNull => true;
+
+    public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.String)
+            return PlaybackSourceSetting.Normalize(reader.GetString());
+        if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+            using (JsonDocument.ParseValue(ref reader)) { }
+        return nameof(PlaybackSourceMode.AppleMusic);
+    }
+
+    public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(PlaybackSourceSetting.Normalize(value));
+}
+
 public record AppSettings(bool Enabled = false, double Offset = 0, string Host = "127.0.0.1", int Port = 9000,
     string Preset = "Lyrics Only", string CustomTemplate = "{lyrics}", string Message = "",
     bool Compact = false, bool TypingIndicator = false, bool LiveEdit = false,
     string CustomAlignment = "Left", string ManualAlignment = "Left",
     bool StartWithWindows = false, bool StartMinimized = false, bool MinimizeToTray = false,
     bool CloseToTray = false, bool AutomaticUpdateChecks = false, AppearanceSettings? Appearance = null,
-    bool? AutoDiscoverOsc = null, string? SkippedUpdateVersion = null, string PlaybackSource = "AppleMusic")
+    bool? AutoDiscoverOsc = null, string? SkippedUpdateVersion = null,
+    [property: JsonConverter(typeof(PlaybackSourceJsonConverter))] string PlaybackSource = "AppleMusic")
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => double.IsFinite(Offset) && Offset is >= -5 and <= 5 && Port is >= 1 and <= 65535 &&

@@ -47,13 +47,16 @@ public sealed partial class SpotifyPlayback : IPlaybackSource
     }
     private void SessionsChanged(GlobalSystemMediaTransportControlsSessionManager _, SessionsChangedEventArgs __) =>
         Invalidate("Checking Spotify session");
-    private void MediaChanged(GlobalSystemMediaTransportControlsSession _, MediaPropertiesChangedEventArgs __)
+    private void MediaChanged(GlobalSystemMediaTransportControlsSession sender, MediaPropertiesChangedEventArgs __)
     {
+        if (!ReferenceEquals(sender, session)) return;
         lock (transitionLock) transitions.InvalidateForMediaChange(MonotonicClock.Now);
         Invalidate("Updating Spotify track");
     }
-    private void PlaybackChanged(GlobalSystemMediaTransportControlsSession _, PlaybackInfoChangedEventArgs __) => Wake();
-    private void TimelineChanged(GlobalSystemMediaTransportControlsSession _, TimelinePropertiesChangedEventArgs __) => Wake();
+    private void PlaybackChanged(GlobalSystemMediaTransportControlsSession sender, PlaybackInfoChangedEventArgs __)
+    { if (ReferenceEquals(sender, session)) Wake(); }
+    private void TimelineChanged(GlobalSystemMediaTransportControlsSession sender, TimelinePropertiesChangedEventArgs __)
+    { if (ReferenceEquals(sender, session)) Wake(); }
 
     private void Select(GlobalSystemMediaTransportControlsSession? next, string? emptyStatus = null)
     {
@@ -66,7 +69,7 @@ public sealed partial class SpotifyPlayback : IPlaybackSource
         }
         session = next;
         sessionNumber++;
-        lock (transitionLock) transitions.Reset();
+        lock (transitionLock) transitions.BeginSession(session is null ? null : VerifiedSource + ":" + sessionNumber);
         artworkKey = null; artworkRevision = -1;
         if (session is not null)
         {

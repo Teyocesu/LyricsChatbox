@@ -17,10 +17,12 @@ public sealed record OutputPauseState(int Version = 1, string Kind = "None",
     public static OutputPauseState Normalize(OutputPauseState? state, DateTimeOffset nowUtc)
     {
         if (state is not { Version: 1 }) return None;
+        var utcNow = nowUtc.ToUniversalTime();
         return state.Mode switch
         {
-            OutputPauseKind.Timed when state.ExpiresUtc is { } expires && expires.ToUniversalTime() > nowUtc.ToUniversalTime() =>
-                new(1, nameof(OutputPauseKind.Timed), expires.ToUniversalTime()),
+            OutputPauseKind.Timed when state.ExpiresUtc is { } expires &&
+                expires.ToUniversalTime() - utcNow is { } remaining && remaining > TimeSpan.Zero &&
+                remaining <= TimeSpan.FromMinutes(35) => new(1, nameof(OutputPauseKind.Timed), expires.ToUniversalTime()),
             OutputPauseKind.UntilTrackChanges when ValidKey(state.TriggerTrackKey) =>
                 new(1, nameof(OutputPauseKind.UntilTrackChanges), TriggerTrackKey: state.TriggerTrackKey!.ToUpperInvariant()),
             OutputPauseKind.UntilResumed => new(1, nameof(OutputPauseKind.UntilResumed)),

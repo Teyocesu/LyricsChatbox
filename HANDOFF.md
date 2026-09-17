@@ -1,4 +1,14 @@
-# Current handoff — v0.6.0 Phase 4 packaging hardening completed
+# Current handoff — v0.6.0 post-audit correction pack completed
+
+AUD6-01 through AUD6-03 are corrected on `codex/v0.6.0`; `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`, and no RC, tag, version, release or public-copy work was started.
+
+Spotify settlement now preserves the last accepted recording across reconnect, rejects stale-session observations, compares exact identity-affecting state, keeps metadata-first and timeline-first combinations invalid, and requires an exact candidate across distinct fresh authoritative anchors while Playing. Cold/different Paused candidates remain fail-closed; only an exact prior identity can re-establish while Paused through stable observations. Physical production-adapter validation from Spotify closed covered corrected startup, more than one anchor, Next, Previous, forward/backward scrubs and close/reopen of the same recording. The paused rounded reconnect candidate was not accepted; after Play, only the original corrected 324.733-second identity settled. No alternate transient identity was accepted. Natural end-of-track transition was not performed in this bounded pass. No app/OSC output path ran, and Spotify was restored to closed.
+
+Malformed `PlaybackSource` JSON is now isolated by a property converter: missing/null/unknown/number/boolean/object/array default only that property to AppleMusic, canonical strings round-trip, unrelated settings survive, and invalid whole JSON still falls back safely. Persisted Timed pause restore now accepts only a positive remaining interval through 35 minutes UTC; farther future, year-9999 and expired values clear, while 5/15/30-minute creation and indefinite modes are unchanged.
+
+Focused correction tests passed 90/90. Final locked restore passed, the Release solution built with zero warnings/errors, all 320 tests passed with no skips, package policy passed and `git diff --check` passed. Remaining pre-RC gates are independent diff confirmation, second-machine Spotify QA and explicit RC authorization. Do not merge, tag, release or begin RC from this handoff.
+
+# Previous handoff — v0.6.0 Phase 4 packaging hardening completed
 
 Phase 4 is implemented on `codex/v0.6.0` in `354034bfc13e269ed6ae5253c8a689e7c8000161`. Packaging now cleans only a validated direct child of `artifacts/`, publishes runtime output plus an explicit public-doc/license allowlist, and verifies staging, ZIP parity, checksums, public copy, user-data exclusions and the Inno installer source boundary. `PLAN.md`, `HANDOFF.md`, `AGENTS.md` and `SPEC.md` cannot enter the portable or installer input tree. The README's internal validation references were removed; no Spotify/v0.6 marketing or release-note work was done.
 

@@ -21,6 +21,18 @@ public sealed class RuntimeStateTests : IDisposable
     public void UnknownNavigationFallsBackHome(string section) =>
         Assert.Equal("Home", RuntimeStatePolicy.Normalize(new(Section: section), Now).Section);
 
+    [Theory]
+    [InlineData(5, "Timed")]
+    [InlineData(30, "Timed")]
+    [InlineData(35, "Timed")]
+    [InlineData(35.001, "None")]
+    [InlineData(525600, "None")]
+    public void RuntimeStateAppliesPersistedTimedPauseRestoreBound(double minutes, string expected)
+    {
+        var state = new RuntimeState(OutputPause: new(1, nameof(OutputPauseKind.Timed), Now.AddMinutes(minutes)));
+        Assert.Equal(Enum.Parse<OutputPauseKind>(expected), RuntimeStatePolicy.Normalize(state, Now).OutputPause!.Mode);
+    }
+
     [Fact]
     public void ValidNormalAndMaximizedBoundsRestore()
     {

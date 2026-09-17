@@ -2,93 +2,172 @@ namespace LyricsChatbox;
 
 public enum SpotifyGateResult { Accept, Invalidate, Settling }
 
-// GSMTC may publish a new Position/End before the new title. Nothing from a mixed
-// observation is accepted; recovery needs subsequent coherent authoritative samples.
+// Spotify can publish metadata and timeline changes in either order. The gate keeps
+// automatic playback invalid until one exact recording candidate is repeated by
+// distinct, fresh authoritative anchors.
 public sealed class SpotifyTransitionGate
 {
     private PlaybackSnapshot? accepted;
+    private PlaybackSnapshot? lastAccepted;
     private Pending? pending;
-    private sealed record Pending(PlaybackSnapshot Before, double StartedMono, bool RequireNewMetadata,
-        bool RestartLike, PlaybackSnapshot? Candidate = null, int StableSamples = 0);
+    private string? expectedSessionId;
 
-    public void Reset() { accepted = null; pending = null; }
+    private sealed record CandidateProof(PlaybackSnapshot Snapshot, DateTimeOffset LastAnchor, int AnchorSamples,
+        double LastObservedMono, int ObservationSamples);
+    private sealed record Pending(PlaybackSnapshot? Before, double StartedMono, string? ExpectedSessionId,
+        bool RequireMetadataChange, CandidateProof? Candidate = null);
+
+    public SpotifyTransitionGate() => BeginSession(null);
+
+    // Preserve the last accepted recording across loss/reconnect so a transient
+    // rounded duration cannot briefly become a different authoritative identity.
+    public void BeginSession(string? sessionId)
+    {
+        if (accepted is { } current) lastAccepted = current;
+        accepted = null;
+        expectedSessionId = sessionId;
+        pending = new(lastAccepted, double.NegativeInfinity, sessionId, false);
+    }
+
+    public void Reset() => BeginSession(null);
 
     public void InvalidateForMediaChange(double mono)
     {
-        if (pending is null && accepted is { } before)
-        {
-            pending = new(before, mono, false, false);
-            accepted = null;
-        }
+        var acceptedInCurrentSession = accepted is not null;
+        if (accepted is { } current) lastAccepted = current;
+        var before = accepted ?? pending?.Before ?? lastAccepted;
+        accepted = null;
+        pending = new(before, mono, expectedSessionId,
+            pending?.RequireMetadataChange == true || acceptedInCurrentSession);
     }
 
     public SpotifyGateResult Observe(PlaybackSnapshot next)
     {
+        if (expectedSessionId is not null && next.SessionId != expectedSessionId)
+            return SpotifyGateResult.Settling;
+        if (expectedSessionId is null)
+        {
+            expectedSessionId = next.SessionId;
+            pending = (pending ?? new(null, double.NegativeInfinity, next.SessionId, false)) with
+            {
+                ExpectedSessionId = next.SessionId
+            };
+        }
+
         if (!Coherent(next))
         {
-            if (pending is null && accepted is { } before)
+            if (accepted is { } current)
             {
-                pending = new(before, next.ObservedMono, false, false);
+                lastAccepted = current;
                 accepted = null;
+                pending = new(current, next.ObservedMono, expectedSessionId, false);
                 return SpotifyGateResult.Invalidate;
             }
+            if (pending is { } settling) pending = settling with { Candidate = null };
             return SpotifyGateResult.Settling;
         }
+
         if (pending is { } settle) return Settle(next, settle);
-        if (accepted is { } previous)
+        if (accepted is not { } previous)
         {
-            if (previous.SessionId != next.SessionId)
-            {
-                pending = new(previous, next.ObservedMono, false, false);
-                accepted = null;
-                return SpotifyGateResult.Invalidate;
-            }
-            var metadataChanged = next.RawTitle != previous.RawTitle || next.RawArtist != previous.RawArtist ||
-                next.RawAlbum != previous.RawAlbum || next.TrackNumber != previous.TrackNumber;
-            var durationChanged = Math.Abs(next.End - previous.End) > 0.75 || Math.Abs(next.Start - previous.Start) > 0.75;
-            var reset = previous.Position - next.Position > 0.75;
-            var jump = false;
-            if (previous.State == PlaybackState.Playing && next.State == PlaybackState.Playing)
-            {
-                var elapsed = (next.LastUpdated - previous.LastUpdated).TotalSeconds;
-                if (elapsed >= 0 && elapsed < 30 &&
-                    Math.Abs(next.Position - (previous.Position + elapsed * previous.Rate)) > 1.5)
-                    jump = true;
-            }
-            if (metadataChanged || durationChanged || reset || jump)
-            {
-                // A changed duration with old metadata is the observed transition race.
-                pending = new(previous, next.ObservedMono, durationChanged && !metadataChanged,
-                    reset && !durationChanged && !metadataChanged);
-                accepted = null;
-                return SpotifyGateResult.Invalidate;
-            }
+            pending = new(lastAccepted, next.ObservedMono, expectedSessionId, false);
+            return SpotifyGateResult.Settling;
         }
+
+        if (previous.SessionId != next.SessionId || RecordingMetadataChanged(previous, next) ||
+            previous.Track.Key != next.Track.Key || TimelineChanged(previous, next))
+        {
+            lastAccepted = previous;
+            accepted = null;
+            pending = new(previous, next.ObservedMono, expectedSessionId, false);
+            return SpotifyGateResult.Invalidate;
+        }
+
         accepted = next;
+        lastAccepted = next;
         return SpotifyGateResult.Accept;
     }
 
     private SpotifyGateResult Settle(PlaybackSnapshot next, Pending settle)
     {
-        if (next.SessionId != settle.Before.SessionId || next.ObservedMono <= settle.StartedMono ||
-            next.LastUpdated <= settle.Before.LastUpdated) return SpotifyGateResult.Settling;
-        var newMetadata = next.RawTitle != settle.Before.RawTitle || next.RawArtist != settle.Before.RawArtist ||
-            next.RawAlbum != settle.Before.RawAlbum || next.TrackNumber != settle.Before.TrackNumber;
-        if (settle.RequireNewMetadata && !newMetadata) return SpotifyGateResult.Settling;
-        var sameCandidate = settle.Candidate is { } candidate &&
-            candidate.RawTitle == next.RawTitle && candidate.RawArtist == next.RawArtist &&
-            candidate.RawAlbum == next.RawAlbum && candidate.TrackNumber == next.TrackNumber &&
-            Math.Abs(candidate.End - next.End) <= 0.75 && Math.Abs(candidate.Start - next.Start) <= 0.75;
-        settle = settle with { Candidate = next, StableSamples = sameCandidate ? settle.StableSamples + 1 : 1 };
-        pending = settle;
-        // A restart-like reset gets a bounded observation window in which delayed metadata
-        // can arrive. A true title change still needs a second consistent sample.
-        var minimum = settle.RestartLike ? 0.5 : 0.25;
-        if (settle.StableSamples < 2 || next.ObservedMono - settle.StartedMono < minimum)
+        if (settle.ExpectedSessionId is not null && next.SessionId != settle.ExpectedSessionId)
             return SpotifyGateResult.Settling;
+        if (next.ObservedMono <= settle.StartedMono)
+            return SpotifyGateResult.Settling;
+
+        if (settle.Before is { } before)
+        {
+            if (next.LastUpdated <= before.LastUpdated)
+                return SpotifyGateResult.Settling;
+
+            var metadataChanged = RecordingMetadataChanged(before, next);
+            var identityChanged = before.Track.Key != next.Track.Key;
+            var timelineChanged = TimelineChanged(before, next);
+            var identityMetadataChanged = before.Track.Title != next.Track.Title ||
+                before.Track.Artist != next.Track.Artist || before.Track.Album != next.Track.Album;
+            var identityDurationChanged = before.Track.Duration != next.Track.Duration;
+
+            if (settle.RequireMetadataChange && !metadataChanged)
+                return SpotifyGateResult.Settling;
+            // Symmetric fail-closed ordering: new identity metadata needs evidence of
+            // its timeline, while a duration-only identity needs new metadata.
+            if (identityChanged && identityMetadataChanged && !timelineChanged)
+                return SpotifyGateResult.Settling;
+            if (identityChanged && identityDurationChanged && !identityMetadataChanged)
+                return SpotifyGateResult.Settling;
+        }
+
+        var proof = settle.Candidate;
+        if (proof is null || !SameCandidate(proof.Snapshot, next))
+            proof = new(next, next.LastUpdated, 1, next.ObservedMono, 1);
+        else if (next.LastUpdated > proof.LastAnchor)
+            proof = new(next, next.LastUpdated, proof.AnchorSamples + 1, next.ObservedMono,
+                next.ObservedMono > proof.LastObservedMono ? proof.ObservationSamples + 1 : proof.ObservationSamples);
+        else if (next.LastUpdated < proof.LastAnchor)
+            proof = new(next, next.LastUpdated, 1, next.ObservedMono, 1);
+        else
+            proof = proof with
+            {
+                Snapshot = next,
+                LastObservedMono = Math.Max(proof.LastObservedMono, next.ObservedMono),
+                ObservationSamples = next.ObservedMono > proof.LastObservedMono
+                    ? proof.ObservationSamples + 1 : proof.ObservationSamples
+            };
+
+        pending = settle with { Candidate = proof };
+        var exactPausedReconnect = next.State == PlaybackState.Paused && settle.Before is { } prior &&
+            next.Track.Key == prior.Track.Key;
+        var proven = next.State == PlaybackState.Playing
+            ? proof.AnchorSamples >= 2
+            : exactPausedReconnect && proof.ObservationSamples >= 2;
+        if (!proven)
+            return SpotifyGateResult.Settling;
+
         accepted = next;
+        lastAccepted = next;
         pending = null;
         return SpotifyGateResult.Accept;
+    }
+
+    private static bool SameCandidate(PlaybackSnapshot left, PlaybackSnapshot right) =>
+        left.SessionId == right.SessionId && left.Track.Key == right.Track.Key &&
+        left.RawTitle == right.RawTitle && left.RawArtist == right.RawArtist &&
+        left.RawAlbum == right.RawAlbum && left.TrackNumber == right.TrackNumber &&
+        left.Start == right.Start && left.End == right.End && left.State == right.State;
+
+    private static bool RecordingMetadataChanged(PlaybackSnapshot left, PlaybackSnapshot right) =>
+        left.RawTitle != right.RawTitle || left.RawArtist != right.RawArtist ||
+        left.RawAlbum != right.RawAlbum || left.TrackNumber != right.TrackNumber;
+
+    private static bool TimelineChanged(PlaybackSnapshot previous, PlaybackSnapshot next)
+    {
+        if (previous.Start != next.Start || previous.End != next.End || previous.Position - next.Position > 0.75)
+            return true;
+        if (previous.State != PlaybackState.Playing || next.State != PlaybackState.Playing)
+            return false;
+        var elapsed = (next.LastUpdated - previous.LastUpdated).TotalSeconds;
+        return elapsed >= 0 && elapsed < 30 &&
+            Math.Abs(next.Position - (previous.Position + elapsed * previous.Rate)) > 1.5;
     }
 
     private static bool Coherent(PlaybackSnapshot next)
