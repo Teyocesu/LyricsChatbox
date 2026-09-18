@@ -16,13 +16,13 @@ public sealed class UpdateChecker(HttpClient http)
         if (tag is null || !Regex.IsMatch(tag, @"^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")) return null;
         return Version.TryParse(tag.TrimStart('v'), out var version) ? version : null;
     }
-    public async Task<UpdateResult> CheckAtStartupAsync(bool enabled, Version current, CancellationToken token, string? skipped = null)
+    public async Task<UpdateResult> CheckAtStartupAsync(bool enabled, Version current, CancellationToken token, string? skipped = null, bool currentIsPrerelease = false)
     {
         if (!enabled) return new("Automatic checks are off");
-        var result = await CheckAsync(current, token);
+        var result = await CheckAsync(current, token, currentIsPrerelease);
         return StableVersion(skipped) is { } version && version == StableVersion(result.Tag) ? new("This version is skipped. Use Check now to view it.") : result;
     }
-    public async Task<UpdateResult> CheckAsync(Version current, CancellationToken token)
+    public async Task<UpdateResult> CheckAsync(Version current, CancellationToken token, bool currentIsPrerelease = false)
     {
         if (DateTimeOffset.UtcNow < retryAfter) return new("GitHub is busy. Try again later.");
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
@@ -56,7 +56,10 @@ public sealed class UpdateChecker(HttpClient http)
             var tag = root.GetProperty("tag_name").GetString();
             var latest = StableVersion(tag);
             if (latest is null) return new("Could not read release information.");
-            if (latest <= new Version(current.Major, current.Minor, Math.Max(0, current.Build))) return new("You're up to date.");
+            var currentNumeric = new Version(current.Major, current.Minor, Math.Max(0, current.Build));
+            // Stable-only comparison, except an installed prerelease graduates to its same numeric stable.
+            if (latest < currentNumeric) return new("You're up to date.");
+            if (latest == currentNumeric && !currentIsPrerelease) return new("You're up to date.");
             // Build a known project URL; never open a URL supplied by untrusted JSON.
             var notes = root.TryGetProperty("body", out var body) && body.ValueKind == JsonValueKind.String ? body.GetString() ?? "" : "";
             notes = PresentationText.ReleaseNotes(notes);

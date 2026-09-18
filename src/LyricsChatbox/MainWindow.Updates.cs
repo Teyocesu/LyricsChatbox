@@ -45,8 +45,8 @@ public partial class MainWindow
         updateBusy = true; CheckUpdatesButton.IsEnabled = false; UpdateStatus.Text = "Checking GitHub…";
         try
         {
-            var request = automatic ? updates.CheckAtStartupAsync(settings.AutomaticUpdateChecks, ProductIdentity.Version, lifetime.Token, settings.SkippedUpdateVersion)
-                : updates.CheckAsync(ProductIdentity.Version, lifetime.Token);
+            var request = automatic ? updates.CheckAtStartupAsync(settings.AutomaticUpdateChecks, ProductIdentity.Version, lifetime.Token, settings.SkippedUpdateVersion, ProductIdentity.IsPrerelease)
+                : updates.CheckAsync(ProductIdentity.Version, lifetime.Token, ProductIdentity.IsPrerelease);
             pending.Add(request);
             UpdateResult result;
             try { result = await request; }

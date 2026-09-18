@@ -48,6 +48,35 @@ public class UpdateTests
         using var http = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) })));
         Assert.Null((await new UpdateChecker(http).CheckAsync(new(0, 4, 0), default)).Release);
     }
+    [Theory]
+    [InlineData("0.5.4", false, "v0.6.0", true)]
+    [InlineData("0.6.0", false, "v0.6.0", false)]
+    [InlineData("0.6.0", true, "v0.6.0", true)]
+    [InlineData("0.6.0", true, "v0.5.4", false)]
+    [InlineData("0.7.0", true, "v0.6.0", false)]
+    [InlineData("0.5.4", false, "v0.5.4", false)]
+    public async Task PrereleaseAwareStableComparison(string current, bool prerelease, string latest, bool offered)
+    {
+        using var http = new HttpClient(new Handler((_, _) => Task.FromResult(Json(latest))));
+        var result = await new UpdateChecker(http).CheckAsync(Version.Parse(current), default, prerelease);
+        Assert.Equal(offered, result.Release is not null);
+    }
+    [Fact]
+    public async Task PrereleasePayloadIsIgnoredEvenForPrereleaseBuilds()
+    {
+        const string body = "{\"draft\":false,\"prerelease\":true,\"tag_name\":\"v0.6.0-rc.1\"}";
+        using var http = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) })));
+        Assert.Null((await new UpdateChecker(http).CheckAsync(new(0, 6, 0), default, true)).Release);
+    }
+    [Theory]
+    [InlineData("v0.6.0-rc.1", null)]
+    [InlineData("0.6.0-rc.1", null)]
+    [InlineData("v0.6.0", "0.6.0")]
+    [InlineData("0.5.4", "0.5.4")]
+    public void PrereleaseTagsAreNotStableVersions(string tag, string? expected)
+    {
+        Assert.Equal(expected is null ? null : Version.Parse(expected), UpdateChecker.StableVersion(tag));
+    }
     [Fact]
     public async Task TimeoutAndCancellationAreBounded()
     {

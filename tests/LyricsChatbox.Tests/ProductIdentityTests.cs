@@ -11,4 +11,10 @@ public sealed class ProductIdentityTests
         Assert.DoesNotContain("0.3", ProductIdentity.UserAgent);
         Assert.DoesNotContain("0.5.3", ProductIdentity.UserAgent);
     }
+    [Fact]
+    public void DisplayVersionExtendsNumericVersionAndFlagsPrerelease()
+    {
+        Assert.StartsWith(ProductIdentity.VersionText, ProductIdentity.DisplayVersion);
+        Assert.Equal(ProductIdentity.DisplayVersion.Contains('-'), ProductIdentity.IsPrerelease);
+    }
 }

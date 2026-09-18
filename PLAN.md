@@ -1,5 +1,9 @@
 # Execution state
 
+## v0.6.0-rc.1 final correction (updater graduation + rebuild provenance)
+
+2026-09-18: an RC with numeric version 0.6.0 treated final stable v0.6.0 as equal, so testers would never be offered it. `ProductIdentity.IsPrerelease` (derived from the display version suffix, nothing hardcoded) now flows into `CheckAsync`/`CheckAtStartupAsync` via an optional flag defaulting to stable behavior: a newer numeric stable is offered, an equal numeric stable is offered only to prerelease builds, and older stables never downgrade a prerelease. GitHub prerelease/draft payloads remain ignored and installer behavior is unchanged. Focused tests prove stable 0.5.4→0.6.0 offered, stable 0.6.0→0.6.0 current, RC 0.6.0-rc.1→stable 0.6.0 offered, RC→older stable refused, future RC→older stable refused, prerelease payloads ignored, and `-rc.1` tags rejected by `StableVersion`. Full suite 336/336 with no skips. This correction is committed first; final artifacts are rebuilt afterward from the clean final commit so the embedded SourceRevisionId matches the future tag. No tag/release/merge/publication yet.
+
 ## v0.6.0-rc.1 local preparation
 
 2026-09-18: v0.6.0-rc.1 prepared and validated locally on `codex/v0.6.0`; `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`, public stable remains v0.5.4. No tag, GitHub Release, merge, or publication was created; RC artifacts exist locally only.
