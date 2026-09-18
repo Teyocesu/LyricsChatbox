@@ -102,8 +102,8 @@ public sealed class MultiPlayerTests : IDisposable
         bool spotifyPresent, string? spotifyState, string? expected, bool ambiguous)
     {
         var decision = AutomaticPlaybackSelector.Choose(
-            new(applePresent, Enum.TryParse<PlaybackState>(appleState, out var a) ? a : null),
-            new(spotifyPresent, Enum.TryParse<PlaybackState>(spotifyState, out var s) ? s : null), null);
+            new(applePresent, Enum.TryParse<PlaybackState>(appleState, out var a) ? a : null, Absent: !applePresent),
+            new(spotifyPresent, Enum.TryParse<PlaybackState>(spotifyState, out var s) ? s : null, Absent: !spotifyPresent), null);
         Assert.Equal(expected, decision.Source?.ToString());
         Assert.Equal(ambiguous, decision.Ambiguous);
     }
@@ -443,6 +443,137 @@ public sealed class MultiPlayerTests : IDisposable
         spotify.Raise(applePlaying with { Source = PlaybackSourceKind.Spotify });
         Assert.Equal(PlaybackSourceKind.Spotify, seen.Last());
         Assert.DoesNotContain(PlaybackSourceKind.AppleMusic, seen.Skip(beforeLoss));
+    }
+
+    [Theory]
+    [InlineData("Settling Spotify track")]
+    [InlineData("Updating Spotify track")]
+    [InlineData("Checking Spotify session")]
+    [InlineData("Refreshing Spotify playback")]
+    public async Task AutomaticBindsPlayingAppleWhileSpotifySettles(string spotifyStatus)
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new FakeSource(PlaybackSourceKind.Spotify);
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
+        apple.Raise(CoreTests.Snapshot());
+        spotify.Raise(null, spotifyStatus);
+        Assert.True(SpinWait.SpinUntil(() => coordinator.ActiveKind == PlaybackSourceKind.AppleMusic, 2000));
+    }
+
+    [Theory]
+    [InlineData("Checking Apple Music session")]
+    [InlineData("Updating track")]
+    [InlineData("Reading Apple Music")]
+    [InlineData("Refreshing playback after resume")]
+    public async Task AutomaticBindsPlayingSpotifyWhileAppleSettles(string appleStatus)
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new FakeSource(PlaybackSourceKind.Spotify);
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
+        apple.Raise(null, appleStatus);
+        spotify.Raise(CoreTests.Snapshot() with { Source = PlaybackSourceKind.Spotify });
+        Assert.True(SpinWait.SpinUntil(() => coordinator.ActiveKind == PlaybackSourceKind.Spotify, 2000));
+    }
+
+    [Fact]
+    public async Task AutomaticDoesNotGuessPausedColdStartWhileOtherSettles()
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new FakeSource(PlaybackSourceKind.Spotify);
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
+        apple.Raise(CoreTests.Snapshot(state: PlaybackState.Paused));
+        spotify.Raise(null, "Settling Spotify track");
+        await Task.Delay(250);
+        Assert.Null(coordinator.ActiveKind);
+        Assert.NotEqual("Checking music players", coordinator.Status);
+    }
+
+    [Fact]
+    public async Task AutomaticDoesNotGuessSpotifyPausedColdStartWhileAppleSettles()
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new FakeSource(PlaybackSourceKind.Spotify);
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
+        apple.Raise(null, "Checking Apple Music session");
+        spotify.Raise(CoreTests.Snapshot(state: PlaybackState.Paused) with { Source = PlaybackSourceKind.Spotify });
+        await Task.Delay(250);
+        Assert.Null(coordinator.ActiveKind);
+        Assert.NotEqual("Checking music players", coordinator.Status);
+    }
+
+    [Fact]
+    public async Task AutomaticSettlingCandidateResolvesPlayingAndAbsence()
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new FakeSource(PlaybackSourceKind.Spotify);
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
+        apple.Raise(CoreTests.Snapshot(state: PlaybackState.Paused));
+        spotify.Raise(null, "Settling Spotify track");
+        await Task.Delay(250);
+        Assert.Null(coordinator.ActiveKind);
+        spotify.Raise(CoreTests.Snapshot() with { Source = PlaybackSourceKind.Spotify });
+        Assert.True(SpinWait.SpinUntil(() => coordinator.ActiveKind == PlaybackSourceKind.Spotify, 2000));
+        spotify.Raise(null, "No Spotify session");
+        Assert.True(SpinWait.SpinUntil(() => coordinator.ActiveKind == PlaybackSourceKind.AppleMusic, 2000));
+    }
+
+    [Fact]
+    public async Task AutomaticWarmPausedBindingSurvivesSettlingAlternate()
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new FakeSource(PlaybackSourceKind.Spotify);
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
+        var playing = CoreTests.Snapshot();
+        apple.Raise(playing);
+        spotify.Raise(null, "No Spotify session");
+        Assert.True(SpinWait.SpinUntil(() => coordinator.ActiveKind == PlaybackSourceKind.AppleMusic, 2000));
+        var paused = CoreTests.Snapshot(state: PlaybackState.Paused);
+        apple.Raise(paused);
+        spotify.Raise(null, "Updating Spotify track");
+        await Task.Delay(250);
+        Assert.Equal(PlaybackSourceKind.AppleMusic, coordinator.ActiveKind);
+        spotify.Raise(paused with { Source = PlaybackSourceKind.Spotify });
+        await Task.Delay(250);
+        Assert.Equal(PlaybackSourceKind.AppleMusic, coordinator.ActiveKind);
+    }
+
+    [Fact]
+    public async Task AutomaticSettlingDuringBoundTransitionDoesNotOscillate()
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new FakeSource(PlaybackSourceKind.Spotify);
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
+        var seen = new List<PlaybackSourceKind?>();
+        coordinator.Observed += (snapshot, _, _) => seen.Add(snapshot?.Source);
+        apple.Raise(null, "No Apple Music session");
+        spotify.Raise(CoreTests.Snapshot() with { Source = PlaybackSourceKind.Spotify });
+        Assert.True(SpinWait.SpinUntil(() => coordinator.ActiveKind == PlaybackSourceKind.Spotify, 2000));
+        for (var i = 0; i < 5; i++)
+        {
+            spotify.Raise(null, "Updating Spotify track");
+            apple.Raise(CoreTests.Snapshot(state: PlaybackState.Paused));
+        }
+        await Task.Delay(250);
+        Assert.Equal(PlaybackSourceKind.Spotify, coordinator.ActiveKind);
+        Assert.DoesNotContain(PlaybackSourceKind.AppleMusic, seen);
+    }
+
+    [Fact]
+    public async Task AutomaticBothPlayingReportsAmbiguousTruth()
+    {
+        var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
+        var spotify = new FakeSource(PlaybackSourceKind.Spotify);
+        await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
+        apple.Raise(CoreTests.Snapshot());
+        spotify.Raise(CoreTests.Snapshot() with { Source = PlaybackSourceKind.Spotify });
+        Assert.True(SpinWait.SpinUntil(() => coordinator.Ambiguous, 2000));
+        Assert.Null(coordinator.ActiveKind);
+        Assert.Contains("both playing", coordinator.Status);
+        Assert.Contains("both playing", PresentationText.PlaybackStatus(
+            PlaybackSourceMode.Automatic, coordinator.ActiveKind, null, coordinator.Status));
+        spotify.Raise(null, "No Spotify session");
+        Assert.True(SpinWait.SpinUntil(() => coordinator.ActiveKind == PlaybackSourceKind.AppleMusic, 2000));
+        Assert.False(coordinator.Ambiguous);
     }
 
     [Theory]

@@ -1,4 +1,8 @@
-# Current handoff — v0.6.0-rc.1 final correction committed, artifacts rebuilding next
+# Current handoff — v0.6.0-rc.2 locally prepared, awaiting publication review
+
+QA6-01 (Automatic stuck while Spotify unsettled) and QA6-02 (ambiguity guidance hidden by compact layout) are corrected, covered by new automated tests, physically regressed on a dev build across the full Automatic matrix, and versioned to 0.6.0-rc.2. `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`; rc.1 tag/release untouched; no rc.2 tag/release yet. Next: review, then publish rc.2; second-machine Spotify stays external. Stop before stable work.
+
+# Previous handoff — v0.6.0-rc.1 final correction committed, artifacts rebuilding next
 
 The RC updater now lets an installed `0.6.0-rc.1` graduate to same-numeric stable `0.6.0` while staying stable-only (no downgrades, prereleases still ignored); focused tests plus the full 336/336 suite pass. `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`, v0.5.4 remains public, and no tag/release exists. Next: push this final source commit, rebuild ZIP/installer from the clean tree, verify the embedded source revision, and stop before publication.
 

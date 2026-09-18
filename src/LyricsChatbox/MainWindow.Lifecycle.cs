@@ -48,7 +48,7 @@ public partial class MainWindow
         Loaded += (_, _) => FitWorkArea();
         LocationChanged += (_, _) => QueueRuntimeStateSave();
         SizeChanged += (_, _) => QueueRuntimeStateSave();
-        ContentRoot.SizeChanged += (_, _) => WindowLayout.Apply(this, ContentRoot.ActualHeight);
+        ContentRoot.SizeChanged += (_, _) => WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
         DpiChanged += (_, _) => _ = Dispatcher.InvokeAsync(FitWorkArea);
         StateChanged += (_, _) =>
         {

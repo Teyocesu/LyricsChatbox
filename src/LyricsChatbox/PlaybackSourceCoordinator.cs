@@ -2,7 +2,7 @@ using Windows.Storage.Streams;
 
 namespace LyricsChatbox;
 
-public sealed record PlaybackCandidate(bool Present = false, PlaybackState? State = null);
+public sealed record PlaybackCandidate(bool Present = false, PlaybackState? State = null, bool Absent = false);
 public sealed record PlaybackChoice(PlaybackSourceKind? Source, string Status, bool Ambiguous = false);
 
 public static class AutomaticPlaybackSelector
@@ -19,9 +19,9 @@ public static class AutomaticPlaybackSelector
             return new(bound, "Apple Music");
         if (bound == PlaybackSourceKind.Spotify && spotify.Present && spotify.State == PlaybackState.Paused)
             return new(bound, "Spotify");
-        if (apple.Present && !spotify.Present && apple.State == PlaybackState.Paused)
+        if (apple.Present && apple.State == PlaybackState.Paused && spotify.Absent)
             return new(PlaybackSourceKind.AppleMusic, "Apple Music");
-        if (spotify.Present && !apple.Present && spotify.State == PlaybackState.Paused)
+        if (spotify.Present && spotify.State == PlaybackState.Paused && apple.Absent)
             return new(PlaybackSourceKind.Spotify, "Spotify");
         if (apple.Present && spotify.Present)
             return new(null, "Choose a playback source in Settings.", true);
@@ -109,17 +109,20 @@ public sealed class PlaybackSourceCoordinator : IAsyncDisposable
             var current = kind == PlaybackSourceKind.AppleMusic ? appleCandidate : spotifyCandidate;
             var absent = message.StartsWith("No ", StringComparison.Ordinal) || message.StartsWith("Multiple ", StringComparison.Ordinal) ||
                 message.Contains("unavailable", StringComparison.OrdinalIgnoreCase);
+            // Any observation marks the candidate heard. A null without explicit absence keeps
+            // presence but never counts as absent, so settling never blocks a playing winner
+            // nor lets a cold paused source bind on its own.
             var next = snapshot is not null ? new PlaybackCandidate(true, snapshot.State) :
-                absent ? new PlaybackCandidate() : current;
+                absent ? new PlaybackCandidate(Absent: true) : current with { Absent = false };
             if (kind == PlaybackSourceKind.AppleMusic)
             {
                 appleCandidate = next;
-                if (snapshot is not null || absent) appleKnown = true;
+                appleKnown = true;
             }
             else
             {
                 spotifyCandidate = next;
-                if (snapshot is not null || absent) spotifyKnown = true;
+                spotifyKnown = true;
             }
             changed = mode == PlaybackSourceMode.Automatic && RechooseLocked();
         }

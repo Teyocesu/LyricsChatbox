@@ -20,6 +20,7 @@ public partial class MainWindow
     private readonly PresentationChangeGate<ManualView> manualView = new();
     private readonly PresentationChangeGate<LyricsDetailsView> lyricsDetailsView = new();
     private readonly PresentationChangeGate<string> oscView = new();
+    private readonly PresentationChangeGate<(string Status, bool Ambiguous)> sourceView = new();
     private readonly PresentationCadence progressCadence = new(0.1);
 
     private void ApplyPlaybackView(string lyric)
@@ -30,6 +31,17 @@ public partial class MainWindow
         if (!playbackView.ShouldApply(view)) return;
         TrackText.Text = view.Track; ArtistText.Text = view.Artist; AlbumText.Text = view.Album;
         LyricText.Text = view.Lyric; LyricsStatusText.Text = view.LyricsStatus;
+    }
+
+    // Source truth comes from the current coordinator state, so a dropped stale
+    // playback event can never leave ambiguity guidance invisible.
+    private void ApplySourceView()
+    {
+        var view = (playback.Status, playback.Ambiguous);
+        if (!sourceView.ShouldApply(view)) return;
+        SourceText.Text = PresentationText.PlaybackStatus(playback.Mode, playback.ActiveKind, engine.Snapshot, playback.Status);
+        ChoosePlaybackSourceButton.Visibility = playback.Ambiguous ? Visibility.Visible : Visibility.Collapsed;
+        WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
     }
 
     private void ApplyProgressView(double now, double? position)

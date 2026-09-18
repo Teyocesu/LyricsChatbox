@@ -6,7 +6,8 @@ namespace LyricsChatbox;
 internal static class WindowLayout
 {
     // Keep a useful page viewport when high scaling leaves little vertical work area.
-    public static void Apply(FrameworkElement scope, double contentHeight)
+    // An ambiguous source selection keeps its status row so the guidance stays visible.
+    public static void Apply(FrameworkElement scope, double contentHeight, bool showSourceStatus = false)
     {
         var shortWindow = contentHeight < 540;
         T Find<T>(string name) => (T)scope.FindName(name);
@@ -62,7 +63,7 @@ internal static class WindowLayout
         Find<Border>("HomeFit").Visibility = compactDashboard ? Visibility.Collapsed : Visibility.Visible;
         Find<Grid>("HomeCompact").Visibility = compactDashboard ? Visibility.Visible : Visibility.Collapsed;
         Find<StackPanel>("HeadingPanel").Visibility = compactDashboard && shortWindow ? Visibility.Collapsed : Visibility.Visible;
-        Find<DockPanel>("HeroStatusRow").Visibility = compactDashboard ? Visibility.Collapsed : Visibility.Visible;
+        Find<DockPanel>("HeroStatusRow").Visibility = compactDashboard && !showSourceStatus ? Visibility.Collapsed : Visibility.Visible;
         Find<Border>("HeroProviderBadge").Visibility = compactDashboard ? Visibility.Collapsed : Visibility.Visible;
         Find<TextBlock>("PositionText").Visibility = compactDashboard ? Visibility.Collapsed : Visibility.Visible;
         void Move(FrameworkElement item, FrameworkElement target, bool first = false)

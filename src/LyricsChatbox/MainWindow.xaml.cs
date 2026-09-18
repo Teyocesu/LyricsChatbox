@@ -99,8 +99,6 @@ public partial class MainWindow : Window
         {
             if (closing || revision != playback.Revision) return;
             acceptedPlaybackRevision = revision;
-            SourceText.Text = PresentationText.PlaybackStatus(playback.Mode, playback.ActiveKind, snapshot, status);
-            ChoosePlaybackSourceButton.Visibility = playback.Ambiguous ? Visibility.Visible : Visibility.Collapsed;
             if (status == "Refreshing playback source" || playback.ActiveKind is null)
             {
                 currentMusicVolume = null; volumeGeneration++; MusicVolumeSlider.IsEnabled = false;
@@ -194,6 +192,7 @@ public partial class MainWindow : Window
         if (engine.RetryAt is { } retry && retry <= DateTimeOffset.UtcNow) StartLookup(true);
         var lyric = engine.Current(now);
         ApplyPlaybackView(lyric);
+        ApplySourceView();
         RefreshTransport(now);
         var position = engine.Position(now);
         ApplyProgressView(now, position);
@@ -227,7 +226,7 @@ public partial class MainWindow : Window
 
     private void HomeSectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ready) WindowLayout.Apply(this, ContentRoot.ActualHeight);
+        if (ready) WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
     }
 
     private void MinimizeWindow(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -249,7 +248,7 @@ public partial class MainWindow : Window
         ManualPage.Visibility = page == "Manual" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
         PageTitle.Text = page;
-        WindowLayout.Apply(this, ContentRoot.ActualHeight);
+        WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
         activeSection = page;
         SaveRuntimeStateNow();
     }
