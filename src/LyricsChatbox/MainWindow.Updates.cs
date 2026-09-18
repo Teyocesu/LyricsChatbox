@@ -22,8 +22,8 @@ public partial class MainWindow
         InstallerDownloader.CleanupManagedDownloads(Path.Combine(data.Root, "downloads"));
         updates = new(http);
         AutoUpdateBox.IsChecked = settings.AutomaticUpdateChecks;
-        VersionCaption.Text = "v" + ProductIdentity.VersionText;
-        UpdateStatus.Text = "Version " + ProductIdentity.VersionText;
+        VersionCaption.Text = "v" + ProductIdentity.DisplayVersion;
+        UpdateStatus.Text = "Version " + ProductIdentity.DisplayVersion;
         if (settings.AutomaticUpdateChecks) Loaded += CheckUpdatesOnce;
     }
     private async void CheckUpdatesOnce(object sender, RoutedEventArgs e)

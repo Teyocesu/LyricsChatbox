@@ -1,4 +1,8 @@
-# Current handoff — v0.6.0 second post-audit correction pack completed
+# Current handoff — v0.6.0-rc.1 locally prepared, awaiting publication review
+
+v0.6.0-rc.1 is versioned (`0.6.0-rc.1` informational, `0.6.0.0` numeric), built, and validated locally on `codex/v0.6.0`; `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909` and v0.5.4 remains public. Portable ZIP (81,452,028 bytes, `d74ed9a8…ed625ee`) and Inno 7.1.0 installer (58,196,256 bytes, `f3ec4b2a…91b77e2`) were verified against the 487-file policy-checked staging; both are unsigned as documented and exist locally only. Fresh install, v0.5.4 upgrade with full user-data preservation, uninstall, and reinstall all pass; packaged-app checks covered Spotify playback/pause/next/natural-transition/loss/recovery, Automatic selection, pause persistence, and window restore. Final locked restore, warning-free Release build, 324/324 tests, package policy, and `git diff --check` pass. The user environment was restored to stable v0.5.4 with byte-identical LocalData. Remaining: evidence review, publication authorization, and external second-machine/Apple/both-playing/visual QA. Stop before tag, prerelease, merge, or stable work.
+
+# Previous handoff — v0.6.0 second post-audit correction pack completed
 
 AUD6R-01 and Windows PowerShell package-policy compatibility are corrected on `codex/v0.6.0`; `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`. No RC, version, tag, release, installer build/install or public-copy work was started.
 
