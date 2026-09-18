@@ -1,4 +1,8 @@
-# Current handoff — v0.6.0-rc.2 locally prepared, awaiting publication review
+# Current handoff — v0.6.0 stable locally prepared, awaiting publication review
+
+v0.6.0 stable is versioned (`0.6.0`, numeric `0.6.0.0`, not prerelease) on `codex/v0.6.0`; `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`, rc.1/rc.2 publications untouched, v0.5.4 still public. No known Medium/High blockers; second-machine QA explicitly waived with conservative Store-version wording. Next: validate, commit, build from the clean tree, verify rc.2 → stable upgrade and packaged smoke, then await publication authorization. Stop before tag, release, or merge.
+
+# Previous handoff — v0.6.0-rc.2 locally prepared, awaiting publication review
 
 QA6-01 (Automatic stuck while Spotify unsettled) and QA6-02 (ambiguity guidance hidden by compact layout) are corrected, covered by new automated tests, physically regressed on a dev build across the full Automatic matrix, and versioned to 0.6.0-rc.2. `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`; rc.1 tag/release untouched; no rc.2 tag/release yet. Next: review, then publish rc.2; second-machine Spotify stays external. Stop before stable work.
 

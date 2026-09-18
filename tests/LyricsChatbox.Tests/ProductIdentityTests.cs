@@ -17,4 +17,10 @@ public sealed class ProductIdentityTests
         Assert.StartsWith(ProductIdentity.VersionText, ProductIdentity.DisplayVersion);
         Assert.Equal(ProductIdentity.DisplayVersion.Contains('-'), ProductIdentity.IsPrerelease);
     }
+    [Fact]
+    public void StableReleaseIdentityIsFinal()
+    {
+        Assert.Equal("0.6.0", ProductIdentity.DisplayVersion);
+        Assert.False(ProductIdentity.IsPrerelease);
+    }
 }

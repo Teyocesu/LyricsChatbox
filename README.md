@@ -2,6 +2,14 @@
 
 A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
 
+## v0.6.0
+
+This update adds Spotify Desktop support alongside Apple Music, with an Apple Music / Spotify / Automatic source selector. Automatic follows whichever supported player is playing and stays undecided when both play. Spotify Desktop support has been verified with the Microsoft Store version on Windows.
+
+Output can now be paused for 5, 15 or 30 minutes, until the next track, or until resumed, independently from turning output off. Window size, position and open section restore more reliably, and playback transitions, pauses, resumes and reconnections are handled more robustly.
+
+Existing settings, profiles, saved lyrics, manual matches and corrections carry over when updating.
+
 ## v0.5.4
 
 This maintenance update keeps local data cleaner and fixes a few small inconsistencies.
