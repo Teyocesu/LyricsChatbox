@@ -20,7 +20,7 @@ public partial class MainWindow
     private readonly PresentationChangeGate<ManualView> manualView = new();
     private readonly PresentationChangeGate<LyricsDetailsView> lyricsDetailsView = new();
     private readonly PresentationChangeGate<string> oscView = new();
-    private readonly PresentationChangeGate<(string Status, bool Ambiguous)> sourceView = new();
+    private readonly PresentationChangeGate<(string Text, bool ChooseVisible)> sourceView = new();
     private readonly PresentationCadence progressCadence = new(0.1);
 
     private void ApplyPlaybackView(string lyric)
@@ -37,10 +37,10 @@ public partial class MainWindow
     // playback event can never leave ambiguity guidance invisible.
     private void ApplySourceView()
     {
-        var view = (playback.Status, playback.Ambiguous);
+        var view = PresentationText.SourceView(playback.Mode, playback.ActiveKind, engine.Snapshot, lastSourceStatus, playback.Ambiguous);
         if (!sourceView.ShouldApply(view)) return;
-        SourceText.Text = PresentationText.PlaybackStatus(playback.Mode, playback.ActiveKind, engine.Snapshot, playback.Status);
-        ChoosePlaybackSourceButton.Visibility = playback.Ambiguous ? Visibility.Visible : Visibility.Collapsed;
+        SourceText.Text = view.Text;
+        ChoosePlaybackSourceButton.Visibility = view.ChooseVisible ? Visibility.Visible : Visibility.Collapsed;
         WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
     }
 

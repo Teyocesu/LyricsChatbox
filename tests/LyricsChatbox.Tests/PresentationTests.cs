@@ -317,5 +317,91 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(messages.Length, restoredMessages.Items.Count);
         Assert.Equal(messages, restoredMessages.Items.ToArray());
     }
+    private static PlaybackSnapshot PlayingSnapshot(PlaybackSourceKind kind, PlaybackState state = PlaybackState.Playing) =>
+        CoreTests.Snapshot(state: state) with { Source = kind };
+
+    [Theory]
+    [InlineData("No Spotify session", "Spotify · not detected", false)]
+    [InlineData("Updating Spotify track", "Spotify · reconnecting", false)]
+    [InlineData("Checking Spotify session", "Spotify · reconnecting", false)]
+    [InlineData("Reading Spotify", "Spotify · reconnecting", false)]
+    [InlineData("Refreshing Spotify playback", "Spotify · reconnecting", false)]
+    [InlineData("Spotify unavailable · reconnecting", "Spotify · reconnecting", false)]
+    public void ExplicitSpotifyNullSnapshotNeverClaimsPlayback(string status, string expected, bool choose)
+    {
+        var view = PresentationText.SourceView(PlaybackSourceMode.Spotify, null, null, status, false);
+        Assert.Equal((expected, choose), view);
+    }
+
+    [Theory]
+    [InlineData(PlaybackState.Playing, "Spotify · playing")]
+    [InlineData(PlaybackState.Paused, "Spotify · paused")]
+    public void ExplicitSpotifySnapshotMatchesAuthoritativeState(PlaybackState state, string expected)
+    {
+        var view = PresentationText.SourceView(PlaybackSourceMode.Spotify, PlaybackSourceKind.Spotify,
+            PlayingSnapshot(PlaybackSourceKind.Spotify, state), "status", false);
+        Assert.Equal((expected, false), view);
+    }
+
+    [Theory]
+    [InlineData("No Apple Music session", "Apple Music · not detected")]
+    [InlineData("Checking Apple Music session", "Apple Music · reconnecting")]
+    [InlineData("Updating track", "Apple Music · reconnecting")]
+    [InlineData("Reading Apple Music", "Apple Music · reconnecting")]
+    [InlineData("Refreshing playback after resume", "Apple Music · reconnecting")]
+    [InlineData("Apple Music unavailable · reconnecting", "Apple Music · reconnecting")]
+    public void ExplicitAppleNullSnapshotNeverClaimsPlayback(string status, string expected)
+    {
+        var view = PresentationText.SourceView(PlaybackSourceMode.AppleMusic, null, null, status, false);
+        Assert.Equal((expected, false), view);
+    }
+
+    [Theory]
+    [InlineData(PlaybackState.Playing, "Apple Music · playing")]
+    [InlineData(PlaybackState.Paused, "Apple Music · paused")]
+    public void ExplicitAppleSnapshotMatchesAuthoritativeState(PlaybackState state, string expected)
+    {
+        var view = PresentationText.SourceView(PlaybackSourceMode.AppleMusic, PlaybackSourceKind.AppleMusic,
+            PlayingSnapshot(PlaybackSourceKind.AppleMusic, state), "status", false);
+        Assert.Equal((expected, false), view);
+    }
+
+    [Theory]
+    [InlineData(PlaybackSourceKind.Spotify, PlaybackState.Playing, "Automatic · Spotify playing")]
+    [InlineData(PlaybackSourceKind.Spotify, PlaybackState.Paused, "Automatic · Spotify paused")]
+    [InlineData(PlaybackSourceKind.AppleMusic, PlaybackState.Playing, "Automatic · Apple Music playing")]
+    [InlineData(PlaybackSourceKind.AppleMusic, PlaybackState.Paused, "Automatic · Apple Music paused")]
+    public void AutomaticSelectedSourceStatesItself(PlaybackSourceKind kind, PlaybackState state, string expected)
+    {
+        var view = PresentationText.SourceView(PlaybackSourceMode.Automatic, kind,
+            PlayingSnapshot(kind, state), "status", false);
+        Assert.Equal((expected, false), view);
+    }
+
+    [Fact]
+    public void AutomaticAmbiguityExposesGuidanceAndAction()
+    {
+        const string status = "Apple Music and Spotify are both playing. Choose a playback source.";
+        var view = PresentationText.SourceView(PlaybackSourceMode.Automatic, null, null, status, true);
+        Assert.Equal((status, true), view);
+        var waiting = PresentationText.SourceView(PlaybackSourceMode.Automatic, null, null, "Waiting for a music player", false);
+        Assert.Equal(("Waiting for a music player", false), waiting);
+        var checking = PresentationText.SourceView(PlaybackSourceMode.Automatic, null, null, "Checking music players", false);
+        Assert.Equal(("Checking music players", false), checking);
+    }
+
+    [Fact]
+    public void SourceViewChangesWhenSnapshotArrivesUnderIdenticalStatus()
+    {
+        var before = PresentationText.SourceView(PlaybackSourceMode.Spotify, null, null, "status", false);
+        var after = PresentationText.SourceView(PlaybackSourceMode.Spotify, PlaybackSourceKind.Spotify,
+            PlayingSnapshot(PlaybackSourceKind.Spotify), "status", false);
+        Assert.NotEqual(before, after);
+        Assert.Equal("Spotify · not detected", before.Text);
+        var moved = PresentationText.SourceView(PlaybackSourceMode.Spotify, PlaybackSourceKind.AppleMusic,
+            PlayingSnapshot(PlaybackSourceKind.AppleMusic), "status", false);
+        Assert.NotEqual(after, moved);
+    }
+
     public void Dispose() { if(Directory.Exists(root)) Directory.Delete(root,true); }
 }

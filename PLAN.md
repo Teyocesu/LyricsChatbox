@@ -1,5 +1,11 @@
 # Execution state
 
+## v0.6.1 follow-up: truthful detection, smarter status, Automatic default
+
+Physical QA of the rc.1-era UI exposed DET-01 (badge could contradict an accepted snapshot: the presentation gate tracked only coordinator status/ambiguity, and compact windows additionally collapse the status row only when the event path happened to fire). The gate now consumes a complete SourceView (final text + Choose visibility) computed from mode, active kind, engine snapshot, last event status and ambiguity, refreshed on a gated Tick. Explicit modes label Playing/Paused snapshots exactly and reserve "not detected" for genuine absence; transitions read updating/reconnecting. Automatic prefixes the selected player and state. Verified live: paused Spotify shows reconnecting (never not-detected), playing/paused/Next/close/reopen all agree across badge, metadata, artwork, progress and lyrics; both-playing shows guidance with Choose action.
+
+Also on this branch: Automatic is now the default for new, missing, legacy-unspecified and malformed sources (single Parse fallback change propagating through converter, defaults, UI and diagnostics); explicit AppleMusic/Spotify/Automatic choices round-trip unchanged. Physical matrix re-verified: fresh missing-source defaults to Automatic and binds the playing player; both-playing fail-closed with visible guidance; recoveries, both-paused retention and transitions hold. Product stays 0.6.0; no packaging/tag/release.
+
 ## v0.6.1 maintenance audit and corrections
 
 Independent audit of stable v0.6.0 confirmed LC-01 through LC-05 (Lyric Context ignored Custom templates, erased Music Info identity to fit context, never tried previous-without-next in Adaptive, and advertised ineffective modes) and MAN-01 (HIGH-adjacent boundary: Live Edit arming while master Output Off transmitted on re-enable, proven end-to-end over UDP loopback; Send/Clear buttons were already disabled while Off). DOC-01 confirmed (README Apple-only drift across setup/sync/display/limitations sections); DOC-02 mostly historical — SPEC itself has no second-machine gate, only stale v0.5.x-era normative lines, corrected. No other patch-scope defects in the skimmed areas (epochs, atomic writes, pause, scheduler, updater, lifecycle).

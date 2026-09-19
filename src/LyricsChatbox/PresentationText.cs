@@ -30,10 +30,23 @@ public static partial class PresentationText
             _ => ""
         };
 
+    public static (string Text, bool ChooseVisible) SourceView(PlaybackSourceMode mode, PlaybackSourceKind? active,
+        PlaybackSnapshot? snapshot, string status, bool ambiguous) =>
+        (PlaybackStatus(mode, active, snapshot, status), ambiguous);
+
     public static string PlaybackStatus(PlaybackSourceMode mode, PlaybackSourceKind? active,
         PlaybackSnapshot? snapshot, string status)
     {
         if (mode == PlaybackSourceMode.Automatic && active is null) return status;
+        if (mode == PlaybackSourceMode.Automatic && active is not null)
+        {
+            var player = active == PlaybackSourceKind.Spotify ? "Spotify" : "Apple Music";
+            if (snapshot is not null) return $"Automatic · {player} {snapshot.State.ToString().ToLowerInvariant()}";
+            if (status.StartsWith("No ", StringComparison.Ordinal) ||
+                status.Contains("unavailable", StringComparison.OrdinalIgnoreCase))
+                return $"Automatic · {player} not detected";
+            return $"Automatic · {player} updating";
+        }
         var source = active ?? (mode == PlaybackSourceMode.Spotify ? PlaybackSourceKind.Spotify : PlaybackSourceKind.AppleMusic);
         if (source == PlaybackSourceKind.AppleMusic) return AppleMusicStatus(snapshot, status);
         if (snapshot is not null) return "Spotify · " + snapshot.State.ToString().ToLowerInvariant();

@@ -4,7 +4,7 @@ A small Windows app that follows Apple Music or Spotify Desktop playback, finds 
 
 ## v0.6.0
 
-This update adds Spotify Desktop support alongside Apple Music, with an Apple Music / Spotify / Automatic source selector. Automatic follows whichever supported player is playing and stays undecided when both play. Spotify Desktop support has been verified with the Microsoft Store version on Windows.
+This update adds Spotify Desktop support alongside Apple Music, with an Apple Music / Spotify / Automatic source selector. New installations default to Automatic, which follows whichever supported player is playing and stays undecided when both play; an explicitly saved choice is always kept. Spotify Desktop support has been verified with the Microsoft Store version on Windows.
 
 Output can now be paused for 5, 15 or 30 minutes, until the next track, or until resumed, independently from turning output off. Window size, position and open section restore more reliably, and playback transitions, pauses, resumes and reconnections are handled more robustly.
 

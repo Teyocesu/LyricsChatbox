@@ -37,6 +37,7 @@ public partial class MainWindow : Window
     private int receiverPid;
     private double nextReceiverCheck;
     private long acceptedPlaybackRevision = -1;
+    private string lastSourceStatus = "";
 
     public MainWindow()
     {
@@ -97,7 +98,9 @@ public partial class MainWindow : Window
         if (closing) return;
         _ = Dispatcher.InvokeAsync(() =>
         {
-            if (closing || revision != playback.Revision) return;
+            if (closing) return;
+            lastSourceStatus = status;
+            if (revision != playback.Revision) return;
             acceptedPlaybackRevision = revision;
             if (status == "Refreshing playback source" || playback.ActiveKind is null)
             {

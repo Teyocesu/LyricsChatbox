@@ -1,4 +1,8 @@
-# Current handoff — v0.6.1 maintenance branch ready for release preparation
+# Current handoff — v0.6.1 branch complete for release preparation (detection + Automatic default)
+
+DET-01 (badge contradicting accepted snapshot) fixed via complete SourceView gate input plus last-event status sourcing (physical QA caught an explicit-mode regression of the first attempt during the same session). Smarter explicit/Automatic status wording implemented and tested. Automatic is the default for new/missing/legacy/malformed sources with explicit choices preserved and round-tripped. Full matrix physically re-verified on a dev build (Spotify contradiction suite, Apple bounded checks, fresh-default Automatic, both-playing guidance, recoveries, retention, transitions). A LocalData scare from a failed scripted restore was recovered byte-identical from the session backup; user environment restored and verified. Product stays 0.6.0, suite green, branch pushed. Next: separate v0.6.1 release-preparation task. Stop before version/tag/merge/publish.
+
+# Previous handoff — v0.6.1 maintenance branch ready for release preparation
 
 v0.6.0 is published stable on `main`. The v0.6.1 maintenance branch `codex/v0.6.1` holds: profile-aware Lyric Context (unified template budgeting, metadata-preserving degradation, Custom `{lyrics}` support, honest disabled state), master Output Off hard no-transmission boundary (Send/Clear/Live arming gated), corrected README/SPEC Spotify-era wording, and the 22-item context regression matrix. Full suite green, physical QA passed on a dev build with loopback capture, user environment restored byte-identical. No Medium/High blockers. Product stays at 0.6.0 — no version bump, packaging, tag, or release. Next: separate v0.6.1 release-preparation task. Stop before version/tag/merge/publish.
 

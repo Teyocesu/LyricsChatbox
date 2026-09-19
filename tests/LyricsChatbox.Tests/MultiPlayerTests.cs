@@ -15,7 +15,7 @@ public sealed class MultiPlayerTests : IDisposable
         File.WriteAllText(Path.Combine(root, "settings.json"), "{\"Enabled\":true,\"Offset\":0.7,\"Message\":\"retained\"}");
         var data = new LocalData(root);
         var old = data.ReadSettings();
-        Assert.Equal("AppleMusic", old.PlaybackSource);
+        Assert.Equal("Automatic", old.PlaybackSource);
         Assert.True(old.Enabled); Assert.Equal(0.7, old.Offset); Assert.Equal("retained", old.Message);
         foreach (var mode in new[] { PlaybackSourceMode.AppleMusic, PlaybackSourceMode.Spotify, PlaybackSourceMode.Automatic })
         {
@@ -23,11 +23,34 @@ public sealed class MultiPlayerTests : IDisposable
             Assert.Equal(mode.ToString(), data.ReadSettings().PlaybackSource);
         }
         Assert.True(data.SaveSettings(old with { PlaybackSource = "unexpected" }));
-        Assert.Equal("AppleMusic", data.ReadSettings().PlaybackSource);
+        Assert.Equal("Automatic", data.ReadSettings().PlaybackSource);
         File.WriteAllText(Path.Combine(root, "settings.json"), "{\"Enabled\":true,\"Offset\":0.7,\"Message\":\"retained\",\"PlaybackSource\":\"Unknown\"}");
         var corrupt = data.ReadSettings();
-        Assert.Equal("AppleMusic", corrupt.PlaybackSource);
+        Assert.Equal("Automatic", corrupt.PlaybackSource);
         Assert.Equal("retained", corrupt.Message);
+    }
+
+    [Fact]
+    public void NewSettingsDefaultToAutomaticSource()
+    {
+        Assert.Equal("Automatic", new AppSettings().PlaybackSource);
+        Assert.Equal(PlaybackSourceMode.Automatic, PlaybackSourceSetting.Parse(null));
+        Assert.Equal(PlaybackSourceMode.Automatic, PlaybackSourceSetting.Parse("garbage"));
+        Assert.Equal(PlaybackSourceMode.AppleMusic, PlaybackSourceSetting.Parse("AppleMusic"));
+        Assert.Equal(PlaybackSourceMode.Spotify, PlaybackSourceSetting.Parse("Spotify"));
+        Assert.Equal(PlaybackSourceMode.Automatic, PlaybackSourceSetting.Parse("Automatic"));
+    }
+
+    [Fact]
+    public void ExplicitSourceChoicesRoundTrip()
+    {
+        Directory.CreateDirectory(root);
+        var data = new LocalData(root);
+        foreach (var mode in new[] { "AppleMusic", "Spotify", "Automatic" })
+        {
+            Assert.True(data.SaveSettings(new AppSettings() with { PlaybackSource = mode }));
+            Assert.Equal(mode, data.ReadSettings().PlaybackSource);
+        }
     }
 
     [Theory]
@@ -52,7 +75,7 @@ public sealed class MultiPlayerTests : IDisposable
             "\"AccentPreset\":\"Blue\",\"BackgroundStyle\":\"Graphite\",\"ArtworkTintEnabled\":true}" +
             sourceProperty + "}");
         var restored = new LocalData(root).ReadSettings();
-        Assert.Equal("AppleMusic", restored.PlaybackSource);
+        Assert.Equal("Automatic", restored.PlaybackSource);
         Assert.True(restored.Enabled); Assert.Equal(0.7, restored.Offset);
         Assert.Equal("192.168.1.40", restored.Host); Assert.Equal(9123, restored.Port);
         Assert.Equal("Custom", restored.Preset); Assert.Equal("{title}", restored.CustomTemplate);
