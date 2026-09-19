@@ -1,5 +1,9 @@
 # Execution state
 
+## v0.6.1 release preparation
+
+Version bumped 0.6.0 → 0.6.1 (numeric 0.6.1.0, `IsPrerelease == false`, stable-identity test follows). Updater matrix reconfirmed against the bump (0.6.0 → 0.6.1 offered, same-version current, no downgrades, prereleases filtered). Full suite, package policy, clean-tree portable + installer build with `0.6.1+<sha>` provenance, public v0.6.0 → local v0.6.1 upgrade with explicit-choice preservation, fresh-settings Automatic default, and bounded packaged QA (Spotify badge truth, Apple smoke, Lyric Context profiles, Output Off no-replay) all pass. No Medium/High blockers. No tag/release/merge yet.
+
 ## v0.6.1 follow-up: truthful detection, smarter status, Automatic default
 
 Physical QA of the rc.1-era UI exposed DET-01 (badge could contradict an accepted snapshot: the presentation gate tracked only coordinator status/ambiguity, and compact windows additionally collapse the status row only when the event path happened to fire). The gate now consumes a complete SourceView (final text + Choose visibility) computed from mode, active kind, engine snapshot, last event status and ambiguity, refreshed on a gated Tick. Explicit modes label Playing/Paused snapshots exactly and reserve "not detected" for genuine absence; transitions read updating/reconnecting. Automatic prefixes the selected player and state. Verified live: paused Spotify shows reconnecting (never not-detected), playing/paused/Next/close/reopen all agree across badge, metadata, artwork, progress and lyrics; both-playing shows guidance with Choose action.

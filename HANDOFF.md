@@ -1,4 +1,8 @@
-# Current handoff — v0.6.1 branch complete for release preparation (detection + Automatic default)
+# Current handoff — v0.6.1 locally prepared, awaiting publication review
+
+v0.6.1 is versioned (`0.6.1`, numeric `0.6.1.0`, not prerelease) on `codex/v0.6.1`; `main` stays at v0.6.0 stable, all public releases untouched, no v0.6.1 tag/release. Validation green, provenance exact, upgrade and packaged QA pass, user environment restored byte-identical. Next: review, then publish v0.6.1. Stop before tag/release/merge.
+
+# Previous handoff — v0.6.1 branch complete for release preparation (detection + Automatic default)
 
 DET-01 (badge contradicting accepted snapshot) fixed via complete SourceView gate input plus last-event status sourcing (physical QA caught an explicit-mode regression of the first attempt during the same session). Smarter explicit/Automatic status wording implemented and tested. Automatic is the default for new/missing/legacy/malformed sources with explicit choices preserved and round-tripped. Full matrix physically re-verified on a dev build (Spotify contradiction suite, Apple bounded checks, fresh-default Automatic, both-playing guidance, recoveries, retention, transitions). A LocalData scare from a failed scripted restore was recovered byte-identical from the session backup; user environment restored and verified. Product stays 0.6.0, suite green, branch pushed. Next: separate v0.6.1 release-preparation task. Stop before version/tag/merge/publish.
 

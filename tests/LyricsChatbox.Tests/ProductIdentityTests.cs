@@ -20,7 +20,7 @@ public sealed class ProductIdentityTests
     [Fact]
     public void StableReleaseIdentityIsFinal()
     {
-        Assert.Equal("0.6.0", ProductIdentity.DisplayVersion);
+        Assert.Equal("0.6.1", ProductIdentity.DisplayVersion);
         Assert.False(ProductIdentity.IsPrerelease);
     }
 }
