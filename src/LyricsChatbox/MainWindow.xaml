@@ -277,7 +277,7 @@
               <WrapPanel><Button Content="New profile" Click="NewProfile" Margin="0,0,8,8"/><Button Content="Duplicate" Click="DuplicateProfile" Margin="0,0,8,8"/><Button x:Name="DeleteProfileButton" Content="Delete profile" Click="DeleteProfile" Margin="0,0,0,8"/></WrapPanel>
               <TextBlock x:Name="ProfileStatus" Text="Changes save automatically. Appearance stays global." Style="{StaticResource Caption}"/>
               <TextBlock Text="Lyric context" Style="{StaticResource Caption}" Margin="0,16,0,6"/>
-              <ComboBox ItemsSource="{Binding ItemsSource, ElementName=ContextBox}" SelectedItem="{Binding SelectedItem, ElementName=ContextBox, Mode=TwoWay}" AutomationProperties.Name="Profile lyric context"/>
+              <ComboBox x:Name="ProfileContextBox" ItemsSource="{Binding ItemsSource, ElementName=ContextBox}" SelectedItem="{Binding SelectedItem, ElementName=ContextBox, Mode=TwoWay}" AutomationProperties.Name="Profile lyric context"/>
             </StackPanel>
           </Border>
           <Border Style="{StaticResource Card}" Margin="0,0,8,16">

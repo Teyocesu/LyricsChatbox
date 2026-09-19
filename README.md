@@ -1,6 +1,6 @@
 # LyricsChatbox
 
-A small Windows app that follows native Apple Music playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, Apple credentials or backend.
+A small Windows app that follows Apple Music or Spotify Desktop playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, player credentials or backend.
 
 ## v0.6.0
 
@@ -43,11 +43,11 @@ The WPF interface now has a larger Now Playing area, saved profile cards, lyric 
 
 **Profiles** save display layout/template, custom status, lyric context, Compact/Floating and Custom/Status alignment. Select a card on Home or manage profiles in Display: create, rename, duplicate and delete user profiles. Presentation edits save automatically. Lyrics, Minimal, Music Info and Custom are editable starter profiles protected from deletion. Existing settings migrate to an equivalent profile or **My display**. Appearance, timing, manual typing/live edit and OSC settings stay global.
 
-**Playback controls** use the selected Apple Music session for pause/resume and previous/next. Shuffle and repeat remain disabled when Windows does not expose them. The volume slider supports clicking its track, dragging and keyboard input, and changes only an unambiguous Apple Music audio session. The song progress bar is read-only: the tested Apple Music version ignores Windows seek commands.
+**Playback controls** use the selected player's session for pause/resume and previous/next. Shuffle and repeat remain disabled when Windows does not expose them. The volume slider supports clicking its track, dragging and keyboard input, and changes only the selected player's unambiguous audio session. The song progress bar is read-only: the tested Apple Music version ignores Windows seek commands.
 
 Home has no page scrolling. Smaller windows provide a section selector, and expanded recording/timing details scroll inside their card.
 
-**Lyric context** offers Current only, Current + next, Previous + current + next and Adaptive for Lyrics Only and Song + Lyrics layouts. Adaptive fits the available adjacent lyrics into the budget. The current line wins, followed by next, previous and song metadata; whole lower-priority pieces are removed before truncating the current line. With a previous line present, `›` marks the current one. Instrumental gaps do not send future lyrics alone. Custom/Status templates retain their token behavior and do not use context mode. All output retains the 144-unit, nine-line, whole-grapheme limits and the two-unit compact reserve.
+**Lyric context** offers Current only, Current + next, Previous + current + next and Adaptive. The profile defines the base content and context only adds nearby lyrics: the current line is mandatory, then previous + current + next, current + next, previous + current, or current only — whichever fits first without removing fixed profile content such as song title and artist. Custom templates support context through their `{lyrics}` line; templates without one (including Status / Time) say so instead of offering modes that do nothing. With a previous line present, `›` marks the current one. Instrumental gaps do not send future lyrics alone. All output retains the 144-unit, nine-line, whole-grapheme limits and the two-unit compact reserve.
 
 **Lyrics Details** shows source, cache/match state, Apple Music/candidate durations, global/saved/effective offsets, manual association and ignore state. Recovery offers retry, alternatives and LRC import when relevant. **Ignore lyrics for this recording** saves an exact-recording decision and pauses all lyric sources for it, including imported LRC. Imports and cache are kept. **Resume lyrics for this recording** reverses the decision without affecting another version of the song.
 
@@ -69,7 +69,7 @@ The offset slider shows the effective value. Adjustments are temporary until **S
 
 When automatic matching fails, **Choose another match…** searches up to five candidates, showing recording metadata instead of lyrics. An explicit choice is saved only after verifying timed lyrics. Imported local LRC remains first and blocks remote selection until its file is deliberately removed, followed by validated cache/saved association, then normal strict matching. Missing or changed saved candidates fall back safely. **Forget manual match** removes the association.
 
-Home displays the Windows media thumbnail from Apple Music, with no separate artwork service or disk history. **Settings → Diagnostics** copies or exports current playback/provider/output state and up to 100 recent status events. No lyric bodies, drafts, custom messages or credentials are included; review metadata before sharing. Nothing is uploaded automatically.
+Home displays the Windows media thumbnail from the selected player, with no separate artwork service or disk history. **Settings → Diagnostics** copies or exports current playback/provider/output state and up to 100 recent status events. No lyric bodies, drafts, custom messages or credentials are included; review metadata before sharing. Nothing is uploaded automatically.
 
 Windows CI restores using the repository's SDK/lock files, builds Release and runs offline tests on pushes and pull requests. To build the installer after publishing, run `scripts/Build-Installer.ps1 -Compiler <path-to-ISCC.exe>` with Inno Setup installed. Build artifacts live under the selected version's directory in `artifacts`.
 
@@ -77,7 +77,7 @@ Windows CI restores using the repository's SDK/lock files, builds Release and ru
 
 Download the installer or Windows x64 ZIP from [GitHub Releases](https://github.com/Teyocesu/LyricsChatbox/releases). Run the installer, or extract the ZIP and launch `win-x64/LyricsChatbox.exe`. Both are self-contained and do not require a separate .NET installation. Windows 10 version 2004 or newer is required; development validation uses Windows 11.
 
-1. Open Apple Music for Windows and play a song.
+1. Open Apple Music for Windows or Spotify Desktop (Microsoft Store version tested) and play a song.
 2. In VRChat, enable **OSC** from the Action Menu. Make your own Chatbox visible to check output. Stop other apps that send Chatbox messages to avoid competing output.
 3. Open LyricsChatbox and enable **Output** in the sidebar. The first launch starts with sending off; this setting is remembered. **Lyrics Only** is the default, with no forced song title or prefix.
 
@@ -85,7 +85,7 @@ The **Settings → VRChat OSC → Advanced destination** section contains the ma
 
 ## Synchronization and lyrics
 
-The app explicitly selects Apple Music's Windows media session. Windows position anchors remain authoritative; interpolation only bridges short gaps and stops when observations become stale. Pause, seek, restart and track changes are re-evaluated automatically. Results from an old track are discarded.
+The app explicitly selects the chosen player's Windows media session. Windows position anchors remain authoritative; interpolation only bridges short gaps and stops when observations become stale. Pause, seek, restart and track changes are re-evaluated automatically. Results from an old track are discarded.
 
 Lyrics are resolved in this order: an imported local LRC for the recording, a valid local cache, [LRCLIB direct lookup and conservative search](https://lrclib.net/docs), then NetEase as a best-effort fallback. Track title, artist, album and duration are sent over HTTPS to LRCLIB. If no usable confident result is available, title and artist are sent to NetEase; returned metadata must pass the same strict title/artist/version/duration checks. Plain lyrics are never treated as synchronized. Incompatible or ambiguous recordings fail closed; unavailable lyrics and instrumental tracks are normal states. The app respects provider cooldowns and retries temporary failures without blocking playback monitoring.
 
@@ -117,7 +117,7 @@ Fallback availability depends on the external service and network. The app keeps
 
 ## Desktop layout
 
-**Home** shows Apple Music state, song, current lyric, source and quick preset/floating/timing controls. **Display** provides visual presets and shows the token editor only for Custom. **Manual** has a local draft, payload counter and eight-second return countdown. **Settings** keeps import/data/network controls out of the main playback view. The sidebar output switch and final formatted preview remain visible. The preview labels floating mode and omits its control suffix; it is not a replica of VRChat's renderer. The dark native WPF theme uses Windows fonts/icons and adds no UI framework dependency.
+**Home** shows playback state, song, current lyric, source and quick preset/floating/timing controls. **Display** provides visual presets and shows the token editor only for Custom. **Manual** has a local draft, payload counter and eight-second return countdown. **Settings** keeps import/data/network controls out of the main playback view. The sidebar output switch and final formatted preview remain visible. The preview labels floating mode and omits its control suffix; it is not a replica of VRChat's renderer. The dark native WPF theme uses Windows fonts/icons and adds no UI framework dependency.
 
 ## Local data and privacy
 
@@ -133,7 +133,7 @@ Settings, profiles, reusable quick messages, exact-recording ignore decisions, i
 - Only the newest line is kept when output is faster than the 1.05-second send interval. Text is limited to 144 UTF-16 units without splitting Unicode grapheme clusters, with at most nine explicit lines. VRChat's own word wrapping can further limit display.
 - Disabling stops new output immediately. An already displayed VRChat message is owned by the client and may remain until cleared or expired.
 - VRChat process restarts reset output deduplication for the current line. Arbitrary remote receiver restarts cannot be detected through UDP.
-- No system-audio capture, automatic transcription/alignment, other music players or Apple UI scraping.
+- No system-audio capture, automatic transcription/alignment or player UI scraping. Only Apple Music and Spotify Desktop are supported music sources.
 
 For troubleshooting, verify that VRChat OSC is enabled and that no other application is competing for the Chatbox destination.
 

@@ -93,7 +93,7 @@ public partial class MainWindow
 
     private void RequestManualSend()
     {
-        if (IsOutputPaused(DateTimeOffset.UtcNow)) manual.SuppressOutput();
+        if (!engine.Enabled || IsOutputPaused(DateTimeOffset.UtcNow)) manual.SuppressOutput();
         else manual.Send();
         Tick();
     }

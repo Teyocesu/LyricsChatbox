@@ -198,9 +198,8 @@ public partial class MainWindow : Window
         ApplyProgressView(now, position);
         UpdateLyricsDetails();
         var structured = settings.Preset is "Lyrics Only" or "Song + Lyrics";
-        var automatic = structured ? LyricContextComposer.Compose(engine.Context(now), engine.Track, settings.Preset, contextMode, settings.Compact)
-            : ChatboxComposer.Compose(ChatboxComposer.Template(settings.Preset, settings.CustomTemplate),
-                engine.Track, lyric, settings.Message, DateTimeOffset.Now, position, true);
+        var automatic = LyricContextComposer.ComposeProfile(engine.Context(now), engine.Track, settings.Preset,
+            settings.CustomTemplate, settings.Message, contextMode, settings.Compact, DateTimeOffset.Now, position);
         var desired = manual.Desired(automatic, now);
         var preserveLayout = manual.IsManual || settings.Preset is "Custom" or "Status / Time";
         var alignment = manual.IsManual ? settings.ManualAlignment : settings.CustomAlignment;
@@ -313,12 +312,12 @@ public partial class MainWindow : Window
     {
         if (!ready || loadingQuickDraft) return;
         manual.Focus(DraftBox.IsKeyboardFocusWithin);
-        manual.Edit(DraftBox.Text, settings.LiveEdit && !IsOutputPaused(DateTimeOffset.UtcNow), MonotonicClock.Now); Tick();
+        manual.Edit(DraftBox.Text, engine.Enabled && settings.LiveEdit && !IsOutputPaused(DateTimeOffset.UtcNow), MonotonicClock.Now); Tick();
     }
     private void LiveChanged(object sender, RoutedEventArgs e)
     {
         if (!ready) return;
-        manual.LiveChanged(LiveBox.IsChecked == true && !IsOutputPaused(DateTimeOffset.UtcNow)); DisplayChanged(sender, e);
+        manual.LiveChanged(engine.Enabled && LiveBox.IsChecked == true && !IsOutputPaused(DateTimeOffset.UtcNow)); DisplayChanged(sender, e);
     }
     private void SendManual(object sender, RoutedEventArgs e) => RequestManualSend();
     private void InsertAscii(object sender, RoutedEventArgs e)
@@ -337,8 +336,8 @@ public partial class MainWindow : Window
     private void ClearManual(object sender, RoutedEventArgs e)
     {
         DraftBox.Clear();
-        manual.Edit("", settings.LiveEdit && !IsOutputPaused(DateTimeOffset.UtcNow), MonotonicClock.Now);
-        if (IsOutputPaused(DateTimeOffset.UtcNow)) manual.SuppressOutput(); else manual.Send();
+        manual.Edit("", engine.Enabled && settings.LiveEdit && !IsOutputPaused(DateTimeOffset.UtcNow), MonotonicClock.Now);
+        if (!engine.Enabled || IsOutputPaused(DateTimeOffset.UtcNow)) manual.SuppressOutput(); else manual.Send();
         Tick();
     }
     private void ResumeAutomatic(object sender, RoutedEventArgs e) { manual.Resume(); Tick(); }

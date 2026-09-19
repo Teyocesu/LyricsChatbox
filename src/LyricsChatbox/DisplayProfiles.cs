@@ -8,7 +8,8 @@ public record DisplayProfile(string Id, string Name, string Preset = "Lyrics Onl
         ChatboxComposer.Presets.Contains(Preset) && LyricContextComposer.Modes.Contains(ContextMode) && MessageLayout.Alignments.Contains(Alignment) &&
         CustomTemplate is {Length: <= 512} && Message is {Length: <= 512};
     [System.Text.Json.Serialization.JsonIgnore]
-    public string Summary => Preset + " · " + ContextMode + (Compact ? " · Floating" : "");
+    public bool SupportsLyricContext => LyricContextComposer.SupportsContext(Preset, CustomTemplate);
+    public string Summary => Preset + (SupportsLyricContext ? " · " + ContextMode : "") + (Compact ? " · Floating" : "");
     public override string ToString() => Name;
     public AppSettings Apply(AppSettings settings) => settings with
     { Preset = Preset, CustomTemplate = CustomTemplate, Message = Message, Compact = Compact, CustomAlignment = Alignment };

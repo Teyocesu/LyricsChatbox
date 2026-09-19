@@ -35,11 +35,14 @@ public partial class MainWindow
     private void RememberProfileChanges()
     {
         profiles = profiles.Save(CurrentProfile()) ?? profiles;
-        ContextHint.Text = settings.Preset is "Custom" or "Status / Time"
-            ? "Lyric context does not apply to Custom or Status layouts."
+        var supportsContext = CurrentProfile().SupportsLyricContext;
+        ContextBox.IsEnabled = supportsContext;
+        ProfileContextBox.IsEnabled = supportsContext;
+        ContextHint.Text = !supportsContext ? "Lyric context needs a {lyrics} line in the template."
             : contextMode == "Adaptive" ? "Adds nearby lyrics when they fit. The current lyric always stays."
             : contextMode == "Previous + current + next" ? "Shows all three lyrics when they fit. The current lyric always stays."
             : "The current lyric always stays when space is limited.";
+        ContextHint.Visibility = supportsContext ? Visibility.Collapsed : Visibility.Visible;
         // Replacing immutable items updates card summaries without changing the selected profile.
         RefreshProfiles(); ProfileStatus.Text = "Changes save automatically. Appearance stays global.";
     }

@@ -1,6 +1,6 @@
-# Current handoff — v0.6.0 stable locally prepared, awaiting publication review
+# Current handoff — v0.6.1 maintenance branch ready for release preparation
 
-v0.6.0 stable is versioned (`0.6.0`, numeric `0.6.0.0`, not prerelease) on `codex/v0.6.0`; `main`/`origin/main` remain `4df40710e673a7c6f585b6eb04f6b866f44aa909`, rc.1/rc.2 publications untouched, v0.5.4 still public. No known Medium/High blockers; second-machine QA explicitly waived with conservative Store-version wording. Next: validate, commit, build from the clean tree, verify rc.2 → stable upgrade and packaged smoke, then await publication authorization. Stop before tag, release, or merge.
+v0.6.0 is published stable on `main`. The v0.6.1 maintenance branch `codex/v0.6.1` holds: profile-aware Lyric Context (unified template budgeting, metadata-preserving degradation, Custom `{lyrics}` support, honest disabled state), master Output Off hard no-transmission boundary (Send/Clear/Live arming gated), corrected README/SPEC Spotify-era wording, and the 22-item context regression matrix. Full suite green, physical QA passed on a dev build with loopback capture, user environment restored byte-identical. No Medium/High blockers. Product stays at 0.6.0 — no version bump, packaging, tag, or release. Next: separate v0.6.1 release-preparation task. Stop before version/tag/merge/publish.
 
 # Previous handoff — v0.6.0-rc.2 locally prepared, awaiting publication review
 

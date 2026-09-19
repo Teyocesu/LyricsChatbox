@@ -56,39 +56,55 @@ public sealed class PresentationTests : IDisposable
     public void ContextModesUseTheAuthoritativeLineAndClearAcrossGaps(string mode,string expected)
     {
         var timeline = LrcParser.Parse("[00:01]previous\n[00:03]current\n[00:06]next\n[00:08]\n[00:30]later");
-        Assert.Equal(expected,LyricContextComposer.Compose(timeline.Context(3),CoreTests.Track,"Lyrics Only",mode,false));
-        Assert.Equal("previous\n› current\nnext",LyricContextComposer.Compose(timeline.Context(4,1),CoreTests.Track,"Lyrics Only","Adaptive",false));
+        Assert.Equal(expected,LyricContextComposer.ComposeProfile(timeline.Context(3),CoreTests.Track,"Lyrics Only","{lyrics}","",mode,false));
+        Assert.Equal("previous\n› current\nnext",LyricContextComposer.ComposeProfile(timeline.Context(4,1),CoreTests.Track,"Lyrics Only","{lyrics}","","Adaptive",false));
         Assert.Equal(LyricContext.Empty,timeline.Context(0)); Assert.Equal(LyricContext.Empty,timeline.Context(9));
         Assert.Equal(LyricContext.Empty,timeline.Context(25)); Assert.Equal(LyricContext.Empty,timeline.Context(40));
         Assert.Equal("",timeline.Context(30).Previous);
     }
     [Fact]
-    public void SemanticBudgetDropsMetadataThenPreviousThenNextWithoutShorteningCurrent()
+    public void SemanticBudgetKeepsProfileMetadataBeforeDroppingContext()
     {
-        var context = new LyricContext(new('p',25),new('c',70),new('n',25));
         var track = CoreTests.Track with {Title=new('t',80),Artist=new('a',80)};
-        var result = LyricContextComposer.Compose(context,track,"Song + Lyrics","Adaptive",false);
-        Assert.DoesNotContain('t',result); Assert.Contains(context.Previous,result); Assert.Contains(context.Next,result); Assert.Contains(context.Current,result);
-        result = LyricContextComposer.Compose(context with {Previous=new('p',60)},track,"Song + Lyrics","Adaptive",false);
-        Assert.DoesNotContain('p',result); Assert.Contains(context.Current,result); Assert.Contains(context.Next,result);
-        result = LyricContextComposer.Compose(context with {Current=new('c',130)},track,"Song + Lyrics","Adaptive",false);
-        Assert.Equal(new string('c',130),result);
+        foreach (var context in new[]
+        {
+            new LyricContext(new('p',25),new('c',70),new('n',25)),
+            new LyricContext(new('p',60),new('c',70),new('n',25)),
+            new LyricContext(new('p',25),new('c',130),new('n',25)),
+        })
+        {
+            var result = LyricContextComposer.ComposeProfile(context,track,"Song + Lyrics","{lyrics}","",
+                "Adaptive",false,DateTimeOffset.MinValue,null);
+            Assert.StartsWith("♫",result);
+            Assert.InRange(ChatboxFormatter.Format(result,false).Length,0,144);
+        }
         var fullCurrent = new string('c',142);
-        Assert.Equal(fullCurrent,LyricContextComposer.Compose(new("previous",fullCurrent,"next"),track,"Song + Lyrics","Adaptive",true));
+        var compact = LyricContextComposer.ComposeProfile(new("previous",fullCurrent,"next"),track,"Song + Lyrics","{lyrics}","",
+            "Adaptive",true,DateTimeOffset.MinValue,null);
+        Assert.StartsWith("♫",compact);
+        Assert.InRange(ChatboxFormatter.Format(compact,true).Length,0,144);
     }
     [Fact]
-    public void AdaptiveIsDistinctFromExplicitThreeLineContext()
+    public void AdaptiveSharesTheExplicitFullLadderIncludingPreviousWithoutNext()
     {
-        var context = new LyricContext("previous", "current", "");
-        var explicitContext = LyricContextComposer.Compose(context, CoreTests.Track, "Song + Lyrics", "Previous + current + next", false);
-        var adaptive = LyricContextComposer.Compose(context, CoreTests.Track, "Song + Lyrics", "Adaptive", false);
-        Assert.Contains("previous", explicitContext);
-        Assert.DoesNotContain("previous", adaptive);
-        Assert.Contains("♫ Song — Artist", adaptive);
-        Assert.EndsWith("current", adaptive);
+        var at = new DateTimeOffset(2026, 9, 7, 19, 31, 0, TimeSpan.Zero);
+        foreach (var context in new[]
+        {
+            new LyricContext("previous", "current", "next"),
+            new LyricContext("previous", "current", ""),
+            new LyricContext("", "current", "next"),
+            new LyricContext(new('p', 140), "current", "next"),
+        })
+        {
+            Assert.Equal(
+                LyricContextComposer.ComposeProfile(context, CoreTests.Track, "Song + Lyrics", "{lyrics}", "", "Previous + current + next", false, at, null),
+                LyricContextComposer.ComposeProfile(context, CoreTests.Track, "Song + Lyrics", "{lyrics}", "", "Adaptive", false, at, null));
+        }
+        var adaptive = LyricContextComposer.ComposeProfile(new("previous", "current", ""), CoreTests.Track, "Song + Lyrics", "{lyrics}", "", "Adaptive", false, at, null);
+        Assert.Equal("♫ Song — Artist\nprevious\n› current", adaptive);
 
-        Assert.Equal("current\nnext", LyricContextComposer.Compose(new(new string('p', 140), "current", "next"), CoreTests.Track, "Lyrics Only", "Adaptive", false));
-        Assert.Equal(new string('c', 140), LyricContextComposer.Compose(new("previous", new string('c', 140), "next"), CoreTests.Track, "Lyrics Only", "Adaptive", false));
+        Assert.Equal("current\nnext", LyricContextComposer.ComposeProfile(new(new string('p', 140), "current", "next"), CoreTests.Track, "Lyrics Only", "{lyrics}", "", "Adaptive", false, at, null));
+        Assert.Equal(new string('c', 140), LyricContextComposer.ComposeProfile(new("previous", new string('c', 140), "next"), CoreTests.Track, "Lyrics Only", "{lyrics}", "", "Adaptive", false, at, null));
     }
     [Theory]
     [InlineData("日本語")]
@@ -98,14 +114,124 @@ public sealed class PresentationTests : IDisposable
     public void CurrentTruncationPreservesGraphemesAndCompactAndLineLimits(string element)
     {
         var current = string.Concat(Enumerable.Repeat(element,160));
-        var expected = ChatboxFormatter.Visible(ChatboxFormatter.Format(current,true));
-        var result = LyricContextComposer.Compose(new("old",current,"next"),CoreTests.Track,"Song + Lyrics","Adaptive",true);
-        Assert.Equal(expected,result); Assert.InRange(ChatboxFormatter.Format(result,true).Length,0,144);
+        var expected = ChatboxFormatter.Format("♫ Song — Artist\n" + current,true);
+        var result = LyricContextComposer.ComposeProfile(new("old",current,"next"),CoreTests.Track,"Song + Lyrics","{lyrics}","",
+            "Adaptive",true,new DateTimeOffset(2026,9,7,19,31,0,TimeSpan.Zero),null);
+        Assert.Equal(expected,ChatboxFormatter.Format(result,true));
+        Assert.InRange(ChatboxFormatter.Format(result,true).Length,0,144);
         Assert.Equal(result,new UTF8Encoding(false,true).GetString(new UTF8Encoding(false,true).GetBytes(result)));
         var nine = string.Join('\n',Enumerable.Repeat("current",9));
-        Assert.Equal(nine,LyricContextComposer.Compose(new("old",nine,"next"),CoreTests.Track,"Song + Lyrics","Adaptive",false));
+        var at = new DateTimeOffset(2026,9,7,19,31,0,TimeSpan.Zero);
+        var overBudget = LyricContextComposer.ComposeProfile(new("old",nine,"next"),CoreTests.Track,"Song + Lyrics","{lyrics}","",
+            "Adaptive",false,at,null);
+        Assert.StartsWith("♫",overBudget);
+        Assert.NotEqual(nine,overBudget);
+        var safe = ChatboxFormatter.Format(overBudget,false);
+        Assert.InRange(safe.Count(c=>c=='\n'),0,8);
+        Assert.InRange(safe.Length,0,144);
         var giant = "e" + new string('\u0301',300);
-        Assert.Equal("",LyricContextComposer.Compose(new("old",giant,"next"),CoreTests.Track,"Lyrics Only","Adaptive",true));
+        var giantResult = LyricContextComposer.ComposeProfile(new("old",giant,"next"),CoreTests.Track,"Lyrics Only","{lyrics}","",
+            "Adaptive",true,at,null);
+        Assert.Equal(giant,giantResult);
+        Assert.Equal("",ChatboxFormatter.Format(giantResult,true));
+    }
+    private static string ProfileCompose(LyricContext context, string preset, string custom, string mode, bool compact = false, string message = "")
+    {
+        return LyricContextComposer.ComposeProfile(context, CoreTests.Track, preset, custom, message, mode, compact,
+            new DateTimeOffset(2026, 9, 7, 19, 31, 0, TimeSpan.Zero), 111);
+    }
+    [Fact]
+    public void ProfileAwareLyricsOnlyModes()
+    {
+        var context = new LyricContext("previous", "current", "next");
+        Assert.Equal("current", ProfileCompose(context, "Lyrics Only", "{lyrics}", "Current only"));
+        Assert.Equal("current\nnext", ProfileCompose(context, "Lyrics Only", "{lyrics}", "Current + next"));
+        Assert.Equal("current", ProfileCompose(new("p", "current", new string('n', 140)), "Lyrics Only", "{lyrics}", "Current + next"));
+    }
+    [Fact]
+    public void ProfileAwareAdaptiveTriesAllCandidatesInOrder()
+    {
+        Assert.Equal("previous\n› current\nnext",
+            ProfileCompose(new("previous", "current", "next"), "Lyrics Only", "{lyrics}", "Adaptive"));
+        Assert.Equal("current\nnext",
+            ProfileCompose(new(new string('p', 140), "current", "next"), "Lyrics Only", "{lyrics}", "Adaptive"));
+        Assert.Equal("previous\n› current",
+            ProfileCompose(new("previous", "current", new string('n', 140)), "Lyrics Only", "{lyrics}", "Adaptive"));
+        Assert.Equal("current",
+            ProfileCompose(new(new string('p', 140), "current", new string('n', 140)), "Lyrics Only", "{lyrics}", "Adaptive"));
+    }
+    [Fact]
+    public void ProfileAwareMusicInfoKeepsMetadataBeforeDroppingContext()
+    {
+        var context = new LyricContext("previous", "current", "next");
+        var full = ProfileCompose(context, "Song + Lyrics", "{lyrics}", "Current + next");
+        Assert.Equal("♫ Song — Artist\ncurrent\nnext", full);
+        var track = CoreTests.Track with { Title = new('t', 80), Artist = new('a', 80) };
+        var tight = new LyricContext(new('p', 25), new('c', 70), new('n', 25));
+        var result = LyricContextComposer.ComposeProfile(tight, track, "Song + Lyrics", "{lyrics}", "", "Adaptive", false,
+            new DateTimeOffset(2026, 9, 7, 19, 31, 0, TimeSpan.Zero), 111);
+        Assert.StartsWith("♫", result);
+        Assert.InRange(ChatboxFormatter.Format(result, false).Length, 0, 144);
+        var adaptive = LyricContextComposer.ComposeProfile(context, CoreTests.Track, "Song + Lyrics", "{lyrics}", "", "Adaptive", false,
+            new DateTimeOffset(2026, 9, 7, 19, 31, 0, TimeSpan.Zero), 111);
+        Assert.Contains("Song", adaptive); Assert.Contains("Artist", adaptive); Assert.Contains("next", adaptive);
+    }
+    [Fact]
+    public void ProfileAwareCustomTemplateSupportsContextThroughLyricsToken()
+    {
+        const string template = "{time}\n{title} - {artist}\n{elapsed} - {duration}\n{lyrics}";
+        var context = new LyricContext("previous", "current", "next");
+        Assert.Equal("19:31\nSong - Artist\n1:51 - 2:00\ncurrent",
+            ProfileCompose(context, "Custom", template, "Current only"));
+        Assert.Equal("19:31\nSong - Artist\n1:51 - 2:00\ncurrent\nnext",
+            ProfileCompose(context, "Custom", template, "Current + next"));
+        Assert.Equal("19:31\nSong - Artist\n1:51 - 2:00\nprevious\n› current\nnext",
+            ProfileCompose(context, "Custom", template, "Adaptive"));
+        var heavy = ProfileCompose(new("previous", "current", "next"), "Custom",
+            new string('m', 130) + "\n{lyrics}", "Adaptive");
+        Assert.Contains(new string('m', 130), heavy);
+        Assert.InRange(ChatboxFormatter.Format(heavy, false).Length, 0, 144);
+    }
+    [Fact]
+    public void ProfileAwareContextNeedsLyricsToken()
+    {
+        Assert.False(LyricContextComposer.SupportsContext("Status / Time", "{message}\n{time}"));
+        Assert.False(LyricContextComposer.SupportsContext("Custom", "{message}"));
+        Assert.True(LyricContextComposer.SupportsContext("Lyrics Only", "{lyrics}"));
+        Assert.True(LyricContextComposer.SupportsContext("Song + Lyrics", "{lyrics}"));
+        Assert.True(LyricContextComposer.SupportsContext("Custom", "{time}\n{lyrics}"));
+        var context = new LyricContext("previous", "current", "next");
+        Assert.Equal("msg", ProfileCompose(context, "Custom", "{message}", "Adaptive", message: "msg"));
+        Assert.DoesNotContain("next", ProfileCompose(context, "Custom", "{message}", "Adaptive", message: "msg"));
+        var summary = new DisplayProfile("x", "Custom", "Custom", "Adaptive", CustomTemplate: "{message}");
+        Assert.DoesNotContain("Adaptive", summary.Summary);
+        var supported = new DisplayProfile("y", "Custom", "Custom", "Adaptive", CustomTemplate: "{lyrics}");
+        Assert.Contains("Adaptive", supported.Summary);
+    }
+    [Fact]
+    public void ProfileAwareGapBudgetAndPreviewRules()
+    {
+        var gapped = new LyricContext("previous", "", "next");
+        Assert.DoesNotContain("next", ProfileCompose(gapped, "Lyrics Only", "{lyrics}", "Adaptive"));
+        Assert.DoesNotContain("next", ProfileCompose(gapped, "Custom", "{time}\n{lyrics}", "Previous + current + next"));
+        var sized = ProfileCompose(new("p", new string('c', 70), new string('n', 72)), "Lyrics Only", "{lyrics}", "Adaptive");
+        var sizedCompact = ProfileCompose(new("p", new string('c', 70), new string('n', 72)), "Lyrics Only", "{lyrics}", "Adaptive", compact: true);
+        Assert.DoesNotContain(new string('n', 72), sizedCompact);
+        Assert.Contains(new string('c', 70), sizedCompact);
+        Assert.Contains(new string('n', 72), sized);
+        var exact = ProfileCompose(new("p", new string('c', 70), new string('n', 73)), "Lyrics Only", "{lyrics}", "Adaptive");
+        Assert.Contains(new string('n', 73), exact);
+        var over = ProfileCompose(new("p", new string('c', 70), new string('n', 74)), "Lyrics Only", "{lyrics}", "Adaptive");
+        Assert.DoesNotContain(new string('n', 74), over);
+        var grapheme = string.Concat(Enumerable.Repeat("👨‍👩‍👧‍👦", 40));
+        var gapped2 = LyricContextComposer.ComposeProfile(new("p", grapheme, "n"), CoreTests.Track, "Lyrics Only", "{lyrics}", "", "Adaptive", true,
+            new DateTimeOffset(2026, 9, 7, 19, 31, 0, TimeSpan.Zero), 111);
+        Assert.Equal(gapped2, new UTF8Encoding(false, true).GetString(new UTF8Encoding(false, true).GetBytes(gapped2)));
+        Assert.InRange(ChatboxFormatter.Format(gapped2, true).Length, 0, 144);
+        var nine = string.Join('\n', Enumerable.Repeat("current", 9));
+        Assert.Equal(nine, ProfileCompose(new("old", nine, "next"), "Lyrics Only", "{lyrics}", "Adaptive"));
+        var roundtrip = ProfileCompose(new("previous", "current", "next"), "Song + Lyrics", "{lyrics}", "Previous + current + next");
+        Assert.Equal(roundtrip, ChatboxFormatter.Format(roundtrip, false));
     }
     [Fact]
     public async Task IgnoreSkipsAllSourcesRetainsImportsAndInvalidatesLateResults()

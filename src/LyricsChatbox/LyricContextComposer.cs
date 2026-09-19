@@ -8,38 +8,38 @@ public record LyricContext(string Previous, string Current, string Next)
 public static class LyricContextComposer
 {
     public static readonly string[] Modes = ["Current only", "Current + next", "Previous + current + next", "Adaptive"];
-    public static string Compose(LyricContext context, TrackIdentity? track, string preset, string mode, bool compact)
+    public static bool SupportsContext(string preset, string customTemplate) =>
+        ChatboxComposer.Template(preset, customTemplate).Contains("{lyrics}", System.StringComparison.Ordinal);
+    public static string ComposeProfile(LyricContext context, TrackIdentity? track, string preset, string customTemplate,
+        string message, string mode, bool compact, DateTimeOffset localTime = default, double? position = null)
     {
         static string Clean(string text) => ChatboxFormatter.CleanText(text).Trim();
+        var template = ChatboxComposer.Template(preset, customTemplate);
+        string WithLyrics(string lyrics) => ChatboxComposer.Compose(template, track, lyrics, message, localTime, position);
+        static bool Fits(string text, bool floating) => text.Length <= (floating ? 142 : 144) && text.Count(c => c == '\n') < 9;
         var current = Clean(context.Current);
-        var metadata = preset == "Song + Lyrics" ? Clean(ChatboxComposer.Compose("♫ {title} — {artist}",track,"","",DateTimeOffset.MinValue,null)) : "";
-        if (current.Length == 0) return ChatboxFormatter.Visible(ChatboxFormatter.Format(metadata,compact));
-        var previous = mode == "Previous + current + next" ? Clean(context.Previous) : "";
-        var next = mode is "Current + next" or "Previous + current + next" ? Clean(context.Next) : "";
-        string Assemble(string heading, string before, string after) => string.Join("\n", new[] {heading, before, before.Length>0 ? "› " + current : current, after}.Where(s=>s.Length>0));
-        static bool Fits(string text, bool floating) => text.Length <= (floating ? 142 : 144) && text.Count(c=>c=='\n') < 9;
-
-        if (mode == "Adaptive")
+        if (current.Length == 0) return WithLyrics("");
+        string Lyrics(string? previous, string? next)
         {
-            var adaptiveNext = Clean(context.Next);
-            var withNext = Assemble("", "", adaptiveNext);
-            if (adaptiveNext.Length > 0 && Fits(withNext, compact))
-            {
-                var adaptivePrevious = Clean(context.Previous);
-                var withBoth = Assemble("", adaptivePrevious, adaptiveNext);
-                return ChatboxFormatter.Visible(ChatboxFormatter.Format(
-                    adaptivePrevious.Length > 0 && Fits(withBoth, compact) ? withBoth : withNext, compact));
-            }
-            var withMetadata = Assemble(metadata, "", "");
-            return ChatboxFormatter.Visible(ChatboxFormatter.Format(
-                metadata.Length > 0 && Fits(withMetadata, compact) ? withMetadata : current, compact));
+            var lines = new System.Collections.Generic.List<string>();
+            if (previous is { Length: > 0 }) { lines.Add(previous); lines.Add("› " + current); }
+            else lines.Add(current);
+            if (next is { Length: > 0 }) lines.Add(next);
+            return string.Join("\n", lines);
         }
-
-        string Selected() => Assemble(metadata, previous, next);
-        // Drop semantic pieces in priority order. Current is never shortened to make room for context.
-        if (!Fits(Selected(),compact)) metadata="";
-        if (!Fits(Selected(),compact)) previous="";
-        if (!Fits(Selected(),compact)) next="";
-        return ChatboxFormatter.Visible(ChatboxFormatter.Format(Selected(),compact));
+        var previous = Clean(context.Previous);
+        var next = Clean(context.Next);
+        var options = mode switch
+        {
+            "Current + next" => new (string?, string?)[] { (null, next), (null, null) },
+            "Previous + current + next" or "Adaptive" => new (string?, string?)[] { (previous, next), (null, next), (previous, null), (null, null) },
+            _ => new (string?, string?)[] { (null, null) },
+        };
+        foreach (var (before, after) in options)
+        {
+            var composed = WithLyrics(Lyrics(before, after));
+            if (Fits(composed, compact)) return composed;
+        }
+        return WithLyrics(current);
     }
 }
