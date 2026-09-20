@@ -43,6 +43,7 @@ public class UpdateTests
     [InlineData("{}")]
     [InlineData("not json")]
     [InlineData("{\"draft\":false,\"prerelease\":true,\"tag_name\":\"v9.0.0\"}")]
+    [InlineData("{\"draft\":false,\"prerelease\":true,\"tag_name\":\"v0.6.2\"}")]
     public async Task MalformedOrPrereleaseCannotOfferDownload(string body)
     {
         using var http = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) })));
@@ -55,6 +56,9 @@ public class UpdateTests
     [InlineData("0.6.0", true, "v0.5.4", false)]
     [InlineData("0.7.0", true, "v0.6.0", false)]
     [InlineData("0.5.4", false, "v0.5.4", false)]
+    [InlineData("0.6.1", false, "v0.6.2", true)]
+    [InlineData("0.6.2", false, "v0.6.2", false)]
+    [InlineData("0.6.2", false, "v0.6.1", false)]
     public async Task PrereleaseAwareStableComparison(string current, bool prerelease, string latest, bool offered)
     {
         using var http = new HttpClient(new Handler((_, _) => Task.FromResult(Json(latest))));
@@ -73,6 +77,8 @@ public class UpdateTests
     [InlineData("0.6.0-rc.1", null)]
     [InlineData("v0.6.0", "0.6.0")]
     [InlineData("0.5.4", "0.5.4")]
+    [InlineData("v0.6.2", "0.6.2")]
+    [InlineData("v0.6.2-rc.1", null)]
     public void PrereleaseTagsAreNotStableVersions(string tag, string? expected)
     {
         Assert.Equal(expected is null ? null : Version.Parse(expected), UpdateChecker.StableVersion(tag));

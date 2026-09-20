@@ -1,4 +1,8 @@
-# Current handoff — v0.6.2 maintenance fixes implemented, restore verified, validation next
+# Current handoff — v0.6.2 release preparation validated, final commit next
+
+v0.6.2 maintenance corrections accepted on `codex/v0.6.2`. Version bumped to 0.6.2 with stable identity and updater-matrix coverage; full suite 390/390, warning-free build, package policy and diff-check green. Next: final source commit and push, then stable packaging from the frozen SHA. Stop before tag/release/merge.
+
+# Previous handoff — v0.6.2 maintenance fixes implemented, restore verified, validation next
 
 v0.6.1 is published stable on `main` (`6912d76`). On `codex/v0.6.2`: REV-01, LC-ALIGN-01, UI-01, DOC-01, STATUS-01 fixed with regression tests (suite 384/384) and dev-build physical QA (Spotify transitions, Custom Center preview). User LocalData restored to pre-session values (user's own Adaptive/Compact/Appearance choices kept; only QA mutations reverted); QA temp files cleaned. Next: ponytail review, full validation, commit, push. Stop before version/tag/merge/publish.
 
