@@ -20,6 +20,6 @@ public static class TextInsertion
     {
         var analysis = ChatboxFormatter.Analyze(rawOutput, compact, preserveLayout);
         return new(insertion.CanInsert, insertion.CanInsert && analysis.WouldTruncate,
-            insertion.CanInsert ? analysis.VisibleUnits : 0, analysis.Limit);
+            insertion.CanInsert ? analysis.RequiredUnits : 0, analysis.Limit);
     }
 }

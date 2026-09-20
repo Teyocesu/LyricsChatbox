@@ -49,6 +49,7 @@ public sealed class DecorationPickerTests : IDisposable
         var fit = ChatboxFormatter.Analyze(new string('a', 144));
         Assert.False(fit.WouldTruncate);
         Assert.Equal(144, fit.VisibleUnits);
+        Assert.Equal(144, fit.RequiredUnits);
         Assert.Equal(144, fit.Limit);
         Assert.Equal(ChatboxFormatter.Format(new string('a', 144)), fit.Payload);
 
@@ -57,6 +58,8 @@ public sealed class DecorationPickerTests : IDisposable
         var truncated = ChatboxFormatter.Analyze(input);
         Assert.True(truncated.WouldTruncate);
         Assert.Equal(new string('a', 141), truncated.Payload);
+        Assert.Equal(141, truncated.VisibleUnits);
+        Assert.Equal(141 + family.Length, truncated.RequiredUnits);
         Assert.DoesNotContain('\u200d', truncated.Payload);
         Assert.False(char.IsHighSurrogate(truncated.Payload[^1]));
     }
@@ -129,12 +132,96 @@ public sealed class DecorationPickerTests : IDisposable
         Assert.Equal(new[] { "status-ready" }, Ids(library, DecorationNavigation.Status));
         Assert.Equal(new[] { "status-ready", user.Id, "symbol-star" }, Ids(library, DecorationNavigation.Favorites));
         Assert.Equal(new[] { user.Id }, Ids(library, DecorationNavigation.MyItems));
+        Assert.Equal(DecorationNavigation.Suggested, DecorationPickerPolicy.Options[0].Mode);
 
         Assert.Equal(DecorationPresentation.Dense, DecorationPickerPolicy.Presentation(DecorationNavigation.Symbols));
         Assert.Equal(DecorationPresentation.Art, DecorationPickerPolicy.Presentation(DecorationNavigation.TextArt));
         Assert.Equal(DecorationPresentation.Wide, DecorationPickerPolicy.Presentation(DecorationNavigation.Dividers));
         Assert.Equal(DecorationPresentation.Compact, DecorationPickerPolicy.Presentation(DecorationNavigation.Kaomoji));
         Assert.Contains(DecorationPickerPolicy.KindOptions, option => option is { Kind: "TextArt", Label: "Text Art" });
+    }
+
+    [Fact]
+    public void SuggestedIsDeterministicTargetAwareFitFirstAndBounded()
+    {
+        var catalog = Load([
+            Entry("symbol-pop", "Popular symbol", "Symbol", "symbol", true),
+            Entry("symbol-stable", "Stable symbol", "Symbol", "symbol two"),
+            Entry("status-fit", "Status", "Status", "status", true),
+            Entry("kaomoji-fit", "Kaomoji", "Kaomoji", "face"),
+            Entry("heart-fit", "Heart", "Heart", "heart"),
+            Entry("music-truncate", "Long music", "Music", "truncate"),
+            Entry("frame-no-space", "Large frame", "Frame", "no-space")
+        ]);
+        var library = DecorationLibrary.Create(catalog, DecorationState.Empty);
+        static DecorationInsertionPreview Preview(DecorationEntry item) => item.Content switch
+        {
+            "truncate" => new(true, true, 150, 144),
+            "no-space" => new(false, false, 0, 144),
+            _ => new(true, false, item.Content.Length, 144)
+        };
+
+        Assert.Equal(new[] { "symbol-pop", "symbol-stable", "heart-fit", "kaomoji-fit", "status-fit", "music-truncate", "frame-no-space" },
+            DecorationPickerPolicy.Suggested(library, DecorationTarget.Custom, null, Preview).Select(item => item.Id));
+        Assert.Equal("status-fit", DecorationPickerPolicy.Suggested(library, DecorationTarget.Status, null, Preview)[0].Id);
+        Assert.Equal("kaomoji-fit", DecorationPickerPolicy.Suggested(library, DecorationTarget.Manual, null, Preview)[0].Id);
+        Assert.Equal(new[] { "symbol-pop", "symbol-stable", "heart-fit", "kaomoji-fit", "status-fit" },
+            DecorationPickerPolicy.Suggested(library, DecorationTarget.Custom, null, Preview, fitsOnly: true).Select(item => item.Id));
+        Assert.Equal(new[] { "symbol-pop", "symbol-stable" },
+            DecorationPickerPolicy.Suggested(library, DecorationTarget.Custom, "symbol", Preview).Select(item => item.Id));
+
+        var many = Load(Enumerable.Range(0, 30).Select(index =>
+            Entry($"symbol-{index}", $"Symbol {index}", "Symbol", index.ToString())));
+        var first = DecorationPickerPolicy.Suggested(DecorationLibrary.Create(many, DecorationState.Empty),
+            DecorationTarget.Custom, null, Preview).Select(item => item.Id).ToArray();
+        var second = DecorationPickerPolicy.Suggested(DecorationLibrary.Create(many, DecorationState.Empty),
+            DecorationTarget.Custom, null, Preview).Select(item => item.Id).ToArray();
+        Assert.Equal(24, first.Length);
+        Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public void GroupsSearchAliasesAndFitsComposeWithoutChangingResourceOrder()
+    {
+        var catalog = Load([
+            Entry("symbol-star", "Star", "Symbol", "☆", group: "Sparkles", searchTerms: ["favorite"]),
+            Entry("symbol-moon", "Moon", "Symbol", "☾", group: "Celestial", searchTerms: ["night"]),
+            Entry("symbol-spark", "Spark", "Symbol", "✦", group: "Sparkles", searchTerms: ["shine"]),
+            Entry("status-ready", "Ready", "Status", "Ready", group: "Presence")
+        ]);
+        var library = DecorationLibrary.Create(catalog, DecorationState.Empty);
+
+        Assert.Equal(new[] { "Sparkles", "Celestial" }, DecorationPickerPolicy.Groups(library, DecorationNavigation.Symbols));
+        Assert.Equal(new[] { "symbol-star", "symbol-moon", "symbol-spark" },
+            DecorationPickerPolicy.Filter(library, DecorationNavigation.Symbols, null).Select(item => item.Id));
+        Assert.Equal(new[] { "symbol-star", "symbol-spark" },
+            DecorationPickerPolicy.Filter(library, DecorationNavigation.Symbols, null, "Sparkles").Select(item => item.Id));
+        Assert.Equal(new[] { "symbol-star" },
+            DecorationPickerPolicy.Filter(library, DecorationNavigation.Symbols, "FAVORITE", "Sparkles").Select(item => item.Id));
+        Assert.Equal(new[] { "symbol-moon" },
+            DecorationPickerPolicy.Filter(library, DecorationNavigation.Symbols, null, null, item => item.Id == "symbol-moon").Select(item => item.Id));
+        foreach (var group in DecorationPickerPolicy.Groups(library, DecorationNavigation.Symbols))
+            Assert.All(DecorationPickerPolicy.Filter(library, DecorationNavigation.Symbols, null, group),
+                item => Assert.Equal(group, item.Group));
+        Assert.Empty(DecorationPickerPolicy.Groups(library, DecorationNavigation.Popular));
+    }
+
+    [Fact]
+    public void FitsFilterUsesProspectiveInsertionForNormalFloatingLinesAndEditorCapacity()
+    {
+        var catalog = Load([
+            Entry("symbol-one", "One", "Symbol", "x"),
+            Entry("symbol-two", "Two", "Symbol", "xx"),
+            Entry("symbol-line", "Line", "Symbol", "\nx")
+        ]);
+        var library = DecorationLibrary.Create(catalog, DecorationState.Empty);
+
+        Assert.Equal("symbol-one", Fits(library, new string('a', 143), 512, compact: false).Single().Id);
+        Assert.Equal("symbol-one", Fits(library, new string('a', 141), 512, compact: true).Single().Id);
+        var nineLines = Fits(library, string.Join('\n', Enumerable.Repeat("x", 9)), 512, compact: false);
+        Assert.Contains(nineLines, item => item.Id == "symbol-one");
+        Assert.DoesNotContain(nineLines, item => item.Id == "symbol-line");
+        Assert.Empty(Fits(library, new string('a', 512), 512, compact: false));
     }
 
     [Fact]
@@ -184,8 +271,17 @@ public sealed class DecorationPickerTests : IDisposable
     private static string[] Ids(DecorationLibrary library, DecorationNavigation mode) =>
         DecorationPickerPolicy.Filter(library, mode, null).Select(item => item.Id).ToArray();
 
-    private static DecorationEntry Entry(string id, string name, string kind, string content, bool popular = false) =>
-        new(id, name, kind, content, popular);
+    private static IReadOnlyList<DecorationEntry> Fits(DecorationLibrary library, string current, int maximumLength, bool compact) =>
+        DecorationPickerPolicy.Filter(library, DecorationNavigation.Symbols, null, null, entry =>
+        {
+            var insertion = TextInsertion.Insert(current, current.Length, 0, maximumLength, entry.Content);
+            return TextInsertion.Preview(insertion, insertion.CanInsert ? insertion.Text : current, compact) is
+                { CanInsert: true, WouldTruncate: false };
+        });
+
+    private static DecorationEntry Entry(string id, string name, string kind, string content, bool popular = false,
+        string? group = null, IReadOnlyList<string>? searchTerms = null) =>
+        new(id, name, kind, content, popular, group, searchTerms);
 
     private static DecorationCatalog Load(IEnumerable<DecorationEntry> items) =>
         LoadRaw(JsonSerializer.Serialize(new { version = 1, items }));

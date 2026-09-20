@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace LyricsChatbox;
 
@@ -16,6 +17,8 @@ public partial class DecorationPicker : Window
     private readonly DecorationCatalog catalog;
     private readonly Func<DecorationState, bool> saveState;
     private readonly Func<string, DecorationInsertionPreview> preview;
+    private readonly DecorationTarget target;
+    private readonly Dictionary<string, DecorationInsertionPreview> previewCache = new(StringComparer.Ordinal);
     private DecorationState state;
     private DecorationLibrary library;
     private string? editingId;
@@ -23,12 +26,13 @@ public partial class DecorationPicker : Window
 
     public string? SelectedContent { get; private set; }
 
-    public DecorationPicker(DecorationCatalog catalog, DecorationState state, DecorationLibrary library,
+    public DecorationPicker(DecorationCatalog catalog, DecorationState state, DecorationLibrary library, DecorationTarget target,
         Func<DecorationState, bool> saveState, Func<string, DecorationInsertionPreview> preview)
     {
         this.catalog = catalog;
         this.state = state;
         this.library = library;
+        this.target = target;
         this.saveState = saveState;
         this.preview = preview;
         InitializeComponent();
@@ -36,6 +40,7 @@ public partial class DecorationPicker : Window
         ItemKindBox.ItemsSource = DecorationPickerPolicy.KindOptions;
         ModeList.SelectedIndex = 0;
         initialized = true;
+        RefreshGroups();
         RefreshItems();
         Loaded += (_, _) => SearchBox.Focus();
     }
@@ -46,7 +51,13 @@ public partial class DecorationPicker : Window
     {
         if (!initialized) return;
         selectedId ??= (DecorationList.SelectedItem as PickerItem)?.Entry.Id;
-        var entries = DecorationPickerPolicy.Filter(library, Mode, SearchBox.Text);
+        var group = GroupList.SelectedItem as string;
+        if (group == "All") group = null;
+        var fitsOnly = FitsBox.IsChecked == true;
+        var entries = Mode == DecorationNavigation.Suggested
+            ? DecorationPickerPolicy.Suggested(library, target, SearchBox.Text, PreviewFor, fitsOnly)
+            : DecorationPickerPolicy.Filter(library, Mode, SearchBox.Text, group,
+                fitsOnly ? entry => PreviewFor(entry) is { CanInsert: true, WouldTruncate: false } : null);
         var favoriteIds = state.FavoriteIds!.ToHashSet(StringComparer.Ordinal);
         var items = entries.Select(entry => new PickerItem(entry, favoriteIds.Contains(entry.Id))).ToArray();
         DecorationList.ItemsSource = items;
@@ -66,18 +77,33 @@ public partial class DecorationPicker : Window
         UpdateSelection();
     }
 
+    private void RefreshGroups()
+    {
+        var groups = DecorationPickerPolicy.Groups(library, Mode);
+        GroupList.ItemsSource = new[] { "All" }.Concat(groups).ToArray();
+        GroupList.SelectedIndex = 0;
+        GroupList.Visibility = groups.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private DecorationInsertionPreview PreviewFor(DecorationEntry entry)
+    {
+        if (!previewCache.TryGetValue(entry.Id, out var result))
+            previewCache[entry.Id] = result = preview(entry.Content);
+        return result;
+    }
+
     private void UpdateSelection()
     {
         if (DecorationList.SelectedItem is not PickerItem item)
         {
             SelectedText.Text = ""; PreviewStatus.Text = ""; InsertButton.IsEnabled = false; return;
         }
-        var result = preview(item.Entry.Content);
+        var result = PreviewFor(item.Entry);
         var lines = item.Entry.Content.Count(c => c == '\n') + 1;
         SelectedText.Text = item.Entry.Name + (lines > 1 ? $" · {lines} lines" : "");
-        PreviewStatus.Text = !result.CanInsert ? "Not enough editor space for this item."
-            : result.WouldTruncate ? "This composition will be truncated in VRChat."
-            : $"{result.VisibleUnits} / {result.Limit} visible units";
+        PreviewStatus.Text = !result.CanInsert ? "Not enough editor space"
+            : result.WouldTruncate ? $"{result.VisibleUnits} / {result.Limit} · Will truncate"
+            : $"{result.VisibleUnits} / {result.Limit} · Fits";
         PreviewStatus.SetResourceReference(TextBlock.ForegroundProperty,
             !result.CanInsert || result.WouldTruncate ? "WarningBrush" : "MutedBrush");
         InsertButton.IsEnabled = result.CanInsert;
@@ -87,9 +113,12 @@ public partial class DecorationPicker : Window
     {
         if (!initialized) return;
         EditorPanel.Visibility = Visibility.Collapsed;
+        RefreshGroups();
         RefreshItems();
     }
     private void SearchChanged(object sender, TextChangedEventArgs e) => RefreshItems();
+    private void GroupChanged(object sender, SelectionChangedEventArgs e) => RefreshItems();
+    private void FitsChanged(object sender, RoutedEventArgs e) => RefreshItems();
     private void DecorationSelected(object sender, SelectionChangedEventArgs e) => UpdateSelection();
     private void SearchKeyDown(object sender, KeyEventArgs e) { if (e.Key == Key.Enter) InsertSelected(sender, e); }
     private void DecorationKeyDown(object sender, KeyEventArgs e) { if (e.Key == Key.Enter) InsertSelected(sender, e); }
@@ -102,10 +131,27 @@ public partial class DecorationPicker : Window
     private void InsertSelected(object sender, RoutedEventArgs e)
     {
         if (DecorationList.SelectedItem is not PickerItem item) return;
-        var result = preview(item.Entry.Content);
+        var result = PreviewFor(item.Entry);
         if (!result.CanInsert) { MutationStatus.Text = "Not enough editor space for this item."; return; }
         SelectedContent = item.Entry.Content;
         DialogResult = true;
+    }
+
+    private void ItemDoubleClicked(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject source && FindAncestor<Button>(source) is not null) return;
+        if (sender is ListBoxItem { DataContext: PickerItem item }) DecorationList.SelectedItem = item;
+        InsertSelected(sender, e); e.Handled = true;
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? current) where T : DependencyObject
+    {
+        while (current is not null)
+        {
+            if (current is T match) return match;
+            current = VisualTreeHelper.GetParent(current);
+        }
+        return null;
     }
 
     private void ToggleFavorite(object sender, RoutedEventArgs e)
@@ -172,6 +218,7 @@ public partial class DecorationPicker : Window
     {
         state = next;
         library = DecorationLibrary.Create(catalog, state);
+        previewCache.Clear();
         var saved = saveState(state);
         MutationStatus.Text = saved ? success : "Change works this session but could not be saved.";
         RefreshItems(selectedId);

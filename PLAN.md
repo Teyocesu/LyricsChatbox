@@ -1,4 +1,4 @@
-# v0.7.0 execution plan — Phases 0–3 implemented
+# v0.7.0 execution plan — Phases 0–3.1 implemented
 
 ## State and baseline
 
@@ -6,10 +6,11 @@
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
 - Product assembly/file version remains `0.6.2`. This planning task changes only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: close Phase 3 implementation and keep the Phase 4 Display/rotation UI as the next separate task after physical picker QA. About implementation, Output redesign, version bump, package, tag, release and main merge remain out of scope.
+- Current goal: close the post-QA Phase 3.1 picker refinement and keep the Phase 4 Display/rotation UI as the next separate task after renewed physical picker QA. About implementation, Output redesign, version bump, package, tag, release and main merge remain out of scope.
 - Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
 - Phase 2 evidence: focused Decorations + rotation regression tests `44/44`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `434/434` with 0 skips; package-policy test PASS; `git diff --check` PASS. Systematic content review found 90 entries, 10,228 source bytes, 19 curated Popular flags, no duplicate IDs/content, no tabs/trailing garbage, maximum content length 48, maximum six lines and no item over 144 UTF-16 units. Security/quality review made the catalog collections actually read-only and moved the shared Unicode validator to neutral ownership; Ponytail FULL found no removable architecture.
 - Phase 3 evidence: focused picker/decorations/layout/display tests `50/50`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `447/447` with 0 skips; package-policy test and `git diff --check` PASS. Native WPF interaction QA is still required: the available computer-use host exposed browser tabs but no native Windows app surface, so no visual/keyboard/theme claim is recorded.
+- Phase 3.1 evidence: focused decoration/picker tests `31/31`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `450/450` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 218 entries, all 90 prior IDs preserved, no duplicate IDs/names/content, no tabs/trailing or blank-line garbage, maximum content length 49, maximum six lines and no item over 144 UTF-16 units. Code-quality review found no blocker; Ponytail FULL and complete-diff Ponytail review found no removable architecture or complexity.
 
 ## Current extension points to preserve
 
@@ -118,6 +119,17 @@ Purpose: replace the three ASCII selectors with one keyboard-usable picker and o
 - Acceptance evidence: all obsolete ASCII controls/handler/model references are absent from production; XAML compiles; focused and full gates are green. Physical Custom/Status/Manual, keyboard, alternate-theme and small-window QA remains pending because native Windows automation was unavailable on this host.
 - Dependencies: Phase 2 catalog/state foundation; prospective diagnostics are completed here against each real editor path.
 - Out of scope: drag-and-drop asset management, arbitrary category editing, template library, giant art support.
+
+## Phase 3.1 — Smarter picker and catalog expansion — implemented; physical QA pending
+
+Purpose: refine the accepted Phase 3 picker without changing its modal, navigation, rendering or insertion architecture.
+
+- Catalog: schema version 1 now has optional built-in-only Group and SearchTerms metadata. The catalog contains 218 project-composed/generic entries: Symbol 48, TextArt 26, Kaomoji 30, Divider 26, Frame 20, Heart 24, Music 24 and Status 20. All prior IDs remain stable; no external dataset or license change was introduced.
+- Navigation: Suggested precedes Popular and returns at most 24 built-ins using current fit state, a fixed Custom/Status/Manual Kind preference, Popular and catalog-order tie-breaking. Category modes expose one stable-order Group chip row. Search matches Name, Content, Kind, Group and bounded aliases. Favorites and My items retain Phase 3 behavior; there is no Recent, learning, usage tracking or recommendation persistence.
+- Fit and interaction: Fits reuses the originating editor's prospective insertion and existing formatter analysis through a per-picker cache. Required units are reported as Fits/Will truncate, editor overflow remains distinct, and double-click joins Enter/footer Insert while single-click remains selection.
+- Deterministic tests: optional metadata validation and immutability; catalog distribution; groups/All/group+search/group+Fits; alias/Kind/Group search; target-aware stable Suggested ranking and bound; final-composition Fits at 142/144/nine lines plus editor capacity; existing insertion, state and failure behavior.
+- Acceptance: focused and full gates plus renewed native WPF product-owner QA with Output Off. Phase 3 is not finally accepted until that physical QA completes.
+- Out of scope: Phase 4, nested taxonomies, user tags, fuzzy/full-text search, global fit cache, online content, AI recommendations, Recent/history and usage analytics.
 
 ## Phase 4 — Display UX simplification and rotation editor
 

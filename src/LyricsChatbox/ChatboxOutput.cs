@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LyricsChatbox;
 
-public readonly record struct ChatboxFormatAnalysis(string Payload, bool WouldTruncate, int VisibleUnits, int Limit);
+public readonly record struct ChatboxFormatAnalysis(string Payload, bool WouldTruncate, int VisibleUnits, int RequiredUnits, int Limit);
 
 public static class ChatboxFormatter
 {
@@ -31,7 +31,7 @@ public static class ChatboxFormatter
         var expected = preserveLayout ? clean.Trim('\r', '\n') : clean.Trim();
         if (string.IsNullOrWhiteSpace(expected)) expected = "";
         var payload = compact && visible.Length > 0 ? visible + CompactSuffix : visible;
-        return new(payload, !string.Equals(visible, expected, StringComparison.Ordinal), visible.Length, limit);
+        return new(payload, !string.Equals(visible, expected, StringComparison.Ordinal), visible.Length, expected.Length, limit);
     }
     public static string CleanText(string input)
     {

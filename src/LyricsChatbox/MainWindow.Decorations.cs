@@ -27,8 +27,14 @@ public partial class MainWindow
             _ => null
         };
         if (target is null) return;
+        var decorationTarget = targetName switch
+        {
+            "Custom" => DecorationTarget.Custom,
+            "Status" => DecorationTarget.Status,
+            _ => DecorationTarget.Manual
+        };
 
-        var picker = new DecorationPicker(decorationCatalog, decorationState, decorationLibrary,
+        var picker = new DecorationPicker(decorationCatalog, decorationState, decorationLibrary, decorationTarget,
             SaveDecorationState, content => PreviewDecorationInsertion(target, content)) { Owner = this };
         try
         {

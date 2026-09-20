@@ -10,11 +10,15 @@ public static class DecorationKinds
     public static bool IsValid(string? kind) => kind is not null && All.Contains(kind, StringComparer.Ordinal);
 }
 
-public sealed record DecorationEntry(string Id, string Name, string Kind, string Content, bool Popular = false)
+public sealed record DecorationEntry(string Id, string Name, string Kind, string Content, bool Popular = false,
+    string? Group = null, IReadOnlyList<string>? SearchTerms = null)
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => LocalContentValidation.ValidId(Id) && LocalContentValidation.ValidText(Name, 40, 1) &&
-        DecorationKinds.IsValid(Kind) && LocalContentValidation.ValidText(Content, 512, 9);
+        DecorationKinds.IsValid(Kind) && LocalContentValidation.ValidText(Content, 512, 9) &&
+        (Group is null || LocalContentValidation.ValidText(Group, 32, 1)) && SearchTerms is null or { Count: <= 8 } &&
+        (SearchTerms is null || SearchTerms.All(term => LocalContentValidation.ValidText(term, 24, 1)) &&
+            SearchTerms.Distinct(StringComparer.OrdinalIgnoreCase).Count() == SearchTerms.Count);
 }
 
 public enum DecorationCatalogStatus { Available, Missing, Oversized, Malformed, Invalid }
@@ -58,7 +62,11 @@ public sealed class DecorationCatalog
                 items.Any(item => item is not { IsValid: true } || item.Id.StartsWith("user-", StringComparison.OrdinalIgnoreCase)) ||
                 items.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count() != items.Count)
                 return Unavailable(DecorationCatalogStatus.Invalid);
-            return new(Array.AsReadOnly(items.ToArray()), DecorationCatalogStatus.Available);
+            var immutable = items.Select(item => item with
+            {
+                SearchTerms = item.SearchTerms is null ? null : Array.AsReadOnly(item.SearchTerms.ToArray())
+            }).ToArray();
+            return new(Array.AsReadOnly(immutable), DecorationCatalogStatus.Available);
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException or ArgumentException)
         {
@@ -164,6 +172,9 @@ public sealed class DecorationLibrary
         return Items.Where(item => (kind is null || item.Kind.Equals(kind, StringComparison.OrdinalIgnoreCase)) &&
             (!popularOnly || item.Popular) &&
             (query is null || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-             item.Content.Contains(query, StringComparison.OrdinalIgnoreCase))).ToArray();
+             item.Content.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+             item.Kind.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+             item.Group?.Contains(query, StringComparison.OrdinalIgnoreCase) == true ||
+             item.SearchTerms?.Any(term => term.Contains(query, StringComparison.OrdinalIgnoreCase)) == true)).ToArray();
     }
 }

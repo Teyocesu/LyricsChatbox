@@ -17,9 +17,11 @@ public sealed class DecorationTests : IDisposable
 
         Assert.True(catalog.IsAvailable);
         Assert.Equal(DecorationCatalogStatus.Available, catalog.Status);
+        Assert.True(((IList<DecorationEntry>)catalog.Items).IsReadOnly);
+        Assert.True(((IList<string>)catalog.Items.First(item => item.SearchTerms is not null).SearchTerms!).IsReadOnly);
         Assert.NotNull(resource);
         Assert.InRange(resource.Length, 1, DecorationCatalog.MaximumBytes);
-        Assert.InRange(catalog.Items.Count, 80, DecorationCatalog.MaximumEntries);
+        Assert.InRange(catalog.Items.Count, 200, 240);
         Assert.All(catalog.Items, item => Assert.True(item.IsValid, item.Id));
         Assert.Equal(catalog.Items.Count, catalog.Items.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count());
         Assert.DoesNotContain(catalog.Items, item => item.Id.StartsWith("user-", StringComparison.OrdinalIgnoreCase));
@@ -30,6 +32,10 @@ public sealed class DecorationTests : IDisposable
             Assert.InRange(item.Name.Length, 1, 40);
             Assert.InRange(item.Content.Length, 1, 512);
             Assert.InRange(item.Content.Count(c => c == '\n') + 1, 1, 9);
+            Assert.False(string.IsNullOrWhiteSpace(item.Group));
+            Assert.InRange(item.Group!.Length, 1, 32);
+            Assert.InRange(item.SearchTerms?.Count ?? 0, 0, 8);
+            Assert.All(item.SearchTerms ?? [], term => Assert.InRange(term.Length, 1, 24));
             Assert.DoesNotContain('\0', item.Content);
             Assert.DoesNotContain('\t', item.Content);
             Assert.DoesNotContain(new[] { "{lyrics}", "{title}", "{artist}", "{album}", "{time}", "{message}", "{elapsed}", "{duration}" },
@@ -37,9 +43,11 @@ public sealed class DecorationTests : IDisposable
         });
         Assert.Equal(new Dictionary<string, int>
         {
-            ["Symbol"] = 16, ["TextArt"] = 8, ["Kaomoji"] = 12, ["Divider"] = 12,
-            ["Frame"] = 8, ["Heart"] = 12, ["Music"] = 12, ["Status"] = 10
+            ["Symbol"] = 48, ["TextArt"] = 26, ["Kaomoji"] = 30, ["Divider"] = 26,
+            ["Frame"] = 20, ["Heart"] = 24, ["Music"] = 24, ["Status"] = 20
         }, catalog.Items.GroupBy(item => item.Kind).ToDictionary(group => group.Key, group => group.Count()));
+        Assert.All(DecorationKinds.All, kind =>
+            Assert.True(catalog.Items.Where(item => item.Kind == kind).Select(item => item.Group).Distinct().Count() >= 5, kind));
     }
 
     [Fact]
@@ -66,6 +74,13 @@ public sealed class DecorationTests : IDisposable
         AssertRejected(Load([Entry(content: "x\0y")]));
         AssertRejected(Load([Entry(content: "x\ty")]));
         AssertRejected(Load([Entry(content: "x\u0085y")]));
+        AssertRejected(Load([Entry(group: "")]));
+        AssertRejected(Load([Entry(group: new string('g', 33))]));
+        AssertRejected(Load([Entry(group: "bad\ngroup")]));
+        AssertRejected(Load([Entry(searchTerms: Enumerable.Repeat("alias", 9).ToArray())]));
+        AssertRejected(Load([Entry(searchTerms: [new string('a', 25)])]));
+        AssertRejected(Load([Entry(searchTerms: ["same", "SAME"])]));
+        AssertRejected(Load([Entry(searchTerms: ["bad\tterm"])]));
         AssertRejected(Load([Entry("user-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]));
         AssertRejected(LoadRaw("{not json"));
         AssertRejected(LoadRaw("""{"version":1,"items":[{"id":"symbol-bad","name":"Bad","kind":"Symbol","content":"\uD800"}]}"""));
@@ -81,8 +96,8 @@ public sealed class DecorationTests : IDisposable
     public void SearchCombinesOptionalQueryKindAndPopularWithoutChangingOrder()
     {
         var catalog = Load([
-            Entry("symbol-star", "Bright Star", "★", popular: true),
-            Entry("status-listening", "Listening", "Music now", "Status"),
+            Entry("symbol-star", "Bright Star", "★", popular: true, group: "Sparkles", searchTerms: ["favorite"]),
+            Entry("status-listening", "Listening", "Music now", "Status", group: "Presence", searchTerms: ["audio"]),
             Entry("music-note", "Quiet note", "♪", "Music", true),
             Entry("symbol-moon", "Moon", "☾")
         ]);
@@ -90,12 +105,21 @@ public sealed class DecorationTests : IDisposable
 
         Assert.Equal(catalog.Items, library.Search());
         Assert.Equal(new[] { "symbol-star" }, library.Search("STAR").Select(item => item.Id));
-        Assert.Equal(new[] { "status-listening" }, library.Search("music").Select(item => item.Id));
+        Assert.Equal(new[] { "status-listening", "music-note" }, library.Search("music").Select(item => item.Id));
         Assert.Equal(new[] { "music-note" }, library.Search(kind: "music").Select(item => item.Id));
         Assert.Equal(new[] { "symbol-star", "music-note" }, library.Search(popularOnly: true).Select(item => item.Id));
         Assert.Equal(new[] { "music-note" }, library.Search("note", "Music", true).Select(item => item.Id));
+        Assert.Equal(new[] { "symbol-star" }, library.Search("sparkles").Select(item => item.Id));
+        Assert.Equal(new[] { "symbol-star" }, library.Search("favorite").Select(item => item.Id));
+        Assert.Equal(new[] { "status-listening" }, library.Search("presence").Select(item => item.Id));
+        Assert.Equal(new[] { "status-listening" }, library.Search("audio").Select(item => item.Id));
         Assert.Empty(library.Search("missing"));
         Assert.Empty(library.Search(kind: "Unknown"));
+
+        var user = new UserDecoration(UserId(1), "Mine", "Symbol", "◇");
+        var withUser = DecorationLibrary.Create(catalog, new DecorationState(1, [], [user]));
+        Assert.DoesNotContain(withUser.Search("favorite"), item => item.Id == user.Id);
+        Assert.Contains(withUser.Search("symbol"), item => item.Id == user.Id);
     }
 
     [Fact]
@@ -262,7 +286,8 @@ public sealed class DecorationTests : IDisposable
     }
 
     private static DecorationEntry Entry(string id = "symbol-one", string name = "One", string content = "☆",
-        string kind = "Symbol", bool popular = false) => new(id, name, kind, content, popular);
+        string kind = "Symbol", bool popular = false, string? group = null, IReadOnlyList<string>? searchTerms = null) =>
+        new(id, name, kind, content, popular, group, searchTerms);
 
     private static UserDecoration UserItem(int index) => new(UserId(index), "Item " + index, "Symbol", "☆ " + index);
     private static string UserId(int index) => "user-" + index.ToString("x32");
