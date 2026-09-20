@@ -1,4 +1,8 @@
-# Current handoff — v0.6.1 locally prepared, awaiting publication review
+# Current handoff — v0.6.2 maintenance fixes implemented, restore verified, validation next
+
+v0.6.1 is published stable on `main` (`6912d76`). On `codex/v0.6.2`: REV-01, LC-ALIGN-01, UI-01, DOC-01, STATUS-01 fixed with regression tests (suite 384/384) and dev-build physical QA (Spotify transitions, Custom Center preview). User LocalData restored to pre-session values (user's own Adaptive/Compact/Appearance choices kept; only QA mutations reverted); QA temp files cleaned. Next: ponytail review, full validation, commit, push. Stop before version/tag/merge/publish.
+
+# Previous handoff — v0.6.1 locally prepared, awaiting publication review
 
 v0.6.1 is versioned (`0.6.1`, numeric `0.6.1.0`, not prerelease) on `codex/v0.6.1`; `main` stays at v0.6.0 stable, all public releases untouched, no v0.6.1 tag/release. Validation green, provenance exact, upgrade and packaged QA pass, user environment restored byte-identical. Next: review, then publish v0.6.1. Stop before tag/release/merge.
 

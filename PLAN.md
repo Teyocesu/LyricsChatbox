@@ -1,5 +1,9 @@
 # Execution state
 
+## v0.6.2 maintenance audit and corrections
+
+Independent audit of v0.6.1 stable on `codex/v0.6.2` (base `6912d76`): REV-01 (last-source status written before the revision check, letting stale events repaint the badge), LC-ALIGN-01 (Center/Right measured context lines without their markers), UI-01 (profile selector offered context modes for templates without `{lyrics}`), DOC-01 (SPEC alignment clause predates context-aware measurement), STATUS-01 (suspend showed "suspended" where SPEC wording is reconnecting). Fixes: status assignment after the revision check; alignment-aware shaping with marker-aware fit; `SupportsContext` gating with honest summaries; suspend maps to reconnecting for Spotify/Apple. Tests: suspend-reconnecting, profile-aware alignment cost, unicode line-limit coverage; full suite 384/384. Physical QA on a dev build: Spotify transitions with no flicker, Custom Center live preview within budget. Version stays 0.6.1; no packaging/tag/release.
+
 ## v0.6.1 release preparation
 
 Version bumped 0.6.0 → 0.6.1 (numeric 0.6.1.0, `IsPrerelease == false`, stable-identity test follows). Updater matrix reconfirmed against the bump (0.6.0 → 0.6.1 offered, same-version current, no downgrades, prereleases filtered). Full suite, package policy, clean-tree portable + installer build with `0.6.1+<sha>` provenance, public v0.6.0 → local v0.6.1 upgrade with explicit-choice preservation, fresh-settings Automatic default, and bounded packaged QA (Spotify badge truth, Apple smoke, Lyric Context profiles, Output Off no-replay) all pass. No Medium/High blockers. No tag/release/merge yet.

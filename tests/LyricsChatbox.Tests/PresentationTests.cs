@@ -333,6 +333,15 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal((expected, choose), view);
     }
 
+    [Fact]
+    public void SuspendPresentsReconnectingInsteadOfNotDetected()
+    {
+        Assert.Equal(("Spotify · reconnecting", false), PresentationText.SourceView(
+            PlaybackSourceMode.Spotify, null, null, "Playback suspended", false));
+        Assert.Equal(("Apple Music · reconnecting", false), PresentationText.SourceView(
+            PlaybackSourceMode.AppleMusic, null, null, "Playback suspended", false));
+    }
+
     [Theory]
     [InlineData(PlaybackState.Playing, "Spotify · playing")]
     [InlineData(PlaybackState.Paused, "Spotify · paused")]
@@ -401,6 +410,43 @@ public sealed class PresentationTests : IDisposable
         var moved = PresentationText.SourceView(PlaybackSourceMode.Spotify, PlaybackSourceKind.AppleMusic,
             PlayingSnapshot(PlaybackSourceKind.AppleMusic), "status", false);
         Assert.NotEqual(after, moved);
+    }
+
+    [Fact]
+    public void ProfileAwareCenterAndRightEvaluateAlignedCost()
+    {
+        var at = new DateTimeOffset(2026, 9, 7, 19, 31, 0, TimeSpan.Zero);
+        var template = new string('m', 60) + "\n{lyrics}";
+        var context = new LyricContext("p", new string('c', 20), new string('n', 20));
+        var left = LyricContextComposer.ComposeProfile(context, CoreTests.Track, "Custom", template, "", "Adaptive", false, at, null, "Left");
+        Assert.Contains(new string('n', 20), left);
+        var right = LyricContextComposer.ComposeProfile(context, CoreTests.Track, "Custom", template, "", "Adaptive", false, at, null, "Right");
+        Assert.DoesNotContain(new string('n', 20), right);
+        Assert.Contains(new string('c', 20), right);
+        Assert.Contains(new string('m', 60), right);
+        var aligned = MessageLayout.Align(right, "Right");
+        Assert.InRange(aligned.Length, 0, 144);
+        Assert.Equal(aligned, ChatboxFormatter.Format(aligned, false));
+        var fuller = MessageLayout.Align(
+            LyricContextComposer.ComposeProfile(context, CoreTests.Track, "Custom", template, "", "Current + next", false, at, null, "Left"), "Right");
+        Assert.True(fuller.Length > 144);
+        var compact = LyricContextComposer.ComposeProfile(context, CoreTests.Track, "Custom", template, "", "Adaptive", true, at, null, "Right");
+        Assert.Equal(right, compact);
+    }
+
+    [Fact]
+    public void ProfileAwareAlignmentPreservesUnicodeLineLimitsAndMusicInfo()
+    {
+        var at = new DateTimeOffset(2026, 9, 7, 19, 31, 0, TimeSpan.Zero);
+        Assert.Equal("p\n› 日本語\nn", LyricContextComposer.ComposeProfile(
+            new("p", "日本語", "n"), CoreTests.Track, "Custom", "{lyrics}", "", "Adaptive", false, at, null, "Center"));
+        var nine = string.Join('\n', Enumerable.Repeat("current", 9));
+        var aligned = MessageLayout.Align(LyricContextComposer.ComposeProfile(
+            new("old", nine, "next"), CoreTests.Track, "Custom", "{lyrics}", "", "Adaptive", false, at, null, "Center"), "Center");
+        Assert.Equal(8, aligned.Count(c => c == '\n'));
+        Assert.Equal(
+            LyricContextComposer.ComposeProfile(new("p", "c", "n"), CoreTests.Track, "Song + Lyrics", "{lyrics}", "", "Adaptive", false, at, null, "Left"),
+            LyricContextComposer.ComposeProfile(new("p", "c", "n"), CoreTests.Track, "Song + Lyrics", "{lyrics}", "", "Adaptive", false, at, null, "Center"));
     }
 
     public void Dispose() { if(Directory.Exists(root)) Directory.Delete(root,true); }

@@ -52,6 +52,7 @@ public static partial class PresentationText
         if (snapshot is not null) return "Spotify · " + snapshot.State.ToString().ToLowerInvariant();
         return status switch
         {
+            "Playback suspended" => "Spotify · reconnecting",
             "Multiple Spotify sessions · waiting" => "Spotify · multiple sessions open",
             "Spotify unavailable · reconnecting" => "Spotify · reconnecting",
             "Reading Spotify" or "Checking Spotify session" or "Updating Spotify track" or
@@ -65,6 +66,7 @@ public static partial class PresentationText
         ? "Apple Music · " + snapshot.State.ToString().ToLowerInvariant()
         : status switch
         {
+            "Playback suspended" => "Apple Music · reconnecting",
             "Multiple Apple Music sessions · waiting" => "Apple Music · multiple sessions open",
             "Apple Music unavailable · reconnecting" => "Apple Music · reconnecting",
             "Checking Apple Music session" or "Reading Apple Music" or "Updating track" or "Refreshing playback after resume" => "Apple Music · reconnecting",

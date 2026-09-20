@@ -56,11 +56,11 @@ public partial class MainWindow
         PositionProgress.Value = view.Value; PositionText.Text = view.Text;
     }
 
-    private void ApplyPreviewView(string visible, bool preserveLayout, int payloadLength, bool structured, string? desired)
+    private void ApplyPreviewView(string visible, bool preserveLayout, int payloadLength, bool showContext, string? desired)
     {
         var preview = PresentationText.Preview(visible);
         var profile = (manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
-            : profiles.Selected.Name + " · " + (structured ? contextMode : settings.Preset)) + (settings.Compact ? " · Floating" : "");
+            : profiles.Selected.Name + " · " + (showContext ? contextMode : settings.Preset)) + (settings.Compact ? " · Floating" : "");
         var owner = !engine.Enabled ? "Output off · preview" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output paused · preview" : manual.IsManual
             ? desired is null ? "Manual · unsent draft" : "Manual · preview" : "Automatic · preview";
         var view = new PreviewView(preview.Text, preview.IsPlaceholder, preserveLayout, payloadLength, profile, settings.Compact, owner);

@@ -99,8 +99,8 @@ public partial class MainWindow : Window
         _ = Dispatcher.InvokeAsync(() =>
         {
             if (closing) return;
-            lastSourceStatus = status;
             if (revision != playback.Revision) return;
+            lastSourceStatus = status;
             acceptedPlaybackRevision = revision;
             if (status == "Refreshing playback source" || playback.ActiveKind is null)
             {
@@ -200,16 +200,17 @@ public partial class MainWindow : Window
         var position = engine.Position(now);
         ApplyProgressView(now, position);
         UpdateLyricsDetails();
-        var structured = settings.Preset is "Lyrics Only" or "Song + Lyrics";
+        var showContext = LyricContextComposer.SupportsContext(settings.Preset, settings.CustomTemplate);
         var automatic = LyricContextComposer.ComposeProfile(engine.Context(now), engine.Track, settings.Preset,
-            settings.CustomTemplate, settings.Message, contextMode, settings.Compact, DateTimeOffset.Now, position);
+            settings.CustomTemplate, settings.Message, contextMode, settings.Compact, DateTimeOffset.Now, position,
+            settings.CustomAlignment);
         var desired = manual.Desired(automatic, now);
         var preserveLayout = manual.IsManual || settings.Preset is "Custom" or "Status / Time";
         var alignment = manual.IsManual ? settings.ManualAlignment : settings.CustomAlignment;
         if (desired is not null && preserveLayout) desired = MessageLayout.Align(desired, alignment);
         var payload = ChatboxFormatter.Format(desired ?? MessageLayout.Align(manual.Draft, settings.ManualAlignment), settings.Compact, preserveLayout);
         var visible = ChatboxFormatter.Visible(payload);
-        ApplyPreviewView(visible, preserveLayout, payload.Length, structured, desired);
+        ApplyPreviewView(visible, preserveLayout, payload.Length, showContext, desired);
         var manualLayout = MessageLayout.Align(manual.Draft, settings.ManualAlignment);
         var manualPayload = ChatboxFormatter.Format(manualLayout, settings.Compact, true);
         ApplyManualView(manualLayout, manualPayload, desired, now);
