@@ -1,4 +1,4 @@
-# v0.7.0 execution plan — SPEC ready for review
+# v0.7.0 execution plan — Phase 0 + Phase 1 implemented
 
 ## State and baseline
 
@@ -6,7 +6,8 @@
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
 - Product assembly/file version remains `0.6.2`. This planning task changes only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: obtain product-owner review of the v0.7.0 normative design, then implement in the phases below. No feature code, tests, package, tag, release or main merge belongs to the planning task.
+- Current goal: finish validation and review of the implemented rotation data model/migration and pure runtime core, then begin Phase 2 Decorations in a separate task. No UI, About implementation, Output redesign, version bump, package, tag, release or main merge belongs to Phase 0/1.
+- Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
 
 ## Current extension points to preserve
 
@@ -43,14 +44,14 @@
 - Missing rotation migrates to disabled/15 seconds plus one enabled legacy item when Message is nonempty. Invalid rotation normalizes only that profile to the same legacy-safe state.
 - Maximum 16 items; allowed intervals 5/10/15/30/60/120 seconds; sequential order only.
 - A pure session-only controller tracks current item ID/index and remaining time per profile. It has no timer thread, network or output dependency; `MainWindow` supplies monotonic elapsed time and current automatic eligibility from its existing tick.
-- Eligibility requires current profile, rotation enabled, effective `{message}`, master Output On, no Output Pause and no Manual ownership. Ineligible time freezes. Eligible stalls advance mathematically to one latest index; no intermediate values are emitted.
+- Eligibility requires current profile, rotation enabled, effective `{message}`, master Output On, no Output Pause and no Manual ownership. Ineligible time freezes. An eligible stall past a deadline advances exactly one item and starts a full interval from now; missed intervals are never enumerated.
 - Track and lyric changes never enter the rotation API. One enabled item is static. Mutation behavior follows SPEC's deterministic ID-based transition rules.
 
 ### About and Output
 
 - Add `About` to the existing runtime-section allowlist without a runtime-state schema bump.
 - Move update/status/actions, Open data folder and legal/notice access out of Settings. Add fixed GitHub profile, Releases and Report issue actions, plus Discord `teyocesu` and Copy.
-- The product-owner-supplied canonical VRChat profile URL is the only blocking content question for that one link; do not invent it.
+- Fixed About identities are GitHub `https://github.com/Teyocesu`, VRChat `https://vrchat.com/home/user/usr_5560dde5-e00b-4784-a0ef-c6a6f36130d1`, and Discord `teyocesu` as display + Copy only.
 - Use one minimal fixed-URI launcher with HTTPS/host allowlisting and bounded failure UI. Clipboard is explicit write-only. No WebView/router/service hierarchy.
 - Keep `RefreshOutputPauseView()` as the source of the three compact presentation states: On/Active, On/Paused and Off; when Off, hide pause actions and show an existing pause only as secondary scheduled state.
 
@@ -68,24 +69,24 @@
 
 Rollback to v0.6.2 shows the mirrored fixed Message and ignores `decorations.json`. Because v0.6.2 can drop unknown profile JSON when saving, user-facing rollback notes must recommend backing up LocalData or not editing/saving profiles before returning to v0.7.0.
 
-## Phase 0 — data model, migration and pure rules
+## Phase 0 — data model, migration and pure rules — implemented
 
 Purpose: establish additive schemas, validation and deterministic transition functions before UI or ticking.
 
-- Likely files: `src/LyricsChatbox/DisplayProfiles.cs`, `src/LyricsChatbox/LocalData.Presentation.cs`, new `src/LyricsChatbox/MessageRotation.cs`, new `src/LyricsChatbox/Decorations.cs`, `tests/LyricsChatbox.Tests/PresentationTests.cs`, new `tests/LyricsChatbox.Tests/RotationTests.cs`, new `tests/LyricsChatbox.Tests/DecorationTests.cs`.
+- Files changed: `src/LyricsChatbox/DisplayProfiles.cs`, `src/LyricsChatbox/LocalData.Presentation.cs`, new `src/LyricsChatbox/MessageRotation.cs`, `tests/LyricsChatbox.Tests/PresentationTests.cs` and new `tests/LyricsChatbox.Tests/RotationTests.cs`. Decoration models remain Phase 2.
 - Invariants: ProfileLibrary remains v1; its read cap becomes 2 MiB to contain 20 profiles × 16 worst-case escaped messages plus overhead; legacy Message is preserved exactly and rotation starts disabled; only affected nested data falls back; all counts/sizes/strings/enums/IDs are bounded; new writes are atomic; no AppSettings or unrelated LocalData mutation.
-- Deterministic tests: deserialize v0.6.2 profile JSON; empty/nonempty Message migration; round-trip mirror; invalid version/interval/count/ID/text/line/control cases; one malformed profile rotation does not discard siblings; old fields/selected ID unchanged; decoration missing/malformed/oversized/unsupported-version fallback; duplicate/stale favorites; My-item bounds; built-in catalog unique IDs/types/text/lines/controls.
-- Acceptance: old fixtures round-trip without user-visible presentation loss; the migration result is independent of clock/UI; corruption isolation is demonstrated; no production behavior changes yet.
+- Deterministic tests: deserialize v0.6.2 profile JSON; empty/nonempty/Unicode Message migration; configuration-save mirror; rollback-compatible fields; invalid interval/count/ID/text/line/control cases; one malformed profile rotation does not discard siblings; old fields/selected ID unchanged; full 20 × 16 × 512 escaped library below the 2 MiB cap; one-over-limit and oversized-file rejection.
+- Acceptance: old fixtures round-trip without user-visible presentation loss; the migration result is independent of clock/UI; corruption isolation is demonstrated; `AppSettings` and Quick Messages are unchanged.
 - Dependencies: approved SPEC only.
 - Out of scope: UI, timer progression, catalog volume/content polish, output sending, version bump.
 
-## Phase 1 — Rotating Messages core
+## Phase 1 — Rotating Messages core — implemented
 
-Purpose: add the pure per-profile runtime state machine and feed its one current value into existing composition.
+Purpose: add the pure per-profile runtime state machine. Composition/UI integration remains Phase 4.
 
-- Likely files: `src/LyricsChatbox/MessageRotation.cs`, `src/LyricsChatbox/MainWindow.xaml.cs`, `src/LyricsChatbox/MainWindow.Presentation.cs`, `src/LyricsChatbox/ChatboxComposer.cs` or a small token-presence helper, `tests/LyricsChatbox.Tests/RotationTests.cs`, `tests/LyricsChatbox.Tests/DisplayTests.cs`, `tests/LyricsChatbox.Tests/BoundaryTests.cs`, `tests/LyricsChatbox.Tests/OutputPauseTests.cs`.
+- Files changed: `src/LyricsChatbox/MessageRotation.cs` and `tests/LyricsChatbox.Tests/RotationTests.cs`; no `MainWindow`, composer, scheduler, output or OSC file changed.
 - Invariants: the state machine has no output reference and no background timer; scheduler cadence stays 1.05 seconds; only `{message}` changes; track/lyric inputs are absent; current state is keyed by profile; inactive/ineligible time freezes; eligible stall exposes one latest result; disabled/one-item lists cause no repeated changes.
-- Deterministic tests: 0 items; 1 item; A→B→C→A; disabled skip; edit current; add; reorder by stable ID; delete/disable current; enable/disable rotation; profile switch/frozen remainder; no `{message}`; track and lyric changes do not reset; Manual, Output Off and every Output Pause freeze; resume preserves remainder; long eligible stall advances modulo with no catch-up sequence; scheduler receives latest only; reflection/architecture assertion or injectable fake proves no direct `ChatboxOutput.Send()` path.
+- Deterministic tests: 0 items; 1 item; A→B→C→A; disabled skip; edit current; add/reorder without reset; delete/disable current; enable/disable rotation; interval changes; profile switch/frozen remainder; Manual/Output Off/Output Pause/no-`{message}` policy freezes; resume preserves remainder; long eligible stall advances once; runtime advancement leaves the persisted legacy mirror unchanged. Source dependency review proves the core has no track, playback, window, scheduler, output, OSC or I/O reference.
 - Acceptance: existing fixed Message behavior is identical with rotation disabled or one item; automatic composition uses exactly one current message; all no-backlog boundaries stay green.
 - Dependencies: Phase 0 models and migration.
 - Out of scope: final editor visuals, random/conditions/schedules, persisted runtime index, a new send loop.
@@ -131,7 +132,7 @@ Purpose: separate settings from identity/maintenance/legal actions and make Outp
 - Invariants: About is one persisted top-level section; maintenance controls move, not duplicate; installed version comes from ProductIdentity; only fixed allowlisted HTTPS URLs launch; Discord only copies; local folder/notice targets are app-owned constants; `RefreshOutputPauseView()` stays authoritative; master Off and Pause remain separate.
 - Deterministic tests: About normalization/restore; version text; exact allowed/rejected URI cases; launcher/clipboard exceptions become UI failure results; no clipboard read; Output Off/Active/each Paused summary/pause-remains-while-Off/Resume/Change; all existing pause modes and no-replay/typing tests.
 - Acceptance: Settings contains settings; About contains identity/version/maintenance/links/legal; no crash on unavailable shell or clipboard; Off hides active pause actions; re-enable returns to an extant pause truthfully; small-height sidebar remains usable.
-- Dependencies: canonical VRChat URL only for enabling that link; all other work can proceed. Existing update/data-folder code is reused.
+- Dependencies: fixed About identities recorded above. Existing update/data-folder code is reused.
 - Out of scope: embedded browser, arbitrary link input, Discord URL, new pause mode, Output semantics rewrite or duplicate view model.
 
 ## Phase 6 — integration, regression, accessibility and hardening
@@ -153,7 +154,7 @@ Purpose: validate actual WPF interaction and upgrade behavior without claiming r
 - Invariants: use a copy of real v0.6.2 LocalData; retain an untouched backup; keep real VRChat output disabled during development UI QA; use loopback OSC only for transmission verification; never overwrite the sole user state copy.
 - Physical matrix: upgrade real v0.6.2 state; selected profile/old Message/custom template/alignment/Floating/context/settings/cache/corrections/matches survive; create/edit/reorder/disable rotation; switch profiles; Manual/Off/timed/track/indefinite Pause freeze and resume; long sleep/stall sends no burst; Spotify playback plus changing lyrics does not reset message state; insert every decoration type into Custom/Message/Manual; selection/caret/keyboard/Escape/focus; 144/142/nine-line warnings versus loopback payload; About links/failure handling/Discord copy/data folder/notices; Output card transitions; small window/DPI; restart/persistence and rollback guidance.
 - Acceptance: observed results and environment are recorded; failures are fixed and re-run; no real headset transmission is inferred from loopback; product-owner visual acceptance is captured before release preparation.
-- Dependencies: Phase 6 green candidate and a supplied canonical VRChat URL if that link is to be accepted.
+- Dependencies: Phase 6 green candidate.
 - Out of scope: tag, GitHub release, automatic installation, new feature work during QA.
 
 ## Phase 8 — release preparation
@@ -196,6 +197,6 @@ Purpose: prepare, but do not publish, v0.7.0 only after automated and physical a
 - Does About remove clutter? Yes: update/data/legal/link actions move from Settings and are not duplicated.
 - Potential slop removed: no `{rotation}` token, no full-template rotation, no new timer thread, no arbitrary URL service, no Discord link guess, no database/search engine, no wholesale external catalog, no persisted runtime deadline, no fifth major feature.
 
-## Open product question
+## Open product questions
 
-- Supply the canonical public VRChat profile URL to expose on About. Repository and current LocalData/source contain no authoritative value; implementation must not infer one. This does not block Phases 0–4 or the rest of About.
+None for the implemented Phase 0/1 scope. The canonical VRChat URL is resolved.

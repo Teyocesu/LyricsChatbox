@@ -6,14 +6,18 @@ namespace LyricsChatbox;
 public sealed partial class LocalData
 {
     // JSON can escape each UTF-16 unit as six ASCII bytes. These limits fit a full valid Unicode library.
-    private const int ProfileBytes = 160 * 1024;
+    private const int ProfileBytes = 2 * 1024 * 1024;
     private const int QuickMessageBytes = 64 * 1024;
     public ProfileLibrary ReadProfiles(AppSettings legacy)
     {
-        var library = Read<ProfileLibrary>(Path.Combine(Root,"profiles.json"),ProfileBytes);
+        var library = Read<ProfileLibrary>(Path.Combine(Root,"profiles.json"),ProfileBytes)?.NormalizeRotations();
         return library is {IsValid:true} ? library : ProfileLibrary.Migrate(legacy);
     }
-    public bool SaveProfiles(ProfileLibrary library) => library.IsValid && WritePresentation("profiles.json", library, ProfileBytes);
+    public bool SaveProfiles(ProfileLibrary library)
+    {
+        var saved = library.PrepareForSave();
+        return saved is {IsValid:true} && WritePresentation("profiles.json", saved, ProfileBytes);
+    }
     public QuickMessageLibrary ReadQuickMessages()
     {
         var library = Read<QuickMessageLibrary>(Path.Combine(Root,"quick-messages.json"),QuickMessageBytes);

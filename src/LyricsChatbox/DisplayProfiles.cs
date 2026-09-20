@@ -1,12 +1,13 @@
 namespace LyricsChatbox;
 
 public record DisplayProfile(string Id, string Name, string Preset = "Lyrics Only", string ContextMode = "Current only",
-    bool Compact = false, string Alignment = "Left", string CustomTemplate = "{lyrics}", string Message = "", bool BuiltIn = false)
+    bool Compact = false, string Alignment = "Left", string CustomTemplate = "{lyrics}", string Message = "", bool BuiltIn = false,
+    MessageRotation? Rotation = null)
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => Id is {Length: > 0 and <= 64} && Name is {Length: > 0 and <= 40} && !string.IsNullOrWhiteSpace(Name) &&
         ChatboxComposer.Presets.Contains(Preset) && LyricContextComposer.Modes.Contains(ContextMode) && MessageLayout.Alignments.Contains(Alignment) &&
-        CustomTemplate is {Length: <= 512} && Message is {Length: <= 512};
+        CustomTemplate is {Length: <= 512} && Message is {Length: <= 512} && (Rotation is null or {IsValid:true});
     [System.Text.Json.Serialization.JsonIgnore]
     public bool SupportsLyricContext => LyricContextComposer.SupportsContext(Preset, CustomTemplate);
     public string Summary => Preset + (SupportsLyricContext ? " · " + ContextMode : "") + (Compact ? " · Floating" : "");
@@ -15,6 +16,13 @@ public record DisplayProfile(string Id, string Name, string Preset = "Lyrics Onl
     { Preset = Preset, CustomTemplate = CustomTemplate, Message = Message, Compact = Compact, CustomAlignment = Alignment };
     public static DisplayProfile FromSettings(AppSettings settings, string id, string name) => new(id, name, settings.Preset,
         Compact: settings.Compact, Alignment: settings.CustomAlignment, CustomTemplate: settings.CustomTemplate, Message: settings.Message);
+    public DisplayProfile NormalizeRotation() => this with
+    { Rotation = Rotation is { IsValid: true } ? Rotation : MessageRotation.FromLegacy(Message) };
+    public DisplayProfile? PrepareForSave()
+    {
+        var rotation = Rotation ?? MessageRotation.FromLegacy(Message);
+        return rotation.IsValid ? this with { Message = rotation.LegacyMessage, Rotation = rotation } : null;
+    }
 }
 
 public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<DisplayProfile> Items)
@@ -28,14 +36,16 @@ public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<Displ
     public ProfileLibrary? Select(string id) => Items.Any(p=>p.Id==id) ? this with {SelectedId=id} : null;
     public ProfileLibrary? Save(DisplayProfile profile)
     {
-        if (!profile.IsValid || !Items.Any(p=>p.Id==profile.Id)) return null;
-        return this with {Items=Items.Select(p=>p.Id==profile.Id ? profile with {BuiltIn=p.BuiltIn} : p).ToArray()};
+        var saved = profile.PrepareForSave();
+        if (saved is not {IsValid:true} || !Items.Any(p=>p.Id==profile.Id)) return null;
+        return this with {Items=Items.Select(p=>p.Id==profile.Id ? saved with {BuiltIn=p.BuiltIn} : p).ToArray()};
     }
     public ProfileLibrary? Create(string name, DisplayProfile source)
     {
         var profile = source with {Id=Guid.NewGuid().ToString("N"), Name=name.Trim(), BuiltIn=false};
-        if (Items.Count >= Maximum || !profile.IsValid) return null;
-        return this with {Items=Items.Append(profile).ToArray(), SelectedId=profile.Id};
+        var saved = profile.PrepareForSave();
+        if (Items.Count >= Maximum || saved is not {IsValid:true}) return null;
+        return this with {Items=Items.Append(saved).ToArray(), SelectedId=saved.Id};
     }
     public ProfileLibrary? Duplicate(DisplayProfile source)
     {
@@ -55,7 +65,16 @@ public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<Displ
             new("music-info","Music Info","Song + Lyrics",BuiltIn:true), new("custom","Custom","Custom",CustomTemplate:"{message}\n{lyrics}",BuiltIn:true)];
         var current = DisplayProfile.FromSettings(legacy,"legacy","My display");
         var equivalent = presets.FirstOrDefault(p => p.Apply(legacy) == legacy);
-        return equivalent is not null ? new(1,equivalent.Id,presets) : new(1,current.Id,presets.Append(current).ToArray());
+        ProfileLibrary migrated = equivalent is not null ? new(1,equivalent.Id,presets) : new(1,current.Id,presets.Append(current).ToArray());
+        return migrated.NormalizeRotations();
+    }
+    public ProfileLibrary NormalizeRotations() => Items is null ? this : this with
+    { Items = Items.Select(profile => profile?.NormalizeRotation()!).ToArray() };
+    public ProfileLibrary? PrepareForSave()
+    {
+        if (Items is null) return null;
+        var items = Items.Select(profile => profile?.PrepareForSave()).ToArray();
+        return items.All(profile => profile is not null) ? this with { Items = items.Select(profile => profile!).ToArray() } : null;
     }
 }
 

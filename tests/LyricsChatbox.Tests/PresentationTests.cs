@@ -23,7 +23,7 @@ public sealed class PresentationTests : IDisposable
         Assert.NotEqual(source.Id, copy.SelectedId);
         var data = new LocalData(root);
         Assert.True(data.SaveProfiles(copy));
-        Assert.Equal(copy.Selected, data.ReadProfiles(new()).Selected);
+        Assert.Equal(JsonSerializer.Serialize(copy.Selected), JsonSerializer.Serialize(data.ReadProfiles(new()).Selected));
     }
     private readonly string root = Path.Combine(Path.GetTempPath(),"LyricsChatbox.Tests",Guid.NewGuid().ToString("N"));
     [Fact]
@@ -308,7 +308,8 @@ public sealed class PresentationTests : IDisposable
         var restored = new LocalData(root).ReadProfiles(new());
         Assert.Equal(profiles.Length, restored.Items.Count);
         Assert.Equal(library.SelectedId, restored.SelectedId);
-        Assert.Equal(profiles, restored.Items.ToArray());
+        Assert.Equal(profiles.Select(profile => JsonSerializer.Serialize(profile.PrepareForSave())),
+            restored.Items.Select(profile => JsonSerializer.Serialize(profile)));
 
         var messages = Enumerable.Range(0, QuickMessageLibrary.Maximum).Select(i => new QuickMessage(
             new string('界', 62) + i.ToString("D2"), new string('名', 32), new string('文', 512))).ToArray();
