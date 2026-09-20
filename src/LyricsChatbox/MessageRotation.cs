@@ -22,30 +22,9 @@ public sealed record MessageRotation(int Version = 1, bool Enabled = false, int 
     public static MessageRotation FromLegacy(string? message) => new(Items:
         ValidText(message) ? [new RotatingMessage("legacy-message", message!)] : []);
 
-    public static bool ValidId(string? id) => id is { Length: > 0 and <= 64 } &&
-        id.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.');
+    public static bool ValidId(string? id) => LocalContentValidation.ValidId(id);
 
-    public static bool ValidText(string? text)
-    {
-        if (text is not { Length: > 0 and <= 512 } || string.IsNullOrWhiteSpace(text)) return false;
-        var lines = 1;
-        for (var i = 0; i < text.Length; i++)
-        {
-            var c = text[i];
-            if (c == '\n')
-            {
-                if (++lines > 9) return false;
-                continue;
-            }
-            if (char.IsControl(c)) return false;
-            if (char.IsHighSurrogate(c))
-            {
-                if (++i >= text.Length || !char.IsLowSurrogate(text[i])) return false;
-            }
-            else if (char.IsLowSurrogate(c)) return false;
-        }
-        return true;
-    }
+    public static bool ValidText(string? text) => LocalContentValidation.ValidText(text, 512, 9);
 }
 
 public readonly record struct MessageRotationCurrent(string? ItemId, string Text, double RemainingSeconds);

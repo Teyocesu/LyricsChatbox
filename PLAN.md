@@ -1,4 +1,4 @@
-# v0.7.0 execution plan — Phase 0 + Phase 1 implemented
+# v0.7.0 execution plan — Phases 0–2 implemented
 
 ## State and baseline
 
@@ -6,8 +6,9 @@
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
 - Product assembly/file version remains `0.6.2`. This planning task changes only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: finish validation and review of the implemented rotation data model/migration and pure runtime core, then begin Phase 2 Decorations in a separate task. No UI, About implementation, Output redesign, version bump, package, tag, release or main merge belongs to Phase 0/1.
+- Current goal: close Phase 2 validation and keep Phase 3 picker UI as the next separate task. No UI, About implementation, Output redesign, version bump, package, tag, release or main merge belongs to Phases 0–2.
 - Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
+- Phase 2 evidence: focused Decorations + rotation regression tests `44/44`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `434/434` with 0 skips; package-policy test PASS; `git diff --check` PASS. Systematic content review found 90 entries, 10,228 source bytes, 19 curated Popular flags, no duplicate IDs/content, no tabs/trailing garbage, maximum content length 48, maximum six lines and no item over 144 UTF-16 units. Security/quality review made the catalog collections actually read-only and moved the shared Unicode validator to neutral ownership; Ponytail FULL found no removable architecture.
 
 ## Current extension points to preserve
 
@@ -91,14 +92,16 @@ Purpose: add the pure per-profile runtime state machine. Composition/UI integrat
 - Dependencies: Phase 0 models and migration.
 - Out of scope: final editor visuals, random/conditions/schedules, persisted runtime index, a new send loop.
 
-## Phase 2 — Decorations catalog and local state
+## Phase 2 — Decorations catalog and local state — implemented
 
-Purpose: implement validated local catalog loading, filtering, Favorites/My items and budget diagnostics without UI.
+Purpose: implement validated local catalog loading, filtering and isolated Favorites/My items persistence without UI. Prospective insertion diagnostics remain with the Phase 3 originating-editor integration so there is no disconnected second formatting path.
 
-- Likely files: `src/LyricsChatbox/Decorations.cs`, `src/LyricsChatbox/LocalData.Presentation.cs`, new `src/LyricsChatbox/Assets/Decorations.json`, `src/LyricsChatbox/LyricsChatbox.csproj`, `src/LyricsChatbox/ChatboxOutput.cs` only if it needs a read-only diagnostics result from existing formatter logic, `tests/LyricsChatbox.Tests/DecorationTests.cs`, `tests/LyricsChatbox.Tests/DisplayTests.cs`, `THIRD_PARTY_NOTICES.md` and `scripts/PackagePolicy.ps1` only if an external licensed subset is actually included.
-- Invariants: local-only bounded load; immutable built-ins separate from mutable user state; no user content becomes path/URL/code; the same formatter logic calculates final cost/truncation; stored content is never auto-truncated; package includes only approved catalog/license assets.
-- Deterministic tests: catalog validation and safe fallback; search by name/content/kind; type and Popular filters; Favorites add/remove/order/dedupe/stale IDs; My-item CRUD and limits; Unicode/graphemes; C0/C1/NUL/invalid UTF-16 handling; prospective normal/floating/nine-line diagnostics agree with final formatter; no network calls; packaging allowlist when applicable.
-- Acceptance: low-hundreds filtering is immediate without an index; malformed state affects only Favorites/My items; formatter remains sole final authority; provenance is auditable for every non-original entry.
+- Files changed: new `src/LyricsChatbox/Decorations.cs`, `src/LyricsChatbox/LocalContentValidation.cs`, embedded `src/LyricsChatbox/Assets/Decorations.json`, `src/LyricsChatbox/LocalData.Presentation.cs`, `src/LyricsChatbox/LyricsChatbox.csproj`, `src/LyricsChatbox/MessageRotation.cs`, new `tests/LyricsChatbox.Tests/DecorationTests.cs` and the canonical workflow documents. `README.md`, `THIRD_PARTY_NOTICES.md`, composer/formatter/scheduler/output and UI files remain unchanged.
+- Catalog: version 1, 90 entries/10,228 source bytes with counts Symbol 16, TextArt 8, Kaomoji 12, Divider 12, Frame 8, Heart 12, Music 12 and Status 10. It uses individual Unicode symbols, common short phrases, requester-provided examples and project-composed arrangements; no external dataset or runtime network source is included.
+- Invariants: local-only 1 MiB/256-entry fail-closed load; exact eight-Kind allowlist; bounded valid Unicode; immutable built-ins separate from mutable user state; user IDs occupy `user-<guid>`; no user content becomes path/URL/code; stored content is never auto-truncated; formatter/composer/output remain untouched.
+- State: `decorations.json` version 1 contains only ordered unique Favorites (128) and My items (64), is bounded to 256 KiB and reuses `LocalData` atomic replacement. Bad reads return empty decoration state without deleting or rewriting the file or affecting settings/profiles/rotation; a later explicit valid save may replace it.
+- Deterministic tests: embedded resource/version/size/count/content review; every invalid catalog boundary; stable resource order; name/content/Kind/Popular filtering; Favorites ordering/dedupe/limits/stale resolution; My-item CRUD/namespace/collision/limits/Unicode/control rules; missing/round-trip/worst-case persistence; corruption preservation; explicit replacement and settings/profile/rotation isolation.
+- Acceptance: 90-item filtering is direct stable-order `OrdinalIgnoreCase`; catalog failure exposes a bounded status and no partial entries; malformed state affects only Favorites/My items; provenance is auditable without new legal notices; existing formatter remains sole final authority.
 - Dependencies: Phase 0 persistence contracts.
 - Out of scope: remote/community catalogs, full-text engine, tags, Recently Used, ratings, broad third-party dataset import.
 
@@ -110,7 +113,7 @@ Purpose: replace the three ASCII selectors with one keyboard-usable picker and o
 - Invariants: Custom/Status/rotation/Manual use the same picker and insertion helper; selection replacement and caret insertion are standard WPF TextBox semantics; content-type views differ appropriately; caller supplies the actual prospective-output preview; Escape/cancel never edits; final output still uses ordinary composer/formatter/scheduler.
 - Deterministic tests: insertion at start/middle/end; selected-text replacement; multiline Unicode; exact/overflow `MaxLength`; focus/caret result through extracted pure insertion calculation where UI automation is unsuitable; category/search selection; Enter insert/Escape cancel commands; warning parity for Custom, Message and Manual origins; no formatter bypass.
 - Acceptance: old Cat/AFK/divider/music examples remain available as catalog items where provenance is original; no duplicate selectors remain; keyboard flow works; oversized art stays intact with truthful warning.
-- Dependencies: Phase 2 catalog/state/diagnostics.
+- Dependencies: Phase 2 catalog/state foundation; prospective diagnostics are completed here against each real editor path.
 - Out of scope: drag-and-drop asset management, arbitrary category editing, template library, giant art support.
 
 ## Phase 4 — Display UX simplification and rotation editor

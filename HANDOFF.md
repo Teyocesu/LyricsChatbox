@@ -1,9 +1,11 @@
-# Current handoff — v0.7.0 Phase 0 + Phase 1 implemented
+# Current handoff — v0.7.0 Phases 0–2 implemented
 
-- Branch: `codex/v0.7.0`; base planning commit `cfbee7b1f87a32f1a3bdb5be129fe1a25227dca8`; main remains at stable `33838408f29b853c8945a0595fc4400420d41d27` (`v0.6.2`).
-- Completed: additive profile-owned rotation model, bounded validation, profile-local normalization, 2 MiB bounded profile persistence, legacy Message save mirror and pure per-profile `MessageRotator` with deterministic mutation/freeze/one-step-stall behavior.
-- Boundaries: runtime advancement never persists; AppSettings and Quick Messages remain separate; no UI, Decorations, About implementation, Output redesign, scheduler/output/OSC integration or version bump.
-- About identities: GitHub `https://github.com/Teyocesu`; VRChat `https://vrchat.com/home/user/usr_5560dde5-e00b-4784-a0ef-c6a6f36130d1`; Discord `teyocesu` display + Copy.
-- Verification: focused `80/80`; locked restore PASS; Release build 0 warnings/0 errors; full `420/420` with 0 skips; package-policy and `git diff --check` PASS. Security/quality review fixed null-entry fallback; Ponytail FULL review simplified two local expressions and found no removable architecture.
-- Next: after committing this clean Phase 0/1 change, Phase 2 Decorations catalog/persistence in a separate task.
-- Product version remains `0.6.2`; no `v0.7.0` tag, package or release.
+- Branch: `codex/v0.7.0`; Phase 2 base `510bc93e718dddae72c0335255166d0089c402ea`; main remains stable `33838408f29b853c8945a0595fc4400420d41d27` (`v0.6.2`).
+- Completed before Phase 2: additive profile-owned rotation model/migration and pure per-profile runtime state machine; runtime advancement never persists or sends directly.
+- Phase 2 completed: exact eight-Kind decoration model, fail-closed embedded catalog loader/status, stable-order name/content/Kind/Popular search, ordered Favorites, bounded My-item CRUD with `user-<guid>` IDs, one built-in + user composition layer and isolated `decorations.json` persistence.
+- Catalog: embedded version 1 `Assets/Decorations.json`, 90 entries/10,228 source bytes; Symbol 16, TextArt 8, Kaomoji 12, Divider 12, Frame 8, Heart 12, Music 12, Status 10. Content uses individual Unicode symbols, common short phrases, requester examples and project-composed arrangements; no external dataset, runtime network source or new legal notice.
+- Persistence: version 1, 256 KiB, 128 Favorites and 64 My items. Missing/bad/oversized/invalid reads return empty decoration state only and preserve the original file; explicit valid save reuses existing atomic temp-and-replace behavior. Settings, profiles and rotations are byte-preserved across bad decoration reads.
+- Boundaries: no picker/UI, caret insertion, prospective editor diagnostics, composer/formatter/scheduler/output/OSC change, About/Output redesign, dependency, version bump, package, tag, release or main merge. `README.md` and `THIRD_PARTY_NOTICES.md` remain unchanged.
+- Verification: focused Decorations + rotation `44/44`; locked restore PASS; Release build 0 warnings/0 errors; full `434/434`, 0 skips; package policy and `git diff --check` PASS. Systematic catalog review found no duplicate IDs/content, tabs, trailing garbage, offensive material or >144-unit item; maximum six lines. Quality/security review hardened read-only exposure and neutral shared validation; Ponytail FULL: `Lean already. Ship.`
+- Next: Phase 3 shared picker UI and originating-editor prospective diagnostics may begin as a separate task. Reuse `DecorationCatalog.LoadBuiltIn()`, `DecorationLibrary.Create(...)` and `LocalData.Read/SaveDecorationState()`; do not create another catalog, formatter or persistence owner.
+- Product version remains `0.6.2`; no `v0.7.0` tag or release.

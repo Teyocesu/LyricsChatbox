@@ -19,6 +19,7 @@
     <Using Remove="System.Drawing" />
     <Resource Include="Assets/AppIcon.ico" />
     <Resource Include="Assets/AppIcon.png" />
+    <EmbeddedResource Include="Assets/Decorations.json" LogicalName="LyricsChatbox.Assets.Decorations.json" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Zeroconf" Version="3.7.16" />
