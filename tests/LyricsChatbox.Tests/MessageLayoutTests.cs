@@ -70,15 +70,4 @@ public sealed class MessageLayoutTests
         Assert.True((old with { CustomAlignment = "Center", ManualAlignment = "Right" }).IsValid);
     }
 
-    [Fact]
-    public void EveryAsciiTemplateIsEditableAsciiAndFitsWithoutFormatting()
-    {
-        foreach (var template in MessageLayout.Templates)
-        {
-            Assert.All(template.Custom + template.Manual, c => Assert.True(c is >= ' ' and <= '~' or '\n'));
-            Assert.True(template.Manual.Length <= 142);
-            Assert.True(template.Manual.Count(c => c == '\n') <= 8);
-            Assert.Equal(template.Manual, ChatboxFormatter.Visible(ChatboxFormatter.Format(template.Manual, true, true)));
-        }
-    }
 }

@@ -54,6 +54,7 @@ public partial class MainWindow : Window
         ThemeColors.Apply(Application.Current.Resources, settings.Appearance);
         InitializeComponent();
         InitializeAppearance();
+        InitializeDecorations();
         engine.Enabled = settings.Enabled; engine.Offset = settings.Offset;
         EnabledBox.IsChecked = settings.Enabled; OffsetSlider.Value = settings.Offset;
         PlaybackSourceBox.ItemsSource = new[] { "Apple Music", "Spotify", "Automatic" };
@@ -65,8 +66,6 @@ public partial class MainWindow : Window
         PresetBox.ItemsSource = ChatboxComposer.Presets; PresetBox.SelectedItem = settings.Preset;
         CustomAlignmentBox.ItemsSource = ManualAlignmentBox.ItemsSource = MessageLayout.Alignments;
         CustomAlignmentBox.SelectedItem = settings.CustomAlignment; ManualAlignmentBox.SelectedItem = settings.ManualAlignment;
-        CustomAsciiBox.ItemsSource = ManualAsciiBox.ItemsSource = StatusAsciiBox.ItemsSource = MessageLayout.Templates;
-        CustomAsciiBox.SelectedIndex = ManualAsciiBox.SelectedIndex = StatusAsciiBox.SelectedIndex = 0;
         TemplateBox.Text = settings.CustomTemplate; TemplateBox.IsEnabled = settings.Preset == "Custom";
         CustomPanel.Visibility = settings.Preset == "Custom" ? Visibility.Visible : Visibility.Collapsed;
         StatusPanel.Visibility = settings.Preset is "Custom" or "Status / Time" ? Visibility.Visible : Visibility.Collapsed;
@@ -324,19 +323,6 @@ public partial class MainWindow : Window
         manual.LiveChanged(engine.Enabled && LiveBox.IsChecked == true && !IsOutputPaused(DateTimeOffset.UtcNow)); DisplayChanged(sender, e);
     }
     private void SendManual(object sender, RoutedEventArgs e) => RequestManualSend();
-    private void InsertAscii(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: string target }) return;
-        var box = target == "Manual" ? DraftBox : target == "Custom" ? TemplateBox : MessageBox;
-        var selector = target == "Manual" ? ManualAsciiBox : target == "Custom" ? CustomAsciiBox : StatusAsciiBox;
-        if (selector.SelectedItem is not AsciiTemplate template) return;
-        var text = target == "Custom" ? template.Custom : template.Manual;
-        var available = box.MaxLength - (box.Text.Length - box.SelectionLength);
-        if (text.Length > available) { ErrorText.Text = "Not enough editor space for this template. Select text to replace it."; return; }
-        box.SelectedText = text;
-        ErrorText.Text = "";
-        box.Focus();
-    }
     private void ClearManual(object sender, RoutedEventArgs e)
     {
         DraftBox.Clear();

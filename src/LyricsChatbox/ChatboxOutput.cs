@@ -5,24 +5,33 @@ using System.Text;
 
 namespace LyricsChatbox;
 
+public readonly record struct ChatboxFormatAnalysis(string Payload, bool WouldTruncate, int VisibleUnits, int Limit);
+
 public static class ChatboxFormatter
 {
     public const string CompactSuffix = "\u0003\u001F";
-    public static string Format(string input, bool compact = false, bool preserveLayout = false)
+    public static string Format(string input, bool compact = false, bool preserveLayout = false) =>
+        Analyze(input, compact, preserveLayout).Payload;
+
+    public static ChatboxFormatAnalysis Analyze(string input, bool compact = false, bool preserveLayout = false)
     {
         var clean = CleanText(input);
         var result = new StringBuilder();
         var elements = StringInfo.GetTextElementEnumerator(clean);
         var lines = 1;
+        var limit = compact ? 142 : 144;
         while (elements.MoveNext())
         {
             var element = elements.GetTextElement();
-            if (result.Length + element.Length > (compact ? 142 : 144) || element == "\n" && ++lines > 9) break;
+            if (result.Length + element.Length > limit || element == "\n" && ++lines > 9) break;
             result.Append(element);
         }
         var visible = preserveLayout ? result.ToString().Trim('\r', '\n') : result.ToString().Trim();
         if (string.IsNullOrWhiteSpace(visible)) visible = "";
-        return compact && visible.Length > 0 ? visible + CompactSuffix : visible;
+        var expected = preserveLayout ? clean.Trim('\r', '\n') : clean.Trim();
+        if (string.IsNullOrWhiteSpace(expected)) expected = "";
+        var payload = compact && visible.Length > 0 ? visible + CompactSuffix : visible;
+        return new(payload, !string.Equals(visible, expected, StringComparison.Ordinal), visible.Length, limit);
     }
     public static string CleanText(string input)
     {

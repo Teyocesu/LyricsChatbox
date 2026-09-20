@@ -4,6 +4,8 @@
 
 v0.7.0 is a Windows-only .NET 10 WPF minor release with exactly four product areas: Display/composition simplification, a local Decorations picker, profile-owned Rotating Messages, and an About/sidebar/Output presentation cleanup. It preserves the current local-first architecture and the pipeline Playback → Track identity → Lyrics → Composition → Formatting → Scheduler → OSC. It adds no account, backend, telemetry, cloud state, runtime scraping, arbitrary player, plugin system, scripting engine or generic Chatbox framework.
 
+Implementation status: Phases 0–3 are implemented on the v0.7.0 development branch. Phase 3 supplies the shared Insert picker and prospective-output diagnostics only; the Phase 4 Display redesign and rotation editor remain unimplemented.
+
 ### Display and composition
 
 - Display answers one question — “What should VRChat show?” — through five visible concepts: Profile, Composition, Lyric Context, Presentation and Live Preview. Existing presets and profile behavior remain available; Custom is the primary advanced editor rather than a separate template ecosystem.

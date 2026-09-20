@@ -1,4 +1,4 @@
-# v0.7.0 execution plan — Phases 0–2 implemented
+# v0.7.0 execution plan — Phases 0–3 implemented
 
 ## State and baseline
 
@@ -6,9 +6,10 @@
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
 - Product assembly/file version remains `0.6.2`. This planning task changes only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: close Phase 2 validation and keep Phase 3 picker UI as the next separate task. No UI, About implementation, Output redesign, version bump, package, tag, release or main merge belongs to Phases 0–2.
+- Current goal: close Phase 3 implementation and keep the Phase 4 Display/rotation UI as the next separate task after physical picker QA. About implementation, Output redesign, version bump, package, tag, release and main merge remain out of scope.
 - Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
 - Phase 2 evidence: focused Decorations + rotation regression tests `44/44`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `434/434` with 0 skips; package-policy test PASS; `git diff --check` PASS. Systematic content review found 90 entries, 10,228 source bytes, 19 curated Popular flags, no duplicate IDs/content, no tabs/trailing garbage, maximum content length 48, maximum six lines and no item over 144 UTF-16 units. Security/quality review made the catalog collections actually read-only and moved the shared Unicode validator to neutral ownership; Ponytail FULL found no removable architecture.
+- Phase 3 evidence: focused picker/decorations/layout/display tests `50/50`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `447/447` with 0 skips; package-policy test and `git diff --check` PASS. Native WPF interaction QA is still required: the available computer-use host exposed browser tabs but no native Windows app surface, so no visual/keyboard/theme claim is recorded.
 
 ## Current extension points to preserve
 
@@ -105,14 +106,16 @@ Purpose: implement validated local catalog loading, filtering and isolated Favor
 - Dependencies: Phase 0 persistence contracts.
 - Out of scope: remote/community catalogs, full-text engine, tags, Recently Used, ratings, broad third-party dataset import.
 
-## Phase 3 — Insert picker UI and shared insertion
+## Phase 3 — Insert picker UI and shared insertion — implemented; physical QA pending
 
 Purpose: replace the three ASCII selectors with one keyboard-usable picker and one caret-aware insertion path.
 
-- Likely files: new `src/LyricsChatbox/DecorationPicker.xaml`, new `src/LyricsChatbox/DecorationPicker.xaml.cs`, `src/LyricsChatbox/MainWindow.xaml`, `src/LyricsChatbox/MainWindow.xaml.cs`, `src/LyricsChatbox/MainWindow.Presentation.cs`, `src/LyricsChatbox/MessageLayout.cs`, `tests/LyricsChatbox.Tests/DecorationTests.cs`, `tests/LyricsChatbox.Tests/PresentationTests.cs`.
-- Invariants: Custom/Status/rotation/Manual use the same picker and insertion helper; selection replacement and caret insertion are standard WPF TextBox semantics; content-type views differ appropriately; caller supplies the actual prospective-output preview; Escape/cancel never edits; final output still uses ordinary composer/formatter/scheduler.
-- Deterministic tests: insertion at start/middle/end; selected-text replacement; multiline Unicode; exact/overflow `MaxLength`; focus/caret result through extracted pure insertion calculation where UI automation is unsuitable; category/search selection; Enter insert/Escape cancel commands; warning parity for Custom, Message and Manual origins; no formatter bypass.
-- Acceptance: old Cat/AFK/divider/music examples remain available as catalog items where provenance is original; no duplicate selectors remain; keyboard flow works; oversized art stays intact with truthful warning.
+- Files changed: new `DecorationPicker.xaml(.cs)`, `DecorationPickerPolicy.cs`, `TextInsertion.cs` and `MainWindow.Decorations.cs`; focused changes to `MainWindow.xaml(.cs)`, `ChatboxOutput.cs`, `MessageLayout.cs` and picker/layout tests.
+- Invariants: Custom, Status and Manual use the same owned modal and pure caret-aware insertion helper; one selected item and one final Insert action; caller-owned prospective composition uses current runtime values and the existing alignment/formatter path; picker mutation reuses Phase 2 state/persistence; no direct scheduler/output/OSC path exists.
+- Rendering: Symbols/Hearts/Music use the dense presentation, Kaomoji/Status/Popular/Favorites/My items compact rows, Dividers wide rows, and Text Art/Frames whitespace-preserving monospaced previews. Search delegates to `DecorationLibrary.Search`; built-in Kind modes exclude user items while Favorites preserve saved order and My items remain available without the built-in catalog.
+- State and failure behavior: catalog/state load once during `MainWindow` initialization; explicit Favorite/My-item mutation rebuilds the small in-memory library and saves; failed saves remain understandable for the session; opening/closing does not write; malformed state and unavailable catalog retain Phase 2 semantics.
+- Deterministic tests: caret start/middle/end, selection, multiline Unicode, exact/refused/replacement `MaxLength`, 144/142/nine-line warnings, grapheme parity, all navigation/presentation modes, active-mode search, Favorites ordering, unavailable catalog plus My items and failed decoration-state save isolation.
+- Acceptance evidence: all obsolete ASCII controls/handler/model references are absent from production; XAML compiles; focused and full gates are green. Physical Custom/Status/Manual, keyboard, alternate-theme and small-window QA remains pending because native Windows automation was unavailable on this host.
 - Dependencies: Phase 2 catalog/state foundation; prospective diagnostics are completed here against each real editor path.
 - Out of scope: drag-and-drop asset management, arbitrary category editing, template library, giant art support.
 
@@ -202,4 +205,4 @@ Purpose: prepare, but do not publish, v0.7.0 only after automated and physical a
 
 ## Open product questions
 
-None for the implemented Phase 0/1 scope. The canonical VRChat URL is resolved.
+None for implemented Phases 0–3. The canonical VRChat URL is resolved. Physical Phase 3 picker QA remains an execution gate, not an open product decision.
