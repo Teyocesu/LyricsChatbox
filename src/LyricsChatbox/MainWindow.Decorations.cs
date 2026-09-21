@@ -27,14 +27,7 @@ public partial class MainWindow
             _ => null
         };
         if (target is null) return;
-        var decorationTarget = targetName switch
-        {
-            "Custom" => DecorationTarget.Custom,
-            "Status" => DecorationTarget.Status,
-            _ => DecorationTarget.Manual
-        };
-
-        var picker = new DecorationPicker(decorationCatalog, decorationState, decorationLibrary, decorationTarget,
+        var picker = new DecorationPicker(decorationCatalog, decorationState, decorationLibrary,
             SaveDecorationState, content => PreviewDecorationInsertion(target, content)) { Owner = this };
         try
         {
@@ -56,19 +49,18 @@ public partial class MainWindow
         var insertion = TextInsertion.Insert(target.Text, target.SelectionStart, target.SelectionLength, target.MaxLength, content);
         if (!insertion.CanInsert) return TextInsertion.Preview(insertion, "", settings.Compact);
 
-        string raw;
-        if (target == DraftBox)
-            raw = MessageLayout.Align(insertion.Text, settings.ManualAlignment);
-        else
+        var monotonicNow = MonotonicClock.Now;
+        var wallNow = DateTimeOffset.Now;
+        string Compose(string text)
         {
-            var template = target == TemplateBox ? insertion.Text : settings.CustomTemplate;
-            var message = target == MessageBox ? insertion.Text : settings.Message;
-            var now = MonotonicClock.Now;
-            raw = LyricContextComposer.ComposeProfile(engine.Context(now), engine.Track, settings.Preset, template,
-                message, contextMode, settings.Compact, DateTimeOffset.Now, engine.Position(now), settings.CustomAlignment);
-            raw = MessageLayout.Align(raw, settings.CustomAlignment);
+            if (target == DraftBox) return MessageLayout.Align(text, settings.ManualAlignment);
+            var template = target == TemplateBox ? text : settings.CustomTemplate;
+            var message = target == MessageBox ? text : settings.Message;
+            var raw = LyricContextComposer.ComposeProfile(engine.Context(monotonicNow), engine.Track, settings.Preset, template,
+                message, contextMode, settings.Compact, wallNow, engine.Position(monotonicNow), settings.CustomAlignment);
+            return MessageLayout.Align(raw, settings.CustomAlignment);
         }
-        return TextInsertion.Preview(insertion, raw, settings.Compact);
+        return TextInsertion.Preview(insertion, Compose(insertion.Text), settings.Compact, currentRawOutput: Compose(target.Text));
     }
 
     private void ApplyDecorationInsertion(TextBox target, string content)

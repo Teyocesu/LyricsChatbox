@@ -1,7 +1,7 @@
 <Window x:Class="LyricsChatbox.DecorationPicker"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Insert" Width="840" Height="640" MinWidth="760" MinHeight="560"
+        Title="Decorations" Width="840" Height="640" MinWidth="760" MinHeight="560"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         Style="{StaticResource {x:Type Window}}" PreviewKeyDown="WindowKeyDown">
   <Window.Resources>
@@ -95,10 +95,10 @@
   <Grid Margin="20">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <StackPanel Margin="0,0,0,14">
-      <TextBlock Text="Insert" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
+      <TextBlock Text="Decorations" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <TextBox x:Name="SearchBox" TextChanged="SearchChanged" KeyDown="SearchKeyDown" AutomationProperties.Name="Search decorations"/>
-        <CheckBox x:Name="FitsBox" Grid.Column="1" Content="Fits" Margin="12,0,0,0" VerticalAlignment="Center" Checked="FitsChanged" Unchecked="FitsChanged" AutomationProperties.Name="Show only decorations that fit"/>
+        <CheckBox x:Name="FitsBox" Grid.Column="1" Content="Only show items that fit" Margin="12,0,0,0" VerticalAlignment="Center" Checked="FitsChanged" Unchecked="FitsChanged" AutomationProperties.Name="Only show decorations that fit the current VRChat Chatbox output" ToolTip="Hides decorations that would be truncated in the current VRChat Chatbox output."/>
       </Grid>
     </StackPanel>
 
@@ -140,6 +140,7 @@
         <TextBlock x:Name="MutationStatus" Style="{StaticResource Caption}" Margin="0,4,0,0"/>
       </StackPanel>
       <WrapPanel Grid.Column="1" VerticalAlignment="Bottom">
+        <Button x:Name="MyItemsButton" Content="My items" Click="OpenMyItems" Margin="0,0,8,0" AutomationProperties.Name="Open My items"/>
         <Button x:Name="AddItemButton" Content="+ Add item" Click="AddMyItem" Visibility="Collapsed" Margin="0,0,8,0" AutomationProperties.Name="Add My item"/>
         <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" AutomationProperties.Name="Cancel insertion"/>
         <Button x:Name="InsertButton" Content="Insert" Click="InsertSelected" Style="{StaticResource PrimaryButton}" IsEnabled="False" AutomationProperties.Name="Insert selected decoration"/>

@@ -315,7 +315,7 @@
               <TextBlock Text="Choose a layout. The live preview below shows your actual output." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
               <CheckBox Content="Floating text" IsChecked="{Binding IsChecked, ElementName=CompactBox, Mode=TwoWay}" Margin="0,0,0,12"/>
 <StackPanel x:Name="StatusPanel">              <TextBlock Text="Status message" Style="{StaticResource SectionTitle}"/>
-<WrapPanel Margin="0,0,0,8"><ComboBox x:Name="CustomAlignmentBox" Width="110" SelectionChanged="DisplayChanged" AutomationProperties.Name="Custom and status alignment" Margin="0,0,8,8"/><Button Content="Insert…" Tag="Status" Click="OpenDecorationPicker" Margin="0,0,0,8" AutomationProperties.Name="Insert decoration into status message"/></WrapPanel>
+<WrapPanel Margin="0,0,0,8"><ComboBox x:Name="CustomAlignmentBox" Width="110" SelectionChanged="DisplayChanged" AutomationProperties.Name="Custom and status alignment" Margin="0,0,8,8"/><Button Content="Decorations menu" Tag="Status" Click="OpenDecorationPicker" Margin="0,0,0,8" AutomationProperties.Name="Open decorations menu" ToolTip="Add symbols, kaomoji, text art and more"/></WrapPanel>
               <TextBox x:Name="MessageBox" FontFamily="Consolas" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="76" TextChanged="DisplayChanged" AutomationProperties.Name="Custom status"/>
               <TextBlock Text="Saved locally. Used by Status / Time and the message token." Style="{StaticResource Caption}" Margin="0,6,0,12"/><TextBlock Text="Alignment applies to Status / Time and Custom. Spaces approximate 24–48 columns; VRChat spacing can differ." Style="{StaticResource Caption}"/></StackPanel>
             </StackPanel>
@@ -323,7 +323,7 @@
           <Border x:Name="CustomPanel" Style="{StaticResource Card}" Margin="0,0,8,16" Visibility="Collapsed">
             <StackPanel>
               <TextBlock Text="Custom composition" Style="{StaticResource SectionTitle}"/>
-              <WrapPanel Margin="0,0,0,8"><ComboBox Width="110" ItemsSource="{Binding ItemsSource, ElementName=CustomAlignmentBox}" SelectedItem="{Binding SelectedItem, ElementName=CustomAlignmentBox, Mode=TwoWay}" AutomationProperties.Name="Custom template alignment" Margin="0,0,8,8"/><Button Content="Insert…" Tag="Custom" Click="OpenDecorationPicker" Margin="0,0,0,8" AutomationProperties.Name="Insert decoration into custom template"/></WrapPanel>
+              <WrapPanel Margin="0,0,0,8"><ComboBox Width="110" ItemsSource="{Binding ItemsSource, ElementName=CustomAlignmentBox}" SelectedItem="{Binding SelectedItem, ElementName=CustomAlignmentBox, Mode=TwoWay}" AutomationProperties.Name="Custom template alignment" Margin="0,0,8,8"/><Button Content="Decorations menu" Tag="Custom" Click="OpenDecorationPicker" Margin="0,0,0,8" AutomationProperties.Name="Open decorations menu" ToolTip="Add symbols, kaomoji, text art and more"/></WrapPanel>
               <TextBox x:Name="TemplateBox" FontFamily="Consolas" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="90" VerticalScrollBarVisibility="Auto" TextChanged="DisplayChanged" AutomationProperties.Name="Custom template"/>
               <TextBlock Text="{}{lyrics}  {title}  {artist}  {album}  {time}&#10;{message}  {elapsed}  {duration}" Style="{StaticResource Caption}" Margin="0,10,0,16"/>
             </StackPanel>
@@ -357,7 +357,7 @@
                 <TextBlock x:Name="ManualBudgetText" Text="0 characters" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
               </DockPanel>
               <TextBlock x:Name="ManualStateText" Text="Your draft takes priority over automatic lyrics." Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,16"/>
-<WrapPanel Margin="0,0,0,8"><ComboBox x:Name="ManualAlignmentBox" Width="110" SelectionChanged="DisplayChanged" AutomationProperties.Name="Manual alignment" Margin="0,0,8,8"/><Button Content="Insert…" Tag="Manual" Click="OpenDecorationPicker" Margin="0,0,0,8" AutomationProperties.Name="Insert decoration into manual draft"/></WrapPanel>
+<WrapPanel Margin="0,0,0,8"><ComboBox x:Name="ManualAlignmentBox" Width="110" SelectionChanged="DisplayChanged" AutomationProperties.Name="Manual alignment" Margin="0,0,8,8"/><Button Content="Decorations menu" Tag="Manual" Click="OpenDecorationPicker" Margin="0,0,0,8" AutomationProperties.Name="Open decorations menu" ToolTip="Add symbols, kaomoji, text art and more"/></WrapPanel>
 <TextBox x:Name="DraftBox" FontFamily="Consolas" MaxLength="2048" AcceptsReturn="True" TextWrapping="Wrap" Height="144" VerticalScrollBarVisibility="Auto" TextChanged="DraftChanged" GotKeyboardFocus="DraftFocused" LostKeyboardFocus="DraftUnfocused" PreviewKeyDown="DraftKeyDown" AutomationProperties.Name="Manual message"/>
               <WrapPanel Margin="0,16,0,16">
                 <Button x:Name="SendButton" Content="Send · Ctrl+Enter" Style="{StaticResource PrimaryButton}" Click="SendManual" Margin="0,0,8,8"/>

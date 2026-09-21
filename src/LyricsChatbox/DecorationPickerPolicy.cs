@@ -2,11 +2,10 @@ namespace LyricsChatbox;
 
 public enum DecorationNavigation
 {
-    Suggested, Popular, Symbols, TextArt, Kaomoji, Dividers, Frames, Hearts, Music, Status, Favorites, MyItems
+    Favorites, Popular, Symbols, TextArt, Kaomoji, Dividers, Frames, Hearts, Music, Status, MyItems
 }
 
 public enum DecorationPresentation { Dense, Compact, Wide, Art }
-public enum DecorationTarget { Custom, Status, Manual }
 
 public sealed record DecorationNavigationOption(DecorationNavigation Mode, string Label);
 public sealed record DecorationKindOption(string Kind, string Label);
@@ -15,7 +14,7 @@ public static class DecorationPickerPolicy
 {
     public static readonly IReadOnlyList<DecorationNavigationOption> Options = Array.AsReadOnly(new[]
     {
-        new DecorationNavigationOption(DecorationNavigation.Suggested, "Suggested"),
+        new DecorationNavigationOption(DecorationNavigation.Favorites, "Favorites"),
         new DecorationNavigationOption(DecorationNavigation.Popular, "Popular"),
         new DecorationNavigationOption(DecorationNavigation.Symbols, "Symbols"),
         new DecorationNavigationOption(DecorationNavigation.TextArt, "Text Art"),
@@ -24,10 +23,9 @@ public static class DecorationPickerPolicy
         new DecorationNavigationOption(DecorationNavigation.Frames, "Frames"),
         new DecorationNavigationOption(DecorationNavigation.Hearts, "Hearts"),
         new DecorationNavigationOption(DecorationNavigation.Music, "Music"),
-        new DecorationNavigationOption(DecorationNavigation.Status, "Status"),
-        new DecorationNavigationOption(DecorationNavigation.Favorites, "Favorites"),
-        new DecorationNavigationOption(DecorationNavigation.MyItems, "My items")
+        new DecorationNavigationOption(DecorationNavigation.Status, "Status")
     });
+    public const DecorationNavigation DefaultMode = DecorationNavigation.Popular;
     public static readonly IReadOnlyList<DecorationKindOption> KindOptions = Array.AsReadOnly(
         DecorationKinds.All.Select(kind => new DecorationKindOption(kind, kind == "TextArt" ? "Text Art" : kind)).ToArray());
 
@@ -42,7 +40,6 @@ public static class DecorationPickerPolicy
     public static IReadOnlyList<DecorationEntry> Filter(DecorationLibrary library, DecorationNavigation mode, string? query,
         string? group = null, Func<DecorationEntry, bool>? fits = null)
     {
-        if (mode == DecorationNavigation.Suggested) return [];
         IEnumerable<DecorationEntry> entries;
         if (mode == DecorationNavigation.Popular) entries = library.Search(query, popularOnly: true);
         else if (Kind(mode) is { } kind) entries = library.Search(query, kind).Where(item => !IsUserItem(item));
@@ -62,25 +59,10 @@ public static class DecorationPickerPolicy
         Kind(mode) is null ? [] : Filter(library, mode, null).Select(item => item.Group).OfType<string>()
             .Distinct(StringComparer.Ordinal).ToArray();
 
-    public static IReadOnlyList<DecorationEntry> Suggested(DecorationLibrary library, DecorationTarget target, string? query,
-        Func<DecorationEntry, DecorationInsertionPreview> preview, bool fitsOnly = false, int maximum = 24)
-    {
-        var preferences = target switch
-        {
-            DecorationTarget.Manual => new[] { "Kaomoji", "Status", "Symbol", "Heart", "Divider", "TextArt", "Music", "Frame" },
-            DecorationTarget.Status => new[] { "Status", "Symbol", "Divider", "Heart", "Kaomoji", "Music", "TextArt", "Frame" },
-            _ => new[] { "Symbol", "Divider", "Frame", "Music", "TextArt", "Heart", "Kaomoji", "Status" }
-        };
-        return library.Search(query).Where(item => !IsUserItem(item))
-            .Select((entry, index) => new { Entry = entry, Index = index, Preview = preview(entry) })
-            .Where(item => !fitsOnly || item.Preview is { CanInsert: true, WouldTruncate: false })
-            .OrderBy(item => item.Preview.CanInsert ? item.Preview.WouldTruncate ? 1 : 0 : 2)
-            .ThenBy(item => Array.IndexOf(preferences, item.Entry.Kind))
-            .ThenBy(item => item.Entry.Popular ? 0 : 1)
-            .ThenBy(item => item.Index)
-            .Take(maximum)
-            .Select(item => item.Entry).ToArray();
-    }
+    public static string PreviewText(DecorationInsertionPreview preview) => !preview.CanInsert ? "Not enough editor space"
+        : !preview.OutputChanged ? $"Current output unchanged: {preview.VisibleUnits} / {preview.Limit}"
+        : preview.WouldTruncate ? $"Current output after insertion: {preview.VisibleUnits} / {preview.Limit} · Will be truncated"
+        : $"Current output after insertion: {preview.VisibleUnits} / {preview.Limit} · Fits";
 
     public static string EmptyMessage(DecorationNavigation mode, string? query, bool catalogAvailable)
     {

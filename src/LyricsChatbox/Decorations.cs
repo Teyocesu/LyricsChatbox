@@ -27,7 +27,7 @@ public sealed class DecorationCatalog
 {
     public const int Version = 1;
     public const int MaximumBytes = 1024 * 1024;
-    public const int MaximumEntries = 256;
+    public const int MaximumEntries = 384;
     private const string ResourceName = "LyricsChatbox.Assets.Decorations.json";
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 

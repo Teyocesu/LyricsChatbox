@@ -1,7 +1,8 @@
 namespace LyricsChatbox;
 
 public readonly record struct TextInsertionResult(bool CanInsert, string Text, int CaretIndex);
-public readonly record struct DecorationInsertionPreview(bool CanInsert, bool WouldTruncate, int VisibleUnits, int Limit);
+public readonly record struct DecorationInsertionPreview(bool CanInsert, bool WouldTruncate, int VisibleUnits, int Limit,
+    bool OutputChanged = true);
 
 public static class TextInsertion
 {
@@ -16,10 +17,12 @@ public static class TextInsertion
         return new(true, text[..selectionStart] + content + text[(selectionStart + selectionLength)..], selectionStart + content.Length);
     }
 
-    public static DecorationInsertionPreview Preview(TextInsertionResult insertion, string rawOutput, bool compact, bool preserveLayout = true)
+    public static DecorationInsertionPreview Preview(TextInsertionResult insertion, string rawOutput, bool compact,
+        bool preserveLayout = true, string? currentRawOutput = null)
     {
         var analysis = ChatboxFormatter.Analyze(rawOutput, compact, preserveLayout);
         return new(insertion.CanInsert, insertion.CanInsert && analysis.WouldTruncate,
-            insertion.CanInsert ? analysis.RequiredUnits : 0, analysis.Limit);
+            insertion.CanInsert ? analysis.RequiredUnits : 0, analysis.Limit,
+            currentRawOutput is null || ChatboxFormatter.Analyze(currentRawOutput, compact, preserveLayout).Payload != analysis.Payload);
     }
 }

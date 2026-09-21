@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace LyricsChatbox;
 
@@ -17,53 +18,49 @@ public partial class DecorationPicker : Window
     private readonly DecorationCatalog catalog;
     private readonly Func<DecorationState, bool> saveState;
     private readonly Func<string, DecorationInsertionPreview> preview;
-    private readonly DecorationTarget target;
     private readonly Dictionary<string, DecorationInsertionPreview> previewCache = new(StringComparer.Ordinal);
     private DecorationState state;
     private DecorationLibrary library;
+    private DecorationNavigation mode = DecorationPickerPolicy.DefaultMode;
     private string? editingId;
     private bool initialized;
+    private bool refreshingGroups;
 
     public string? SelectedContent { get; private set; }
 
-    public DecorationPicker(DecorationCatalog catalog, DecorationState state, DecorationLibrary library, DecorationTarget target,
+    public DecorationPicker(DecorationCatalog catalog, DecorationState state, DecorationLibrary library,
         Func<DecorationState, bool> saveState, Func<string, DecorationInsertionPreview> preview)
     {
         this.catalog = catalog;
         this.state = state;
         this.library = library;
-        this.target = target;
         this.saveState = saveState;
         this.preview = preview;
         InitializeComponent();
         ModeList.ItemsSource = DecorationPickerPolicy.Options;
         ItemKindBox.ItemsSource = DecorationPickerPolicy.KindOptions;
-        ModeList.SelectedIndex = 0;
+        ModeList.SelectedItem = DecorationPickerPolicy.Options.Single(option => option.Mode == DecorationPickerPolicy.DefaultMode);
         initialized = true;
         RefreshGroups();
         RefreshItems();
         Loaded += (_, _) => SearchBox.Focus();
     }
 
-    private DecorationNavigation Mode => (ModeList.SelectedItem as DecorationNavigationOption)?.Mode ?? DecorationNavigation.Popular;
-
-    private void RefreshItems(string? selectedId = null)
+    private void RefreshItems(string? selectedId = null, bool resetScroll = false)
     {
         if (!initialized) return;
         selectedId ??= (DecorationList.SelectedItem as PickerItem)?.Entry.Id;
         var group = GroupList.SelectedItem as string;
         if (group == "All") group = null;
         var fitsOnly = FitsBox.IsChecked == true;
-        var entries = Mode == DecorationNavigation.Suggested
-            ? DecorationPickerPolicy.Suggested(library, target, SearchBox.Text, PreviewFor, fitsOnly)
-            : DecorationPickerPolicy.Filter(library, Mode, SearchBox.Text, group,
-                fitsOnly ? entry => PreviewFor(entry) is { CanInsert: true, WouldTruncate: false } : null);
+        var entries = DecorationPickerPolicy.Filter(library, mode, SearchBox.Text, group,
+            fitsOnly ? entry => PreviewFor(entry) is { CanInsert: true, WouldTruncate: false } : null);
         var favoriteIds = state.FavoriteIds!.ToHashSet(StringComparer.Ordinal);
         var items = entries.Select(entry => new PickerItem(entry, favoriteIds.Contains(entry.Id))).ToArray();
         DecorationList.ItemsSource = items;
         DecorationList.ItemsPanel = (ItemsPanelTemplate)FindResource(
-            DecorationPickerPolicy.Presentation(Mode) == DecorationPresentation.Dense ? "DensePanel" : "RowPanel");
-        DecorationList.ItemTemplate = (DataTemplate)FindResource(DecorationPickerPolicy.Presentation(Mode) switch
+            DecorationPickerPolicy.Presentation(mode) == DecorationPresentation.Dense ? "DensePanel" : "RowPanel");
+        DecorationList.ItemTemplate = (DataTemplate)FindResource(DecorationPickerPolicy.Presentation(mode) switch
         {
             DecorationPresentation.Dense => "DenseTemplate",
             DecorationPresentation.Wide => "WideTemplate",
@@ -71,18 +68,21 @@ public partial class DecorationPicker : Window
             _ => "CompactTemplate"
         });
         DecorationList.SelectedItem = items.FirstOrDefault(item => item.Entry.Id == selectedId) ?? items.FirstOrDefault();
-        EmptyText.Text = DecorationPickerPolicy.EmptyMessage(Mode, SearchBox.Text, catalog.IsAvailable);
+        EmptyText.Text = DecorationPickerPolicy.EmptyMessage(mode, SearchBox.Text, catalog.IsAvailable);
         EmptyText.Visibility = items.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-        AddItemButton.Visibility = Mode == DecorationNavigation.MyItems ? Visibility.Visible : Visibility.Collapsed;
+        AddItemButton.Visibility = mode == DecorationNavigation.MyItems ? Visibility.Visible : Visibility.Collapsed;
         UpdateSelection();
+        if (resetScroll) ResetScroll();
     }
 
     private void RefreshGroups()
     {
-        var groups = DecorationPickerPolicy.Groups(library, Mode);
+        var groups = DecorationPickerPolicy.Groups(library, mode);
+        refreshingGroups = true;
         GroupList.ItemsSource = new[] { "All" }.Concat(groups).ToArray();
         GroupList.SelectedIndex = 0;
         GroupList.Visibility = groups.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        refreshingGroups = false;
     }
 
     private DecorationInsertionPreview PreviewFor(DecorationEntry entry)
@@ -101,9 +101,7 @@ public partial class DecorationPicker : Window
         var result = PreviewFor(item.Entry);
         var lines = item.Entry.Content.Count(c => c == '\n') + 1;
         SelectedText.Text = item.Entry.Name + (lines > 1 ? $" · {lines} lines" : "");
-        PreviewStatus.Text = !result.CanInsert ? "Not enough editor space"
-            : result.WouldTruncate ? $"{result.VisibleUnits} / {result.Limit} · Will truncate"
-            : $"{result.VisibleUnits} / {result.Limit} · Fits";
+        PreviewStatus.Text = DecorationPickerPolicy.PreviewText(result);
         PreviewStatus.SetResourceReference(TextBlock.ForegroundProperty,
             !result.CanInsert || result.WouldTruncate ? "WarningBrush" : "MutedBrush");
         InsertButton.IsEnabled = result.CanInsert;
@@ -111,14 +109,18 @@ public partial class DecorationPicker : Window
 
     private void ModeChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!initialized) return;
+        if (!initialized || ModeList.SelectedItem is not DecorationNavigationOption option) return;
+        mode = option.Mode;
         EditorPanel.Visibility = Visibility.Collapsed;
         RefreshGroups();
-        RefreshItems();
+        RefreshItems(resetScroll: true);
     }
-    private void SearchChanged(object sender, TextChangedEventArgs e) => RefreshItems();
-    private void GroupChanged(object sender, SelectionChangedEventArgs e) => RefreshItems();
-    private void FitsChanged(object sender, RoutedEventArgs e) => RefreshItems();
+    private void SearchChanged(object sender, TextChangedEventArgs e) => RefreshItems(resetScroll: true);
+    private void GroupChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!refreshingGroups) RefreshItems(resetScroll: true);
+    }
+    private void FitsChanged(object sender, RoutedEventArgs e) => RefreshItems(resetScroll: true);
     private void DecorationSelected(object sender, SelectionChangedEventArgs e) => UpdateSelection();
     private void SearchKeyDown(object sender, KeyEventArgs e) { if (e.Key == Key.Enter) InsertSelected(sender, e); }
     private void DecorationKeyDown(object sender, KeyEventArgs e) { if (e.Key == Key.Enter) InsertSelected(sender, e); }
@@ -137,6 +139,18 @@ public partial class DecorationPicker : Window
         DialogResult = true;
     }
 
+    private void OpenMyItems(object sender, RoutedEventArgs e)
+    {
+        mode = DecorationNavigation.MyItems;
+        ModeList.SelectedItem = null;
+        EditorPanel.Visibility = Visibility.Collapsed;
+        RefreshGroups();
+        RefreshItems(resetScroll: true);
+    }
+
+    private void ResetScroll() => Dispatcher.BeginInvoke(DispatcherPriority.Loaded,
+        new Action(() => FindDescendant<ScrollViewer>(DecorationList)?.ScrollToTop()));
+
     private void ItemDoubleClicked(object sender, MouseButtonEventArgs e)
     {
         if (e.OriginalSource is DependencyObject source && FindAncestor<Button>(source) is not null) return;
@@ -150,6 +164,17 @@ public partial class DecorationPicker : Window
         {
             if (current is T match) return match;
             current = VisualTreeHelper.GetParent(current);
+        }
+        return null;
+    }
+
+    private static T? FindDescendant<T>(DependencyObject current) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(current); i++)
+        {
+            var child = VisualTreeHelper.GetChild(current, i);
+            if (child is T match) return match;
+            if (FindDescendant<T>(child) is { } descendant) return descendant;
         }
         return null;
     }

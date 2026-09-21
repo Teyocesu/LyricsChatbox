@@ -89,6 +89,21 @@ public sealed class DecorationPickerTests : IDisposable
     }
 
     [Fact]
+    public void UnusedEditorInsertionReportsThatCurrentVisibleOutputIsUnchanged()
+    {
+        var insertion = TextInsertion.Insert("unused", 6, 0, 512, " decoration");
+        var current = LyricContextComposer.ComposeProfile(new("", "Visible lyric", ""), null, "Lyrics Only",
+            "unused", "unused", "Current only", false);
+        var prospective = LyricContextComposer.ComposeProfile(new("", "Visible lyric", ""), null, "Lyrics Only",
+            insertion.Text, "unused", "Current only", false);
+
+        var preview = TextInsertion.Preview(insertion, prospective, false, currentRawOutput: current);
+
+        Assert.False(preview.OutputChanged);
+        Assert.Equal("Current output unchanged: 13 / 144", DecorationPickerPolicy.PreviewText(preview));
+    }
+
+    [Fact]
     public void FloatingManualAndLineBudgetWarningsUseExistingFormatterRules()
     {
         var fitsFloating = TextInsertion.Insert("", 0, 0, 512, new string('f', 142));
@@ -132,52 +147,20 @@ public sealed class DecorationPickerTests : IDisposable
         Assert.Equal(new[] { "status-ready" }, Ids(library, DecorationNavigation.Status));
         Assert.Equal(new[] { "status-ready", user.Id, "symbol-star" }, Ids(library, DecorationNavigation.Favorites));
         Assert.Equal(new[] { user.Id }, Ids(library, DecorationNavigation.MyItems));
-        Assert.Equal(DecorationNavigation.Suggested, DecorationPickerPolicy.Options[0].Mode);
+        Assert.Equal(new[]
+        {
+            DecorationNavigation.Favorites, DecorationNavigation.Popular, DecorationNavigation.Symbols,
+            DecorationNavigation.TextArt, DecorationNavigation.Kaomoji, DecorationNavigation.Dividers,
+            DecorationNavigation.Frames, DecorationNavigation.Hearts, DecorationNavigation.Music, DecorationNavigation.Status
+        }, DecorationPickerPolicy.Options.Select(option => option.Mode));
+        Assert.DoesNotContain(DecorationPickerPolicy.Options, option => option.Mode == DecorationNavigation.MyItems);
+        Assert.Equal(DecorationNavigation.Popular, DecorationPickerPolicy.DefaultMode);
 
         Assert.Equal(DecorationPresentation.Dense, DecorationPickerPolicy.Presentation(DecorationNavigation.Symbols));
         Assert.Equal(DecorationPresentation.Art, DecorationPickerPolicy.Presentation(DecorationNavigation.TextArt));
         Assert.Equal(DecorationPresentation.Wide, DecorationPickerPolicy.Presentation(DecorationNavigation.Dividers));
         Assert.Equal(DecorationPresentation.Compact, DecorationPickerPolicy.Presentation(DecorationNavigation.Kaomoji));
         Assert.Contains(DecorationPickerPolicy.KindOptions, option => option is { Kind: "TextArt", Label: "Text Art" });
-    }
-
-    [Fact]
-    public void SuggestedIsDeterministicTargetAwareFitFirstAndBounded()
-    {
-        var catalog = Load([
-            Entry("symbol-pop", "Popular symbol", "Symbol", "symbol", true),
-            Entry("symbol-stable", "Stable symbol", "Symbol", "symbol two"),
-            Entry("status-fit", "Status", "Status", "status", true),
-            Entry("kaomoji-fit", "Kaomoji", "Kaomoji", "face"),
-            Entry("heart-fit", "Heart", "Heart", "heart"),
-            Entry("music-truncate", "Long music", "Music", "truncate"),
-            Entry("frame-no-space", "Large frame", "Frame", "no-space")
-        ]);
-        var library = DecorationLibrary.Create(catalog, DecorationState.Empty);
-        static DecorationInsertionPreview Preview(DecorationEntry item) => item.Content switch
-        {
-            "truncate" => new(true, true, 150, 144),
-            "no-space" => new(false, false, 0, 144),
-            _ => new(true, false, item.Content.Length, 144)
-        };
-
-        Assert.Equal(new[] { "symbol-pop", "symbol-stable", "heart-fit", "kaomoji-fit", "status-fit", "music-truncate", "frame-no-space" },
-            DecorationPickerPolicy.Suggested(library, DecorationTarget.Custom, null, Preview).Select(item => item.Id));
-        Assert.Equal("status-fit", DecorationPickerPolicy.Suggested(library, DecorationTarget.Status, null, Preview)[0].Id);
-        Assert.Equal("kaomoji-fit", DecorationPickerPolicy.Suggested(library, DecorationTarget.Manual, null, Preview)[0].Id);
-        Assert.Equal(new[] { "symbol-pop", "symbol-stable", "heart-fit", "kaomoji-fit", "status-fit" },
-            DecorationPickerPolicy.Suggested(library, DecorationTarget.Custom, null, Preview, fitsOnly: true).Select(item => item.Id));
-        Assert.Equal(new[] { "symbol-pop", "symbol-stable" },
-            DecorationPickerPolicy.Suggested(library, DecorationTarget.Custom, "symbol", Preview).Select(item => item.Id));
-
-        var many = Load(Enumerable.Range(0, 30).Select(index =>
-            Entry($"symbol-{index}", $"Symbol {index}", "Symbol", index.ToString())));
-        var first = DecorationPickerPolicy.Suggested(DecorationLibrary.Create(many, DecorationState.Empty),
-            DecorationTarget.Custom, null, Preview).Select(item => item.Id).ToArray();
-        var second = DecorationPickerPolicy.Suggested(DecorationLibrary.Create(many, DecorationState.Empty),
-            DecorationTarget.Custom, null, Preview).Select(item => item.Id).ToArray();
-        Assert.Equal(24, first.Length);
-        Assert.Equal(first, second);
     }
 
     [Fact]
@@ -222,6 +205,23 @@ public sealed class DecorationPickerTests : IDisposable
         Assert.Contains(nineLines, item => item.Id == "symbol-one");
         Assert.DoesNotContain(nineLines, item => item.Id == "symbol-line");
         Assert.Empty(Fits(library, new string('a', 512), 512, compact: false));
+    }
+
+    [Fact]
+    public void PreviewCopyDistinguishesFitTruncationCapacityAndUnchangedOutput()
+    {
+        Assert.Equal("Current output after insertion: 140 / 142 · Fits",
+            DecorationPickerPolicy.PreviewText(new(true, false, 140, 142)));
+        Assert.Equal("Current output after insertion: 156 / 142 · Will be truncated",
+            DecorationPickerPolicy.PreviewText(new(true, true, 156, 142)));
+        Assert.Equal("Not enough editor space",
+            DecorationPickerPolicy.PreviewText(new(false, false, 0, 142)));
+        Assert.Equal("Current output unchanged: 0 / 142",
+            DecorationPickerPolicy.PreviewText(new(true, false, 0, 142, OutputChanged: false)));
+
+        var insertion = TextInsertion.Insert("unused", 6, 0, 512, " decoration");
+        Assert.False(TextInsertion.Preview(insertion, "", true, currentRawOutput: "").OutputChanged);
+        Assert.True(TextInsertion.Preview(insertion, "visible", true, currentRawOutput: "").OutputChanged);
     }
 
     [Fact]

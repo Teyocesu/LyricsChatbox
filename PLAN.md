@@ -1,4 +1,4 @@
-# v0.7.0 execution plan — Phases 0–3.1 implemented
+# v0.7.0 execution plan — Phases 0–3.2 implemented
 
 ## State and baseline
 
@@ -6,11 +6,12 @@
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
 - Product assembly/file version remains `0.6.2`. This planning task changes only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: close the post-QA Phase 3.1 picker refinement and keep the Phase 4 Display/rotation UI as the next separate task after renewed physical picker QA. About implementation, Output redesign, version bump, package, tag, release and main merge remain out of scope.
+- Current goal: close the final post-QA Phase 3.2 picker refinement and keep the Phase 4 Display/token/rotation UI as the next separate task after renewed physical picker QA. About implementation, Output redesign, version bump, package, tag, release and main merge remain out of scope.
 - Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
 - Phase 2 evidence: focused Decorations + rotation regression tests `44/44`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `434/434` with 0 skips; package-policy test PASS; `git diff --check` PASS. Systematic content review found 90 entries, 10,228 source bytes, 19 curated Popular flags, no duplicate IDs/content, no tabs/trailing garbage, maximum content length 48, maximum six lines and no item over 144 UTF-16 units. Security/quality review made the catalog collections actually read-only and moved the shared Unicode validator to neutral ownership; Ponytail FULL found no removable architecture.
 - Phase 3 evidence: focused picker/decorations/layout/display tests `50/50`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `447/447` with 0 skips; package-policy test and `git diff --check` PASS. Native WPF interaction QA is still required: the available computer-use host exposed browser tabs but no native Windows app surface, so no visual/keyboard/theme claim is recorded.
 - Phase 3.1 evidence: focused decoration/picker tests `31/31`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `450/450` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 218 entries, all 90 prior IDs preserved, no duplicate IDs/names/content, no tabs/trailing or blank-line garbage, maximum content length 49, maximum six lines and no item over 144 UTF-16 units. Code-quality review found no blocker; Ponytail FULL and complete-diff Ponytail review found no removable architecture or complexity.
+- Phase 3.2 evidence: focused decoration/picker tests `32/32`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `451/451` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 327 entries/27 Popular flags with exact requested distribution, no duplicate IDs/names/content, no tabs/trailing/blank-line garbage, maximum content length 50, maximum six lines and no item over 144 UTF-16 units. Multi-axis review found no blocker; Ponytail FULL/complete-diff review removed one unnecessary guard wrapper and found no remaining removable architecture.
 
 ## Current extension points to preserve
 
@@ -37,7 +38,7 @@
 - One reusable picker and one insertion helper replace three ASCII selectors.
 - Built-ins use an embedded, versioned, bounded JSON catalog. The initial catalog should be a small project-authored set. External catalog material is optional, not a prerequisite.
 - `DecorationItem`: stable ID, Name, Kind, Content, Popular. `DecorationLibraryState`: Version, FavoriteIds, MyItems. A user item adds only ID, Name, Content and Kind.
-- Catalog limits: 1 MiB/256 built-ins; state limits: 256 KiB/128 Favorites/64 My items; ID 64 allowlisted characters; Name 40 UTF-16 units; Content 512 UTF-16 units/nine explicit lines. Known kinds only, unique IDs, valid plain Unicode and no disallowed controls.
+- Catalog limits: 1 MiB/384 built-ins; state limits: 256 KiB/128 Favorites/64 My items; ID 64 allowlisted characters; Name 40 UTF-16 units; Content 512 UTF-16 units/nine explicit lines. Known kinds only, unique IDs, valid plain Unicode and no disallowed controls.
 - Search is a direct in-memory `OrdinalIgnoreCase` match. No database/index, remote fetch, tags, ratings, Recently Used or inspector.
 - A prospective-insertion preview calls the same composition/alignment/formatter logic used by the originating editor. It reports final visible usage/truncation but never rewrites stored text.
 
@@ -130,6 +131,17 @@ Purpose: refine the accepted Phase 3 picker without changing its modal, navigati
 - Deterministic tests: optional metadata validation and immutability; catalog distribution; groups/All/group+search/group+Fits; alias/Kind/Group search; target-aware stable Suggested ranking and bound; final-composition Fits at 142/144/nine lines plus editor capacity; existing insertion, state and failure behavior.
 - Acceptance: focused and full gates plus renewed native WPF product-owner QA with Output Off. Phase 3 is not finally accepted until that physical QA completes.
 - Out of scope: Phase 4, nested taxonomies, user tags, fuzzy/full-text search, global fit cache, online content, AI recommendations, Recent/history and usage analytics.
+
+## Phase 3.2 — Final picker UX refinement and catalog expansion — implemented; physical QA pending
+
+Purpose: apply the final product-owner picker corrections without entering the Phase 4 Display redesign.
+
+- UX: launchers say Decorations menu; modal/heading say Decorations; Insert remains the final action. Suggested and its target ranking are deleted. Favorites is first, Popular is selected explicitly as the default, and My items moves to the footer while retaining its existing in-modal management flow.
+- Viewport: category, My-items, group, search and fit-filter changes schedule the native WPF list ScrollViewer to the top after layout. Favorite and My-item mutations refresh in place without requesting a top reset.
+- Fit: the toggle says Only show items that fit and explains current VRChat truncation. Footer copy describes the full prospective output and distinguishes fits, truncation, editor capacity and a genuinely unchanged visible output. Current and prospective composition share the same timestamp/context and use the existing composer/alignment/formatter only.
+- Catalog: 327 local entries, maximum 384/1 MiB, with counts Symbol 72, TextArt 39, Kaomoji 45, Divider 39, Frame 30, Heart 36, Music 36 and Status 30. Content remains project-composed/generic; no dataset, dependency, network or notice change.
+- Acceptance: focused/full gates and product-owner native WPF QA with Output Off. Phase 3 is not finally accepted until that physical QA completes.
+- Deferred exactly to Phase 4: clickable composition token chips, Display reorganization, rotating-message editor, contextual Lyric Context and Status/Rotating Message UI.
 
 ## Phase 4 — Display UX simplification and rotation editor
 

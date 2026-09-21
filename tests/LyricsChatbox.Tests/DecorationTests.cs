@@ -21,9 +21,12 @@ public sealed class DecorationTests : IDisposable
         Assert.True(((IList<string>)catalog.Items.First(item => item.SearchTerms is not null).SearchTerms!).IsReadOnly);
         Assert.NotNull(resource);
         Assert.InRange(resource.Length, 1, DecorationCatalog.MaximumBytes);
-        Assert.InRange(catalog.Items.Count, 200, 240);
+        Assert.InRange(catalog.Items.Count, 300, 350);
         Assert.All(catalog.Items, item => Assert.True(item.IsValid, item.Id));
         Assert.Equal(catalog.Items.Count, catalog.Items.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(catalog.Items.Count, catalog.Items.Select(item => item.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(catalog.Items.Count, catalog.Items.Select(item => item.Content).Distinct(StringComparer.Ordinal).Count());
+        Assert.InRange(catalog.Items.Count(item => item.Popular), 20, 35);
         Assert.DoesNotContain(catalog.Items, item => item.Id.StartsWith("user-", StringComparison.OrdinalIgnoreCase));
         Assert.All(DecorationKinds.All, kind => Assert.Contains(catalog.Items, item => item.Kind == kind));
         Assert.All(catalog.Items, item =>
@@ -43,8 +46,8 @@ public sealed class DecorationTests : IDisposable
         });
         Assert.Equal(new Dictionary<string, int>
         {
-            ["Symbol"] = 48, ["TextArt"] = 26, ["Kaomoji"] = 30, ["Divider"] = 26,
-            ["Frame"] = 20, ["Heart"] = 24, ["Music"] = 24, ["Status"] = 20
+            ["Symbol"] = 72, ["TextArt"] = 39, ["Kaomoji"] = 45, ["Divider"] = 39,
+            ["Frame"] = 30, ["Heart"] = 36, ["Music"] = 36, ["Status"] = 30
         }, catalog.Items.GroupBy(item => item.Kind).ToDictionary(group => group.Key, group => group.Count()));
         Assert.All(DecorationKinds.All, kind =>
             Assert.True(catalog.Items.Where(item => item.Kind == kind).Select(item => item.Group).Distinct().Count() >= 5, kind));
@@ -64,7 +67,8 @@ public sealed class DecorationTests : IDisposable
     {
         AssertRejected(Load([Entry()], 2));
         AssertRejected(Load([Entry("same"), Entry("same")]));
-        AssertRejected(Load(Enumerable.Range(0, 257).Select(i => Entry("symbol-" + i))));
+        Assert.True(Load(Enumerable.Range(0, 384).Select(i => Entry("symbol-" + i, content: "☆" + i))).IsAvailable);
+        AssertRejected(Load(Enumerable.Range(0, 385).Select(i => Entry("symbol-" + i, content: "☆" + i))));
         AssertRejected(Load([Entry(kind: "Unknown")]));
         AssertRejected(Load([Entry(name: "")]));
         AssertRejected(Load([Entry(name: new string('n', 41))]));
