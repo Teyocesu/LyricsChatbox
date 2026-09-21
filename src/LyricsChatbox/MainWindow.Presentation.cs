@@ -200,11 +200,10 @@ public partial class MainWindow
             : resolution.Provider == "Local LRC" ? "Local import" : resolution.Timeline is not null ? "Resolved this session" : "No usable lyrics";
         var match = recordingIgnored ? "Ignored" : resolution?.ManualMatch == true ? "User-selected recording"
             : resolution?.Provider == "Local LRC" ? "User-imported LRC" : resolution?.Outcome == LyricsOutcome.Found ? "Automatic match" : FriendlyLyricsStatus();
-        static string Duration(double? seconds) => DurationFormatter.Format(seconds) is { Length: > 0 } text && seconds > 0 ? text : "—";
         static string Offset(double seconds) => seconds.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
         var view = new LyricsDetailsView(hasTrack, canSearch, searchHint,
             recordingIgnored ? "Resume this recording" : "Ignore this recording", recovery, source, cache, match,
-            Duration(track?.Duration) + " / " + Duration(resolution?.CandidateDuration), Offset(settings.Offset),
+            PresentationText.TrackLyricsDuration(track?.Duration, resolution?.CandidateDuration), Offset(settings.Offset),
             savedCorrection is double correction ? Offset(correction) : "None", Offset(engine.Offset),
             ForgetMatchButton.IsEnabled ? "Saved choice" : "None", recordingIgnored ? "Yes · lookup paused" : "No");
         if (!lyricsDetailsView.ShouldApply(view)) return;

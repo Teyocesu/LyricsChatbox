@@ -7,6 +7,14 @@ namespace LyricsChatbox.Tests;
 
 public sealed class PresentationTests : IDisposable
 {
+    [Fact]
+    public void TrackLyricsDurationShowsSourceAndCandidateTotals()
+    {
+        Assert.Equal("Track / lyrics duration", PresentationText.TrackLyricsDurationLabel);
+        Assert.Equal("4:53 / 4:54", PresentationText.TrackLyricsDuration(293, 294));
+        Assert.NotEqual(PresentationText.TrackLyricsDuration(293, 294), DurationFormatter.Format(42));
+    }
+
     [Theory]
     [InlineData("🎵")]
     [InlineData("é")]

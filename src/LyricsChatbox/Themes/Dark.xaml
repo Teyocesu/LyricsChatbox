@@ -360,6 +360,11 @@
             <Trigger Property="IsKeyboardFocusWithin" Value="True">
               <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource TextBrush}"/>
             </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Shell" Property="Background" Value="{DynamicResource RaisedBrush}"/>
+              <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource LineBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>

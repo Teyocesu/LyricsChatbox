@@ -81,7 +81,7 @@ public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<Displ
     public static ProfileLibrary Migrate(AppSettings legacy)
     {
         DisplayProfile[] presets = [new("lyrics","Lyrics",BuiltIn:true), new("minimal","Minimal",Compact:true,BuiltIn:true),
-            new("music-info","Music Info","Song + Lyrics",BuiltIn:true), new("status","Status","Status / Time",BuiltIn:true),
+            new("music-info","Music Info","Song + Lyrics",BuiltIn:true), new("status","Status / Time","Status / Time",BuiltIn:true),
             new("custom","Custom","Custom",CustomTemplate:"{message}\n{lyrics}",BuiltIn:true)];
         var current = DisplayProfile.FromSettings(legacy,"legacy","My display");
         var equivalent = presets.FirstOrDefault(p => p.Apply(legacy) == legacy);
@@ -92,9 +92,35 @@ public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<Displ
     { Items = Items.Select(profile => profile?.NormalizeRotation()!).ToArray() };
     public ProfileLibrary EnsureBuiltInProfiles()
     {
-        if (Items is null || Items.Count >= Maximum || Items.Any(profile => profile?.Id == "status")) return this;
-        return this with { Items = Items.Append(new DisplayProfile("status", "Status", "Status / Time", BuiltIn: true)
-            .NormalizeRotation()).ToArray() };
+        if (Items is null) return this;
+        var items = Items.ToArray();
+        var statusIndex = Array.FindIndex(items, profile => profile?.Id == "status");
+        if (statusIndex >= 0)
+        {
+            var status = items[statusIndex];
+            if (status is null || !status.BuiltIn) return this;
+            var normalized = status.Name == "Status / Time" ? status : status with { Name = "Status / Time" };
+            var customIndex = Array.FindIndex(items, profile => profile?.Id == "custom" && profile.BuiltIn);
+            if (customIndex < 0 || statusIndex < customIndex)
+            {
+                if (status.Name == "Status / Time") return this;
+                items[statusIndex] = normalized;
+                return this with { Items = items };
+            }
+
+            var reordered = items.Where((_, index) => index != statusIndex).ToList();
+            reordered.Insert(customIndex, normalized);
+            return this with { Items = reordered.ToArray() };
+        }
+
+        if (items.Length >= Maximum) return this;
+        var canonicalStatus = new DisplayProfile("status", "Status / Time", "Status / Time", BuiltIn: true)
+            .NormalizeRotation();
+        var canonicalCustomIndex = Array.FindIndex(items, profile => profile?.Id == "custom" && profile.BuiltIn);
+        var result = items.ToList();
+        if (canonicalCustomIndex < 0) result.Add(canonicalStatus);
+        else result.Insert(canonicalCustomIndex, canonicalStatus);
+        return this with { Items = result.ToArray() };
     }
     public ProfileLibrary? PrepareForSave()
     {

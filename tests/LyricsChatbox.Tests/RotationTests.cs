@@ -42,9 +42,13 @@ public sealed class RotationTests : IDisposable
     public void FreshMigrationIncludesCanonicalStatusProfile()
     {
         var library = ProfileLibrary.Migrate(new());
+        Assert.Equal(5, library.Items.Count(profile => profile.BuiltIn));
+        Assert.Equal(["Lyrics", "Minimal", "Music Info", "Status / Time", "Custom"],
+            library.Items.Where(profile => profile.BuiltIn).Select(profile => profile.Name));
+        Assert.Equal("Custom", library.Items.Last(profile => profile.BuiltIn).Name);
         var status = Assert.Single(library.Items, profile => profile.Id == "status");
 
-        Assert.Equal("Status", status.Name);
+        Assert.Equal("Status / Time", status.Name);
         Assert.Equal("Status / Time", status.Preset);
         Assert.True(status.BuiltIn);
         Assert.NotNull(status.Rotation);
@@ -78,18 +82,86 @@ public sealed class RotationTests : IDisposable
     [Fact]
     public void ExistingStatusIsPreservedAndRoundtripNeverDuplicatesIt()
     {
-        var customized = new DisplayProfile("status", "My Status", "Custom", "Adaptive", true, "Right",
+        var customized = new DisplayProfile("status", "Status", "Status / Time", "Adaptive", true, "Right",
             "{message}\n{time}", "A", true, Rotation(true, 60, Message("a", "A"), Message("b", "B")));
         var data = new LocalData(root);
         Assert.True(data.SaveProfiles(new(1, customized.Id, [customized])));
 
         var first = data.ReadProfiles(new());
-        Assert.Equal(JsonSerializer.Serialize(customized), JsonSerializer.Serialize(first.Selected));
+        Assert.Equal("Status / Time", first.Selected.Name);
+        Assert.Equal(JsonSerializer.Serialize(customized.Rotation), JsonSerializer.Serialize(first.Selected.Rotation));
+        Assert.Equal(customized.Message, first.Selected.Message);
+        Assert.Equal(customized.ContextMode, first.Selected.ContextMode);
+        Assert.Equal(customized.Compact, first.Selected.Compact);
+        Assert.Equal(customized.Alignment, first.Selected.Alignment);
+        Assert.Equal(customized.CustomTemplate, first.Selected.CustomTemplate);
         Assert.Single(first.Items, profile => profile.Id == "status");
         Assert.True(data.SaveProfiles(first));
         var second = data.ReadProfiles(new());
-        Assert.Equal(JsonSerializer.Serialize(customized), JsonSerializer.Serialize(second.Selected));
+        Assert.Equal("Status / Time", second.Selected.Name);
+        Assert.Equal(JsonSerializer.Serialize(customized.Rotation), JsonSerializer.Serialize(second.Selected.Rotation));
+        Assert.Equal(customized.Message, second.Selected.Message);
+        Assert.Equal(customized.ContextMode, second.Selected.ContextMode);
+        Assert.Equal(customized.Compact, second.Selected.Compact);
+        Assert.Equal(customized.Alignment, second.Selected.Alignment);
+        Assert.Equal(customized.CustomTemplate, second.Selected.CustomTemplate);
         Assert.Single(second.Items, profile => profile.Id == "status");
+    }
+
+    [Fact]
+    public void StatusIsInsertedBeforeCanonicalCustom()
+    {
+        var items = new[]
+        {
+            new DisplayProfile("lyrics", "Lyrics", BuiltIn: true),
+            new DisplayProfile("minimal", "Minimal", Compact: true, BuiltIn: true),
+            new DisplayProfile("music-info", "Music Info", "Song + Lyrics", BuiltIn: true),
+            new DisplayProfile("custom", "Custom", "Custom", CustomTemplate: "{message}\n{lyrics}", BuiltIn: true)
+        };
+        var restored = SaveAndRead(new ProfileLibrary(1, "lyrics", items));
+
+        Assert.Equal(["lyrics", "minimal", "music-info", "status", "custom"], restored.Items.Select(profile => profile.Id));
+        Assert.Equal("Status / Time", restored.Items[3].Name);
+    }
+
+    [Fact]
+    public void StatusAfterCustomMovesBeforeItWithoutReorderingUserProfiles()
+    {
+        var userBefore = new DisplayProfile("user-before", "User before", Rotation: Rotation(false, 15));
+        var custom = new DisplayProfile("custom", "Custom", "Custom", CustomTemplate: "{message}\n{lyrics}", BuiltIn: true);
+        var userBetween = new DisplayProfile("user-between", "User between", Rotation: Rotation(false, 30));
+        var status = new DisplayProfile("status", "Status", "Status / Time", BuiltIn: true,
+            Rotation: Rotation(true, 60, Message("status-message", "Ready")));
+        var userAfter = new DisplayProfile("user-after", "User after", Rotation: Rotation(false, 5));
+        var data = new LocalData(root);
+        Assert.True(data.SaveProfiles(new ProfileLibrary(1, userBetween.Id,
+            [userBefore, custom, userBetween, status, userAfter])));
+        var restored = data.ReadProfiles(new());
+
+        Assert.Equal(["user-before", "status", "custom", "user-between", "user-after"],
+            restored.Items.Select(profile => profile.Id));
+        Assert.Equal(userBetween.Id, restored.SelectedId);
+        Assert.Equal(userBefore with { Rotation = null }, restored.Items[0] with { Rotation = null });
+        Assert.Equal(userBetween with { Rotation = null }, restored.Items[3] with { Rotation = null });
+        Assert.Equal(userAfter with { Rotation = null }, restored.Items[4] with { Rotation = null });
+        Assert.Equal(JsonSerializer.Serialize(userBefore.Rotation), JsonSerializer.Serialize(restored.Items[0].Rotation));
+        Assert.Equal(JsonSerializer.Serialize(userBetween.Rotation), JsonSerializer.Serialize(restored.Items[3].Rotation));
+        Assert.Equal(JsonSerializer.Serialize(userAfter.Rotation), JsonSerializer.Serialize(restored.Items[4].Rotation));
+        Assert.Equal(JsonSerializer.Serialize(status.Rotation), JsonSerializer.Serialize(restored.Items[1].Rotation));
+        Assert.Equal("Status / Time", restored.Items[1].Name);
+
+        Assert.True(data.SaveProfiles(restored));
+        var roundtrip = data.ReadProfiles(new());
+        Assert.Equal(["user-before", "status", "custom", "user-between", "user-after"],
+            roundtrip.Items.Select(profile => profile.Id));
+        Assert.Single(roundtrip.Items, profile => profile.Id == "status");
+    }
+
+    private ProfileLibrary SaveAndRead(ProfileLibrary library)
+    {
+        var data = new LocalData(root);
+        Assert.True(data.SaveProfiles(library));
+        return data.ReadProfiles(new());
     }
 
     [Fact]

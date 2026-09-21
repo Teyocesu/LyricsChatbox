@@ -19,6 +19,13 @@ public record RecoveryPresentation(bool Visible, string Title, string Hint, bool
 public static partial class PresentationText
 {
     public const string EmptyPreview = "Nothing to send";
+    public const string TrackLyricsDurationLabel = "Track / lyrics duration";
+
+    public static string TrackLyricsDuration(double? trackDuration, double? candidateDuration) =>
+        FormatDurationOrDash(trackDuration) + " / " + FormatDurationOrDash(candidateDuration);
+
+    private static string FormatDurationOrDash(double? seconds) => DurationFormatter.Format(seconds) is { Length: > 0 } text
+        && seconds > 0 ? text : "—";
 
     public static string PlaybackStatus(PlaybackSourceKind source, PlaybackSnapshot? snapshot, string status) =>
         source switch
