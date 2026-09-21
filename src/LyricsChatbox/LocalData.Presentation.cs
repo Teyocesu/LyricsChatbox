@@ -11,7 +11,7 @@ public sealed partial class LocalData
     private const int DecorationBytes = 256 * 1024;
     public ProfileLibrary ReadProfiles(AppSettings legacy)
     {
-        var library = Read<ProfileLibrary>(Path.Combine(Root,"profiles.json"),ProfileBytes)?.NormalizeRotations();
+        var library = Read<ProfileLibrary>(Path.Combine(Root,"profiles.json"),ProfileBytes)?.NormalizeRotations().EnsureBuiltInProfiles();
         return library is {IsValid:true} ? library : ProfileLibrary.Migrate(legacy);
     }
     public bool SaveProfiles(ProfileLibrary library)

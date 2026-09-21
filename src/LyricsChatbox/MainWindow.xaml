@@ -175,7 +175,7 @@
                   <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Padding" Value="7,7"/><Setter Property="Margin" Value="0,0,5,5"/><Setter Property="VerticalContentAlignment" Value="Center"/></Style></ListBox.ItemContainerStyle>
                   <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="11" TextAlignment="Center"/></DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
-                <TextBlock x:Name="ContextHint" Text="Adds nearby lyrics when they fit. The current lyric always stays." Visibility="Collapsed"/>
+                <TextBlock x:Name="ContextHint" Text="Adds nearby lyrics when they fit. The current lyric always stays." Style="{StaticResource Caption}" Margin="0,4,0,0" Visibility="Collapsed"/>
               </StackPanel>
             </Border>
           </Grid>
@@ -311,7 +311,7 @@
               </ListBox>
               <TextBlock Text="Choose a layout. The live preview below shows your actual output." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
               <StackPanel x:Name="CustomPanel" Visibility="Collapsed">
-                <DockPanel Margin="0,4,0,8"><Button Content="Decorations menu" Tag="Custom" Click="OpenDecorationPicker" DockPanel.Dock="Right" AutomationProperties.Name="Open decorations menu" ToolTip="Add symbols, kaomoji, text art and more"/><TextBlock Text="Custom composition" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,8"><TextBlock Text="Custom composition" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/><Button Content="Decorations menu" Tag="Custom" Click="OpenDecorationPicker" Style="{StaticResource SmallButton}" AutomationProperties.Name="Open decorations menu" ToolTip="Add symbols, kaomoji, text art and more"/></StackPanel>
                 <TextBox x:Name="TemplateBox" FontFamily="Consolas" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="90" VerticalScrollBarVisibility="Auto" TextChanged="DisplayChanged" AutomationProperties.Name="Custom template"/>
                 <ItemsControl x:Name="TokenChips" Margin="0,10,0,4">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -327,7 +327,8 @@
               <DockPanel><TextBlock x:Name="RotationCountText" Text="0 / 16 messages" Style="{StaticResource Caption}" DockPanel.Dock="Right"/><TextBlock Text="Status messages" Style="{StaticResource SectionTitle}"/></DockPanel>
               <CheckBox x:Name="RotationEnabledBox" Content="Rotate messages" Checked="RotationEnabledChanged" Unchecked="RotationEnabledChanged" Margin="0,0,0,10"/>
               <StackPanel Orientation="Horizontal" Margin="0,0,0,10"><TextBlock Text="Change every" VerticalAlignment="Center" Margin="0,0,8,0"/><ComboBox x:Name="RotationIntervalBox" Width="130" SelectionChanged="RotationIntervalChanged" AutomationProperties.Name="Message rotation interval"/></StackPanel>
-              <ListBox x:Name="RotationList" SelectionChanged="RotationSelectionChanged" MaxHeight="180" Margin="0,0,0,10" AutomationProperties.Name="Status messages">
+              <ListBox x:Name="RotationList" SelectionChanged="RotationSelectionChanged" MaxHeight="180" Margin="0,0,0,10" Padding="0" Background="Transparent" Foreground="{DynamicResource TextBrush}" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Status messages">
+                <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Padding" Value="8,7"/><Setter Property="Margin" Value="0,0,0,6"/></Style></ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                   <DataTemplate>
                     <Grid Margin="2,3"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -344,14 +345,17 @@
               <StackPanel x:Name="RotationEditorPanel" Visibility="Collapsed">
                 <TextBlock x:Name="RotationEditorTitle" Text="Selected message" FontWeight="SemiBold" Margin="0,0,0,6"/>
                 <TextBox x:Name="RotationMessageBox" FontFamily="Consolas" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="90" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Status message text"/>
-                <WrapPanel Margin="0,10,0,4"><Button Content="Decorations menu" Tag="Rotation" Click="OpenDecorationPicker" Margin="0,0,8,8" AutomationProperties.Name="Open decorations menu" ToolTip="Add symbols, kaomoji, text art and more"/><Button Content="Save" Click="SaveRotationMessage" Margin="0,0,8,8"/><Button x:Name="RemoveRotationMessageButton" Content="Remove" Click="RemoveRotationMessage" Margin="0,0,0,8"/></WrapPanel>
+                <WrapPanel x:Name="RotationEditorActions" Margin="0,10,0,4"><Button Content="Decorations menu" Tag="Rotation" Click="OpenDecorationPicker" Margin="0,0,8,8" AutomationProperties.Name="Open decorations menu" ToolTip="Add symbols, kaomoji, text art and more"/><Button Content="Save" Click="SaveRotationMessage" Margin="0,0,8,8"/><Button x:Name="RemoveRotationMessageButton" Content="Remove" Click="RemoveRotationMessage" Margin="0,0,0,8"/></WrapPanel>
+                <Border x:Name="RotationRemoveConfirmation" Visibility="Collapsed" Background="{DynamicResource AccentMutedBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,10,0,4">
+                  <StackPanel><TextBlock Text="Remove this message?" FontWeight="SemiBold" Margin="0,0,0,10"/><WrapPanel><Button Content="Cancel" Click="CancelRotationMessageRemoval" Margin="0,0,8,0" AutomationProperties.Name="Cancel removal"/><Button Content="Remove message" Click="ConfirmRemoveRotationMessage" Foreground="{DynamicResource WarningBrush}" AutomationProperties.Name="Confirm remove message"/></WrapPanel></StackPanel>
+                </Border>
                 <TextBlock x:Name="RotationEditStatus" Style="{StaticResource Caption}"/>
               </StackPanel>
             </StackPanel>
           </Border>
 
           <Border x:Name="LyricContextPanel" Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel><TextBlock Text="Lyric Context" Style="{StaticResource SectionTitle}"/><ComboBox x:Name="ProfileContextBox" ItemsSource="{Binding ItemsSource, ElementName=ContextBox}" SelectedItem="{Binding SelectedItem, ElementName=ContextBox, Mode=TwoWay}" AutomationProperties.Name="Profile lyric context"/><TextBlock Text="Nearby lyrics are included only when they fit; the current lyric always stays." Style="{StaticResource Caption}" Margin="0,6,0,0"/></StackPanel>
+            <StackPanel><TextBlock Text="Lyric Context" Style="{StaticResource SectionTitle}"/><ComboBox x:Name="ProfileContextBox" ItemsSource="{Binding ItemsSource, ElementName=ContextBox}" SelectedItem="{Binding SelectedItem, ElementName=ContextBox, Mode=TwoWay}" AutomationProperties.Name="Profile lyric context"/><TextBlock x:Name="ProfileContextHint" Text="Nearby lyrics are included only when they fit; the current lyric always stays." Style="{StaticResource Caption}" Margin="0,6,0,0"/></StackPanel>
           </Border>
 
           <Border Style="{StaticResource Card}" Margin="0,0,8,16">

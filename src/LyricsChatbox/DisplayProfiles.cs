@@ -31,13 +31,17 @@ public record DisplayProfile(string Id, string Name, string Preset = "Lyrics Onl
 }
 
 public readonly record struct DisplayDerivedState(bool ShowCustomEditor, bool ShowStatusMessages,
-    bool ShowLyricContext, bool ShowAlignment)
+    bool LyricContextSupported, bool ShowLyricContextCard, bool ShowAlignment, string LyricContextUnavailableText)
 {
-    public static DisplayDerivedState From(string preset, string customTemplate) => new(
-        preset == "Custom",
-        ChatboxComposer.ConsumesToken(preset, customTemplate, "{message}"),
-        ChatboxComposer.ConsumesToken(preset, customTemplate, "{lyrics}"),
-        preset is "Custom" or "Status / Time");
+    public static DisplayDerivedState From(string preset, string customTemplate)
+    {
+        var custom = preset == "Custom";
+        var lyrics = ChatboxComposer.ConsumesToken(preset, customTemplate, "{lyrics}");
+        return new(custom, ChatboxComposer.ConsumesToken(preset, customTemplate, "{message}"), lyrics, true,
+            preset is "Custom" or "Status / Time", lyrics ? "" : custom
+                ? "Add {lyrics} to Custom composition to use Lyric Context."
+                : "This composition does not use lyrics.");
+    }
 }
 
 public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<DisplayProfile> Items)
@@ -77,7 +81,8 @@ public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<Displ
     public static ProfileLibrary Migrate(AppSettings legacy)
     {
         DisplayProfile[] presets = [new("lyrics","Lyrics",BuiltIn:true), new("minimal","Minimal",Compact:true,BuiltIn:true),
-            new("music-info","Music Info","Song + Lyrics",BuiltIn:true), new("custom","Custom","Custom",CustomTemplate:"{message}\n{lyrics}",BuiltIn:true)];
+            new("music-info","Music Info","Song + Lyrics",BuiltIn:true), new("status","Status","Status / Time",BuiltIn:true),
+            new("custom","Custom","Custom",CustomTemplate:"{message}\n{lyrics}",BuiltIn:true)];
         var current = DisplayProfile.FromSettings(legacy,"legacy","My display");
         var equivalent = presets.FirstOrDefault(p => p.Apply(legacy) == legacy);
         ProfileLibrary migrated = equivalent is not null ? new(1,equivalent.Id,presets) : new(1,current.Id,presets.Append(current).ToArray());
@@ -85,6 +90,12 @@ public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<Displ
     }
     public ProfileLibrary NormalizeRotations() => Items is null ? this : this with
     { Items = Items.Select(profile => profile?.NormalizeRotation()!).ToArray() };
+    public ProfileLibrary EnsureBuiltInProfiles()
+    {
+        if (Items is null || Items.Count >= Maximum || Items.Any(profile => profile?.Id == "status")) return this;
+        return this with { Items = Items.Append(new DisplayProfile("status", "Status", "Status / Time", BuiltIn: true)
+            .NormalizeRotation()).ToArray() };
+    }
     public ProfileLibrary? PrepareForSave()
     {
         if (Items is null) return null;

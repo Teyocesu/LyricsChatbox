@@ -43,9 +43,13 @@ public class DisplayTests
     {
         var state = DisplayDerivedState.From(preset, template);
         Assert.Equal(message, state.ShowStatusMessages);
-        Assert.Equal(lyrics, state.ShowLyricContext);
+        Assert.Equal(lyrics, state.LyricContextSupported);
+        Assert.True(state.ShowLyricContextCard);
         Assert.Equal(custom, state.ShowCustomEditor);
         Assert.Equal(preset is "Custom" or "Status / Time", state.ShowAlignment);
+        Assert.Equal(lyrics ? "" : custom
+            ? "Add {lyrics} to Custom composition to use Lyric Context."
+            : "This composition does not use lyrics.", state.LyricContextUnavailableText);
         Assert.Equal(message, ChatboxComposer.ConsumesToken(preset, template, "{message}"));
         Assert.Equal(lyrics, ChatboxComposer.ConsumesToken(preset, template, "{lyrics}"));
     }

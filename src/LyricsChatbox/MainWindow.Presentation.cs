@@ -38,10 +38,6 @@ public partial class MainWindow
         profiles = profiles.Save(CurrentProfile()) ?? profiles;
         settings = settings with { Message = profiles.Selected.Message };
         RefreshDisplayDerivedState();
-        ContextHint.Text = contextMode == "Adaptive" ? "Adds nearby lyrics when they fit. The current lyric always stays."
-            : contextMode == "Previous + current + next" ? "Shows all three lyrics when they fit. The current lyric always stays."
-            : "The current lyric always stays when space is limited.";
-        ContextHint.Visibility = Visibility.Collapsed;
         // Replacing immutable items updates card summaries without changing the selected profile.
         RefreshProfiles(); ProfileStatus.Text = "Changes save automatically. Appearance stays global.";
     }
@@ -59,7 +55,7 @@ public partial class MainWindow
             PresetBox.SelectedItem = settings.Preset; TemplateBox.Text = settings.CustomTemplate;
             CompactBox.IsChecked = settings.Compact;
             CustomAlignmentBox.SelectedItem = settings.CustomAlignment; ContextBox.SelectedItem = contextMode;
-            RefreshRotationEditor(resetEditor: true);
+            RefreshRotationEditor(RotationEditorState.None);
             RefreshDisplayDerivedState();
         }
         finally { changingProfiles = false; }
@@ -74,11 +70,21 @@ public partial class MainWindow
         StatusPanel.Visibility = state.ShowStatusMessages ? Visibility.Visible : Visibility.Collapsed;
         CustomMessageHint.Visibility = state.ShowCustomEditor && !state.ShowStatusMessages
             ? Visibility.Visible : Visibility.Collapsed;
-        LyricContextPanel.Visibility = ContextCard.Visibility = state.ShowLyricContext
+        LyricContextPanel.Visibility = ContextCard.Visibility = state.ShowLyricContextCard
             ? Visibility.Visible : Visibility.Collapsed;
-        ContextBox.IsEnabled = ProfileContextBox.IsEnabled = state.ShowLyricContext;
+        ContextBox.IsEnabled = ProfileContextBox.IsEnabled = state.LyricContextSupported;
+        ContextHint.Text = state.LyricContextSupported ? ContextModeHint() : state.LyricContextUnavailableText;
+        ContextHint.Visibility = state.LyricContextSupported ? Visibility.Collapsed : Visibility.Visible;
+        ProfileContextHint.Text = state.LyricContextSupported
+            ? "Nearby lyrics are included only when they fit; the current lyric always stays."
+            : state.LyricContextUnavailableText;
         AlignmentPanel.Visibility = state.ShowAlignment ? Visibility.Visible : Visibility.Collapsed;
     }
+    private string ContextModeHint() => contextMode == "Adaptive"
+        ? "Adds nearby lyrics when they fit. The current lyric always stays."
+        : contextMode == "Previous + current + next"
+            ? "Shows all three lyrics when they fit. The current lyric always stays."
+            : "The current lyric always stays when space is limited.";
     private void ContextChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!ready || changingProfiles || ContextBox.SelectedItem is not string mode) return;

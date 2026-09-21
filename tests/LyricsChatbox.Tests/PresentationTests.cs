@@ -33,7 +33,7 @@ public sealed class PresentationTests : IDisposable
         var old = new AppSettings(Enabled:true, Offset:.5, Host:"192.168.1.5", Port:9003, Preset:"Custom", CustomTemplate:"{message}\n{lyrics}",
             Message:"日本語 🎵", Compact:true, CustomAlignment:"Center", Appearance:new("Blue"));
         var library = data.ReadProfiles(old);
-        Assert.Equal(4,library.Items.Count(p=>p.BuiltIn)); Assert.Equal(old,library.Selected.Apply(old));
+        Assert.Equal(5,library.Items.Count(p=>p.BuiltIn)); Assert.Equal(old,library.Selected.Apply(old));
         Assert.Equal("Current only",library.Selected.ContextMode);
         library = library.Create("My copy",library.Selected)!;
         var id = library.SelectedId;

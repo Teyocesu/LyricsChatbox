@@ -3,6 +3,20 @@ using System.Windows.Controls;
 
 namespace LyricsChatbox;
 
+public enum RotationEditorMode { None, Adding, Editing }
+
+public readonly record struct RotationEditorState(RotationEditorMode Mode, string? MessageId = null,
+    bool ConfirmingRemoval = false)
+{
+    public static RotationEditorState None => new(RotationEditorMode.None);
+    public static RotationEditorState Adding => new(RotationEditorMode.Adding);
+    public static RotationEditorState Editing(string id) => new(RotationEditorMode.Editing, id);
+    public bool ShowsEditor => Mode != RotationEditorMode.None;
+    public bool CanRemove => Mode == RotationEditorMode.Editing && MessageId is not null;
+    public RotationEditorState ConfirmRemoval() => CanRemove ? this with { ConfirmingRemoval = true } : this;
+    public RotationEditorState CancelRemoval() => this with { ConfirmingRemoval = false };
+}
+
 public partial class MainWindow
 {
     private sealed record RotationIntervalChoice(int Seconds, string Label);
@@ -31,8 +45,8 @@ public partial class MainWindow
     ];
 
     private readonly MessageRotator messageRotator = new();
-    private bool changingRotation, addingRotation;
-    private string? editingRotationId;
+    private bool changingRotation;
+    private RotationEditorState rotationEditorState = RotationEditorState.None;
     private string? lastRotationHint;
     private MessageRotationCurrent activeRotationMessage;
 
@@ -47,11 +61,17 @@ public partial class MainWindow
     private MessageRotation SelectedRotation() =>
         profiles.Selected.Rotation ?? MessageRotation.FromLegacy(profiles.Selected.Message);
 
-    private void RefreshRotationEditor(string? selectId = null, bool resetEditor = false)
+    private void RefreshRotationEditor(RotationEditorState? nextState = null, bool preserveDraft = false)
     {
+        if (nextState is { } requested) rotationEditorState = requested;
         var rotation = SelectedRotation();
         var items = rotation.Items!;
         var views = items.Select((item, index) => new RotationMessageView(item, index, items.Count)).ToArray();
+        var selected = rotationEditorState.Mode == RotationEditorMode.Editing
+            ? views.FirstOrDefault(view => view.Id == rotationEditorState.MessageId)
+            : null;
+        if (rotationEditorState.Mode == RotationEditorMode.Editing && selected is null)
+            rotationEditorState = RotationEditorState.None;
         changingRotation = true;
         try
         {
@@ -59,41 +79,40 @@ public partial class MainWindow
             RotationIntervalBox.SelectedValue = rotation.IntervalSeconds;
             RotationList.ItemsSource = views;
             AddRotationMessageButton.IsEnabled = items.Count < MessageRotation.Maximum;
-            if (resetEditor) { addingRotation = false; editingRotationId = null; }
-            if (!addingRotation)
-            {
-                var selected = views.FirstOrDefault(view => view.Id == (selectId ?? editingRotationId)) ?? views.FirstOrDefault();
-                RotationList.SelectedItem = selected;
-                ShowRotationEditor(selected?.Message);
-            }
+            RotationList.SelectedItem = selected;
+            ShowRotationEditor(selected?.Message, preserveDraft);
         }
         finally { changingRotation = false; }
         RotationCountText.Text = $"{items.Count} / {MessageRotation.Maximum} messages";
     }
 
-    private void ShowRotationEditor(RotatingMessage? message)
+    private void ShowRotationEditor(RotatingMessage? message, bool preserveDraft = false)
     {
-        editingRotationId = message?.Id;
-        RotationEditorPanel.Visibility = message is null && !addingRotation ? Visibility.Collapsed : Visibility.Visible;
-        if (message is not null)
+        RotationEditorPanel.Visibility = rotationEditorState.ShowsEditor ? Visibility.Visible : Visibility.Collapsed;
+        if (!rotationEditorState.ShowsEditor) return;
+        if (rotationEditorState.Mode == RotationEditorMode.Editing && message is not null)
         {
             RotationEditorTitle.Text = "Selected message";
-            RotationMessageBox.Text = message.Text;
+            if (!preserveDraft) RotationMessageBox.Text = message.Text;
             RemoveRotationMessageButton.Visibility = Visibility.Visible;
         }
-        else if (addingRotation)
+        else
         {
             RotationEditorTitle.Text = "New message";
-            RotationMessageBox.Clear();
+            if (!preserveDraft) RotationMessageBox.Clear();
             RemoveRotationMessageButton.Visibility = Visibility.Collapsed;
         }
-        RotationEditStatus.Text = "";
+        RotationEditorActions.Visibility = rotationEditorState.ConfirmingRemoval
+            ? Visibility.Collapsed : Visibility.Visible;
+        RotationRemoveConfirmation.Visibility = rotationEditorState.ConfirmingRemoval
+            ? Visibility.Visible : Visibility.Collapsed;
+        if (!preserveDraft) RotationEditStatus.Text = "";
     }
 
     private void RotationSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (changingRotation || RotationList.SelectedItem is not RotationMessageView view) return;
-        addingRotation = false;
+        rotationEditorState = RotationEditorState.Editing(view.Id);
         ShowRotationEditor(view.Message);
     }
 
@@ -116,8 +135,7 @@ public partial class MainWindow
             RotationEditStatus.Text = "Up to 16 messages can be saved.";
             return;
         }
-        addingRotation = true;
-        editingRotationId = null;
+        rotationEditorState = RotationEditorState.Adding;
         changingRotation = true;
         RotationList.SelectedItem = null;
         changingRotation = false;
@@ -128,46 +146,59 @@ public partial class MainWindow
     private void SaveRotationMessage(object sender, RoutedEventArgs e)
     {
         var text = RotationMessageBox.Text;
-        var id = addingRotation ? "message-" + Guid.NewGuid().ToString("N") : editingRotationId;
+        var adding = rotationEditorState.Mode == RotationEditorMode.Adding;
+        var id = adding ? "message-" + Guid.NewGuid().ToString("N") : rotationEditorState.MessageId;
         if (id is null) return;
-        var saved = ApplyRotationMutation(rotation => addingRotation
+        var saved = ApplyRotationMutation(rotation => adding
             ? rotation.Add(new RotatingMessage(id, text))
-            : rotation.Edit(id, text), id);
+            : rotation.Edit(id, text), RotationEditorState.Editing(id));
         if (!saved)
         {
             RotationEditStatus.Text = "Use non-empty text within 512 characters and 9 lines.";
             return;
         }
-        addingRotation = false;
-        editingRotationId = id;
         RotationEditStatus.Text = "Message saved.";
     }
 
     private void RemoveRotationMessage(object sender, RoutedEventArgs e)
     {
-        if (editingRotationId is not { } id) return;
-        if (System.Windows.MessageBox.Show(this, "Remove this status message?", "Remove message",
-                MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
-        addingRotation = false;
-        editingRotationId = null;
-        if (ApplyRotationMutation(rotation => rotation.Delete(id), resetEditor: true))
-            RotationEditStatus.Text = "Message removed.";
+        if (!rotationEditorState.CanRemove) return;
+        rotationEditorState = rotationEditorState.ConfirmRemoval();
+        ShowRotationEditor(SelectedRotation().Items!.FirstOrDefault(item => item.Id == rotationEditorState.MessageId),
+            preserveDraft: true);
+    }
+
+    private void CancelRotationMessageRemoval(object sender, RoutedEventArgs e)
+    {
+        rotationEditorState = rotationEditorState.CancelRemoval();
+        ShowRotationEditor(SelectedRotation().Items!.FirstOrDefault(item => item.Id == rotationEditorState.MessageId),
+            preserveDraft: true);
+    }
+
+    private void ConfirmRemoveRotationMessage(object sender, RoutedEventArgs e)
+    {
+        if (rotationEditorState.MessageId is not { } id) return;
+        ApplyRotationMutation(rotation => rotation.Delete(id), RotationEditorState.None);
     }
 
     private void RotationItemEnabledChanged(object sender, RoutedEventArgs e)
     {
         if (changingRotation || sender is not CheckBox { DataContext: RotationMessageView view } checkBox) return;
-        ApplyRotationMutation(rotation => rotation.SetItemEnabled(view.Id, checkBox.IsChecked == true), view.Id);
+        var nextState = rotationEditorState.MessageId == view.Id
+            ? RotationEditorState.Editing(view.Id) : rotationEditorState;
+        ApplyRotationMutation(rotation => rotation.SetItemEnabled(view.Id, checkBox.IsChecked == true), nextState,
+            preserveDraft: true);
     }
 
     private void MoveRotationMessage(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: RotationMessageView view, Tag: string direction }) return;
-        ApplyRotationMutation(rotation => rotation.Move(view.Id, direction == "Up" ? -1 : 1), view.Id);
+        ApplyRotationMutation(rotation => rotation.Move(view.Id, direction == "Up" ? -1 : 1),
+            RotationEditorState.Editing(view.Id), preserveDraft: true);
     }
 
-    private bool ApplyRotationMutation(Func<MessageRotation, MessageRotation?> mutation, string? selectId = null,
-        bool resetEditor = false)
+    private bool ApplyRotationMutation(Func<MessageRotation, MessageRotation?> mutation,
+        RotationEditorState? nextState = null, bool preserveDraft = true)
     {
         if (mutation(SelectedRotation()) is not { } rotation) return false;
         var profile = CurrentProfile() with { Rotation = rotation };
@@ -178,8 +209,9 @@ public partial class MainWindow
         }
         profiles = next;
         settings = settings with { Message = profiles.Selected.Message };
+        if (nextState is { } state) rotationEditorState = state;
         RefreshProfiles();
-        RefreshRotationEditor(selectId, resetEditor);
+        RefreshRotationEditor(preserveDraft: preserveDraft);
         RefreshDisplayDerivedState();
         ProfileStatus.Text = "Changes save automatically. Appearance stays global.";
         Save();

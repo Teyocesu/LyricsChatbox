@@ -39,6 +39,91 @@ public sealed class RotationTests : IDisposable
     }
 
     [Fact]
+    public void FreshMigrationIncludesCanonicalStatusProfile()
+    {
+        var library = ProfileLibrary.Migrate(new());
+        var status = Assert.Single(library.Items, profile => profile.Id == "status");
+
+        Assert.Equal("Status", status.Name);
+        Assert.Equal("Status / Time", status.Preset);
+        Assert.True(status.BuiltIn);
+        Assert.NotNull(status.Rotation);
+        Assert.True(status.Rotation.IsValid);
+        Assert.Empty(status.Rotation.Items!);
+        Assert.Equal("Status / Time", status.Apply(new()).Preset);
+    }
+
+    [Fact]
+    public void ExistingLibraryReceivesStatusWithoutChangingSelectionProfilesOrRotations()
+    {
+        var rotation = Rotation(true, 30, Message("a", "A"), Message("b", "B", false));
+        var builtIn = new DisplayProfile("lyrics", "Lyrics customized", "Custom", "Adaptive", true, "Right",
+            "{lyrics}\ncustom", Rotation: Rotation(false, 15));
+        var user = new DisplayProfile("user", "User", "Custom", "Current + next", false, "Center",
+            "{message}\n{lyrics}", "A", Rotation: rotation);
+        var data = new LocalData(root);
+        Assert.True(data.SaveProfiles(new(1, user.Id, [builtIn, user])));
+
+        var restored = data.ReadProfiles(new());
+
+        Assert.Equal(user.Id, restored.SelectedId);
+        Assert.Equal(3, restored.Items.Count);
+        Assert.Equal(JsonSerializer.Serialize(builtIn),
+            JsonSerializer.Serialize(restored.Items.Single(profile => profile.Id == builtIn.Id)));
+        Assert.Equal(JsonSerializer.Serialize(user),
+            JsonSerializer.Serialize(restored.Items.Single(profile => profile.Id == user.Id)));
+        Assert.Single(restored.Items, profile => profile.Id == "status");
+    }
+
+    [Fact]
+    public void ExistingStatusIsPreservedAndRoundtripNeverDuplicatesIt()
+    {
+        var customized = new DisplayProfile("status", "My Status", "Custom", "Adaptive", true, "Right",
+            "{message}\n{time}", "A", true, Rotation(true, 60, Message("a", "A"), Message("b", "B")));
+        var data = new LocalData(root);
+        Assert.True(data.SaveProfiles(new(1, customized.Id, [customized])));
+
+        var first = data.ReadProfiles(new());
+        Assert.Equal(JsonSerializer.Serialize(customized), JsonSerializer.Serialize(first.Selected));
+        Assert.Single(first.Items, profile => profile.Id == "status");
+        Assert.True(data.SaveProfiles(first));
+        var second = data.ReadProfiles(new());
+        Assert.Equal(JsonSerializer.Serialize(customized), JsonSerializer.Serialize(second.Selected));
+        Assert.Single(second.Items, profile => profile.Id == "status");
+    }
+
+    [Fact]
+    public void FullLibraryMissingStatusIsKeptWithoutEvictionOrFallback()
+    {
+        var items = Enumerable.Range(0, ProfileLibrary.Maximum)
+            .Select(index => new DisplayProfile("profile-" + index, "Profile " + index,
+                Rotation: Rotation(false, 15))).ToArray();
+        var library = new ProfileLibrary(1, items[7].Id, items);
+        var data = new LocalData(root);
+        Assert.True(data.SaveProfiles(library));
+
+        var restored = data.ReadProfiles(new(Message: "fallback must not win"));
+
+        Assert.Equal(items[7].Id, restored.SelectedId);
+        Assert.Equal(JsonSerializer.Serialize(items), JsonSerializer.Serialize(restored.Items));
+        Assert.DoesNotContain(restored.Items, profile => profile.Id == "status");
+    }
+
+    [Fact]
+    public void ExistingProfileUsingStatusIdIsNeverOverwritten()
+    {
+        var existing = new DisplayProfile("status", "User-owned status ID", "Lyrics Only", BuiltIn: false,
+            Rotation: Rotation(false, 15));
+        var data = new LocalData(root);
+        Assert.True(data.SaveProfiles(new(1, existing.Id, [existing])));
+
+        var restored = data.ReadProfiles(new());
+
+        Assert.Single(restored.Items);
+        Assert.Equal(JsonSerializer.Serialize(existing), JsonSerializer.Serialize(restored.Selected));
+    }
+
+    [Fact]
     public void InvalidNestedRotationFallsBackOnlyForThatProfile()
     {
         var broken = new DisplayProfile("broken", "Broken", Message: "keep me",
@@ -51,7 +136,7 @@ public sealed class RotationTests : IDisposable
 
         var restored = new LocalData(root).ReadProfiles(new());
 
-        Assert.Equal(2, restored.Items.Count);
+        Assert.Equal(3, restored.Items.Count);
         Assert.Equal("keep me", restored.Selected.Message);
         AssertRotation(restored.Selected.Rotation, false, 15, new RotatingMessage("legacy-message", "keep me"));
         var restoredSibling = restored.Items.Single(item => item.Id == sibling.Id);
@@ -343,6 +428,77 @@ public sealed class RotationTests : IDisposable
         var full = Rotation(false, 15, Enumerable.Range(0, MessageRotation.Maximum)
             .Select(index => Message("item-" + index, "Text " + index)).ToArray());
         Assert.Null(full.Add(Message("extra", "Extra")));
+    }
+
+    [Fact]
+    public void EditorAddInvalidSaveThenSuccessfulSaveTransitionsToEditing()
+    {
+        var rotation = Rotation(false, 15);
+        var state = RotationEditorState.Adding;
+
+        Assert.Null(rotation.Add(Message("a", "  ")));
+        Assert.Equal(RotationEditorMode.Adding, state.Mode);
+        Assert.False(state.CanRemove);
+
+        rotation = rotation.Add(Message("a", "A"))!;
+        state = RotationEditorState.Editing("a");
+        Assert.Equal(RotationEditorMode.Editing, state.Mode);
+        Assert.Equal("a", state.MessageId);
+        Assert.True(state.CanRemove);
+        Assert.Equal("A", rotation.Items!.Single().Text);
+
+        rotation = rotation.Edit(state.MessageId!, "A edited")!;
+        Assert.Single(rotation.Items!);
+        Assert.Equal("A edited", rotation.Items![0].Text);
+        Assert.Equal("a", state.MessageId);
+    }
+
+    [Fact]
+    public void EditorDeleteLeavesNoneAndAddAfterDeleteSelectsOnlyTheNewItem()
+    {
+        var rotation = Rotation(false, 15, Message("a", "A"), Message("b", "B"));
+        var state = RotationEditorState.Editing("b");
+
+        state = state.ConfirmRemoval();
+        Assert.True(state.ConfirmingRemoval);
+        state = state.CancelRemoval();
+        Assert.False(state.ConfirmingRemoval);
+        Assert.Equal("b", state.MessageId);
+
+        rotation = rotation.Delete("b")!;
+        state = RotationEditorState.None;
+        Assert.Equal(RotationEditorMode.None, state.Mode);
+        Assert.Null(state.MessageId);
+        Assert.Single(rotation.Items!);
+
+        state = RotationEditorState.Adding;
+        rotation = rotation.Add(Message("c", "C"))!;
+        state = RotationEditorState.Editing("c");
+        Assert.Equal("c", state.MessageId);
+        Assert.True(state.CanRemove);
+        Assert.Equal(["a", "c"], rotation.Items!.Select(item => item.Id));
+
+        rotation = rotation.Delete("a")!.Delete("c")!;
+        state = RotationEditorState.None;
+        Assert.Empty(rotation.Items!);
+        Assert.Equal(RotationEditorMode.None, state.Mode);
+        Assert.True(RotationEditorState.Adding.ShowsEditor);
+    }
+
+    [Fact]
+    public void EditorSelectionSurvivesReorderAndEnableChangesById()
+    {
+        var rotation = Rotation(false, 15, Message("a", "A"), Message("b", "B"));
+        var state = RotationEditorState.Editing("b");
+
+        rotation = rotation.Move("b", -1)!;
+        Assert.Equal("b", state.MessageId);
+        Assert.Equal("b", rotation.Items![0].Id);
+
+        rotation = rotation.SetItemEnabled("b", false)!;
+        Assert.Equal("b", state.MessageId);
+        Assert.False(rotation.Items![0].Enabled);
+        Assert.True(state.CanRemove);
     }
 
     [Fact]

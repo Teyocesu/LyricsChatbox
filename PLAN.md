@@ -1,4 +1,4 @@
-# v0.7.0 execution plan — Phases 0–4 implemented
+# v0.7.0 execution plan — Phases 0–4.1 implemented
 
 ## State and baseline
 
@@ -6,13 +6,13 @@
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
 - Product assembly/file version remains `0.6.2`. This planning task changes only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: obtain product-owner physical QA for the implemented Phase 4 Display/token/rotation UI. About implementation, Output redesign, version bump, tag, release and main merge remain out of scope.
+- Current goal: obtain product-owner physical QA for the corrected Phase 4.1 Display/token/rotation UI. About implementation, Output redesign, version bump, tag, release and main merge remain out of scope.
 - Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
 - Phase 2 evidence: focused Decorations + rotation regression tests `44/44`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `434/434` with 0 skips; package-policy test PASS; `git diff --check` PASS. Systematic content review found 90 entries, 10,228 source bytes, 19 curated Popular flags, no duplicate IDs/content, no tabs/trailing garbage, maximum content length 48, maximum six lines and no item over 144 UTF-16 units. Security/quality review made the catalog collections actually read-only and moved the shared Unicode validator to neutral ownership; Ponytail FULL found no removable architecture.
 - Phase 3 evidence: focused picker/decorations/layout/display tests `50/50`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `447/447` with 0 skips; package-policy test and `git diff --check` PASS. Native WPF interaction QA is still required: the available computer-use host exposed browser tabs but no native Windows app surface, so no visual/keyboard/theme claim is recorded.
 - Phase 3.1 evidence: focused decoration/picker tests `31/31`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `450/450` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 218 entries, all 90 prior IDs preserved, no duplicate IDs/names/content, no tabs/trailing or blank-line garbage, maximum content length 49, maximum six lines and no item over 144 UTF-16 units. Code-quality review found no blocker; Ponytail FULL and complete-diff Ponytail review found no removable architecture or complexity.
 - Phase 3.2 evidence: focused decoration/picker tests `32/32`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `451/451` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 327 entries/27 Popular flags with exact requested distribution, no duplicate IDs/names/content, no tabs/trailing/blank-line garbage, maximum content length 50, maximum six lines and no item over 144 UTF-16 units. Multi-axis review found no blocker; Ponytail FULL/complete-diff review removed one unnecessary guard wrapper and found no remaining removable architecture. The product owner then physically approved naming, Favorites/Popular/My items placement, scroll reset, fit language, catalog variety/density and interaction behavior; Phase 3 is closed.
-- Phase 4 evidence: focused Display/rotation/manual/picker/presentation tests `160/160`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `473/473` with 0 skips; package policy and `git diff --check` PASS. The native Release WPF smoke launch with Output Off confirmed the cold-start Custom state, eight token chips, contextual panel hiding, Presentation grouping and persistent Live Preview without binding/runtime errors. Product-owner physical QA remains pending.
+- Phase 4 evidence: focused Display/rotation/manual/picker/presentation tests `160/160`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `473/473` with 0 skips; package policy and `git diff --check` PASS. The first product-owner physical pass found rotation-editor transition/styling defects, unstable Lyric Context discoverability/layout and the missing canonical Status profile; those findings are the bounded Phase 4.1 scope below.
 
 ## Current extension points to preserve
 
@@ -159,6 +159,19 @@ Purpose: reorganize Display around the five user concepts and expose the bounded
 - Dependencies: Phases 1 and 3.
 - Out of scope: new tokens, multiple rotating templates, rules, alternate profile framework or standalone fix architecture for the v0.6.2 cosmetic issue.
 
+## Phase 4.1 — rotation UX and stable Home derived state — implemented; physical QA pending
+
+Purpose: correct only the concrete findings from the first Phase 4 product-owner physical review.
+
+- Editor state: one small value state owns None, Adding and Editing-by-ID, with inline removal confirmation as an Editing substate. Refresh never falls back to the first item. Invalid Add keeps the draft; successful Add transitions before refresh to the new selected ID; Delete returns to None; reorder and enabled changes preserve the selected ID and draft.
+- UI: rotating rows reuse the themed `PresetItem` container over a transparent list with semantic dynamic resources and retained keyboard focus/selection. Removal uses inline Cancel/Confirm controls with accessible names. The Custom Decorations launcher sits immediately beside its label; the approved picker itself is unchanged.
+- Derived state: both Home and Display Lyric Context cards stay visible. Exact `{lyrics}` support controls enablement and concise unsupported copy without changing the saved ContextMode. Home therefore retains its real second card instead of leaving a layout hole.
+- Profiles: canonical Status (`status`, Status, Status / Time, built-in) has no sample text and normalizes to an empty valid rotation. Fresh migration includes it. Existing valid libraries append it idempotently only when the ID is absent and capacity permits; no selection/configuration is overwritten and a full library is preserved unchanged.
+- Tests: pure editor transition sequences, invalid-save recovery, delete/add-after-delete, cancellation, reorder/enable stability, derived-card support/copy, fresh/existing/customized/full-capacity profile normalization and Status behavior.
+- Runtime invariants: rotator timing, Off/Pause/Manual/no-token freeze, legacy Message mirroring, scheduler ownership and zero runtime writes are unchanged.
+- Verification: focused Display/Presentation/Rotation/OutputPause/DecorationPicker suite `168/168`; locked restore PASS; Release build 0 warnings/0 errors; full suite `481/481`, 0 skips; package policy and `git diff --check` PASS. Scope inspection found no runtime-core, README or Phase 5 diff, native rotation dialog or newly hardcoded theme color. Native Release smoke with Output Off confirmed themed rotation rows, no implicit row selection/editor, and the stable disabled Lyric Context card with explanatory copy; product-owner physical QA remains pending.
+- Out of scope: Decorations redesign/catalog work, rotation runtime changes, Phase 5/About/Output UI, version bump, tag, release or main merge.
+
 ## Phase 5 — About, sidebar and Output UI
 
 Purpose: separate settings from identity/maintenance/legal actions and make Output states unambiguous.
@@ -234,4 +247,4 @@ Purpose: prepare, but do not publish, v0.7.0 only after automated and physical a
 
 ## Open product questions
 
-None for implemented Phases 0–4. The canonical VRChat URL is resolved. Phase 4 product-owner physical QA remains an execution gate, not an open product decision.
+None for implemented Phases 0–4.1. The canonical VRChat URL is resolved. Phase 4.1 product-owner physical QA remains an execution gate, not an open product decision.
