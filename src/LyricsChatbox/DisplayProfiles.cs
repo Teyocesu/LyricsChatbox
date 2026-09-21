@@ -14,6 +14,11 @@ public record DisplayProfile(string Id, string Name, string Preset = "Lyrics Onl
     public override string ToString() => Name;
     public AppSettings Apply(AppSettings settings) => settings with
     { Preset = Preset, CustomTemplate = CustomTemplate, Message = Message, Compact = Compact, CustomAlignment = Alignment };
+    public DisplayProfile UpdatePresentation(AppSettings settings, string contextMode) => this with
+    {
+        Preset = settings.Preset, ContextMode = contextMode, Compact = settings.Compact,
+        Alignment = settings.CustomAlignment, CustomTemplate = settings.CustomTemplate
+    };
     public static DisplayProfile FromSettings(AppSettings settings, string id, string name) => new(id, name, settings.Preset,
         Compact: settings.Compact, Alignment: settings.CustomAlignment, CustomTemplate: settings.CustomTemplate, Message: settings.Message);
     public DisplayProfile NormalizeRotation() => this with
@@ -23,6 +28,16 @@ public record DisplayProfile(string Id, string Name, string Preset = "Lyrics Onl
         var rotation = Rotation ?? MessageRotation.FromLegacy(Message);
         return rotation.IsValid ? this with { Message = rotation.LegacyMessage, Rotation = rotation } : null;
     }
+}
+
+public readonly record struct DisplayDerivedState(bool ShowCustomEditor, bool ShowStatusMessages,
+    bool ShowLyricContext, bool ShowAlignment)
+{
+    public static DisplayDerivedState From(string preset, string customTemplate) => new(
+        preset == "Custom",
+        ChatboxComposer.ConsumesToken(preset, customTemplate, "{message}"),
+        ChatboxComposer.ConsumesToken(preset, customTemplate, "{lyrics}"),
+        preset is "Custom" or "Status / Time");
 }
 
 public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<DisplayProfile> Items)

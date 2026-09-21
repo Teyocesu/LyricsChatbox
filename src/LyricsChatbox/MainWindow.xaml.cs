@@ -66,10 +66,7 @@ public partial class MainWindow : Window
         PresetBox.ItemsSource = ChatboxComposer.Presets; PresetBox.SelectedItem = settings.Preset;
         CustomAlignmentBox.ItemsSource = ManualAlignmentBox.ItemsSource = MessageLayout.Alignments;
         CustomAlignmentBox.SelectedItem = settings.CustomAlignment; ManualAlignmentBox.SelectedItem = settings.ManualAlignment;
-        TemplateBox.Text = settings.CustomTemplate; TemplateBox.IsEnabled = settings.Preset == "Custom";
-        CustomPanel.Visibility = settings.Preset == "Custom" ? Visibility.Visible : Visibility.Collapsed;
-        StatusPanel.Visibility = settings.Preset is "Custom" or "Status / Time" ? Visibility.Visible : Visibility.Collapsed;
-        MessageBox.Text = settings.Message; CompactBox.IsChecked = settings.Compact;
+        TemplateBox.Text = settings.CustomTemplate; CompactBox.IsChecked = settings.Compact;
         TypingBox.IsChecked = settings.TypingIndicator; LiveBox.IsChecked = settings.LiveEdit;
         OffsetText.Text = settings.Offset.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
         output.Configure(settings.Host, settings.Port);
@@ -200,8 +197,14 @@ public partial class MainWindow : Window
         ApplyProgressView(now, position);
         UpdateLyricsDetails();
         var showContext = LyricContextComposer.SupportsContext(settings.Preset, settings.CustomTemplate);
+        var consumesMessage = ChatboxComposer.ConsumesToken(settings.Preset, settings.CustomTemplate, "{message}");
+        var rotationEligible = MessageRotator.IsEligible(consumesMessage, engine.Enabled, outputPaused,
+            manual.AutomaticAvailable(now));
+        var profile = profiles.Selected;
+        var currentMessage = messageRotator.Current(profile.Id, SelectedRotation(), profile.Message, now, rotationEligible);
+        ApplyRotationRuntimeView(currentMessage, rotationEligible);
         var automatic = LyricContextComposer.ComposeProfile(engine.Context(now), engine.Track, settings.Preset,
-            settings.CustomTemplate, settings.Message, contextMode, settings.Compact, DateTimeOffset.Now, position,
+            settings.CustomTemplate, currentMessage.Text, contextMode, settings.Compact, DateTimeOffset.Now, position,
             settings.CustomAlignment);
         var desired = manual.Desired(automatic, now);
         var preserveLayout = manual.IsManual || settings.Preset is "Custom" or "Status / Time";
@@ -209,7 +212,7 @@ public partial class MainWindow : Window
         if (desired is not null && preserveLayout) desired = MessageLayout.Align(desired, alignment);
         var payload = ChatboxFormatter.Format(desired ?? MessageLayout.Align(manual.Draft, settings.ManualAlignment), settings.Compact, preserveLayout);
         var visible = ChatboxFormatter.Visible(payload);
-        ApplyPreviewView(visible, preserveLayout, payload.Length, showContext, desired);
+        ApplyPreviewView(visible, preserveLayout, showContext, desired);
         var manualLayout = MessageLayout.Align(manual.Draft, settings.ManualAlignment);
         var manualPayload = ChatboxFormatter.Format(manualLayout, settings.Compact, true);
         ApplyManualView(manualLayout, manualPayload, desired, now);
@@ -299,15 +302,23 @@ public partial class MainWindow : Window
     {
         if (!ready || changingProfiles) return;
         settings = settings with { Preset = PresetBox.SelectedItem as string ?? "Lyrics Only", CustomTemplate = TemplateBox.Text,
-            Message = MessageBox.Text, Compact = CompactBox.IsChecked == true, TypingIndicator = TypingBox.IsChecked == true,
+            Compact = CompactBox.IsChecked == true, TypingIndicator = TypingBox.IsChecked == true,
             LiveEdit = LiveBox.IsChecked == true, CustomAlignment = CustomAlignmentBox.SelectedItem as string ?? "Left",
             ManualAlignment = ManualAlignmentBox.SelectedItem as string ?? "Left" };
-        TemplateBox.IsEnabled = settings.Preset == "Custom";
-        CustomPanel.Visibility = settings.Preset == "Custom" ? Visibility.Visible : Visibility.Collapsed;
-        StatusPanel.Visibility = settings.Preset is "Custom" or "Status / Time" ? Visibility.Visible : Visibility.Collapsed;
         RememberProfileChanges();
         UpdateTray();
         saveTimer.Stop(); saveTimer.Start(); Tick();
+    }
+    private void InsertCompositionToken(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string token }) return;
+        var result = TextInsertion.Insert(TemplateBox.Text, TemplateBox.SelectionStart, TemplateBox.SelectionLength,
+            TemplateBox.MaxLength, token);
+        if (!result.CanInsert) { SetError("Not enough editor space for this token."); return; }
+        TemplateBox.Text = result.Text;
+        TemplateBox.Select(result.CaretIndex, 0);
+        TemplateBox.Focus();
+        ClearError();
     }
     private void DraftFocused(object sender, RoutedEventArgs e) { if (ready) { manual.Focus(true); Tick(); } }
     private void DraftUnfocused(object sender, RoutedEventArgs e) { if (ready) { manual.Focus(false); Tick(); } }

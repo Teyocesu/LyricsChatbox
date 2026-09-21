@@ -1,4 +1,4 @@
-# v0.7.0 execution plan — Phases 0–3.2 implemented
+# v0.7.0 execution plan — Phases 0–4 implemented
 
 ## State and baseline
 
@@ -6,12 +6,13 @@
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
 - Product assembly/file version remains `0.6.2`. This planning task changes only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: close the final post-QA Phase 3.2 picker refinement and keep the Phase 4 Display/token/rotation UI as the next separate task after renewed physical picker QA. About implementation, Output redesign, version bump, package, tag, release and main merge remain out of scope.
+- Current goal: obtain product-owner physical QA for the implemented Phase 4 Display/token/rotation UI. About implementation, Output redesign, version bump, tag, release and main merge remain out of scope.
 - Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
 - Phase 2 evidence: focused Decorations + rotation regression tests `44/44`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `434/434` with 0 skips; package-policy test PASS; `git diff --check` PASS. Systematic content review found 90 entries, 10,228 source bytes, 19 curated Popular flags, no duplicate IDs/content, no tabs/trailing garbage, maximum content length 48, maximum six lines and no item over 144 UTF-16 units. Security/quality review made the catalog collections actually read-only and moved the shared Unicode validator to neutral ownership; Ponytail FULL found no removable architecture.
 - Phase 3 evidence: focused picker/decorations/layout/display tests `50/50`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `447/447` with 0 skips; package-policy test and `git diff --check` PASS. Native WPF interaction QA is still required: the available computer-use host exposed browser tabs but no native Windows app surface, so no visual/keyboard/theme claim is recorded.
 - Phase 3.1 evidence: focused decoration/picker tests `31/31`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `450/450` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 218 entries, all 90 prior IDs preserved, no duplicate IDs/names/content, no tabs/trailing or blank-line garbage, maximum content length 49, maximum six lines and no item over 144 UTF-16 units. Code-quality review found no blocker; Ponytail FULL and complete-diff Ponytail review found no removable architecture or complexity.
-- Phase 3.2 evidence: focused decoration/picker tests `32/32`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `451/451` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 327 entries/27 Popular flags with exact requested distribution, no duplicate IDs/names/content, no tabs/trailing/blank-line garbage, maximum content length 50, maximum six lines and no item over 144 UTF-16 units. Multi-axis review found no blocker; Ponytail FULL/complete-diff review removed one unnecessary guard wrapper and found no remaining removable architecture.
+- Phase 3.2 evidence: focused decoration/picker tests `32/32`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `451/451` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 327 entries/27 Popular flags with exact requested distribution, no duplicate IDs/names/content, no tabs/trailing/blank-line garbage, maximum content length 50, maximum six lines and no item over 144 UTF-16 units. Multi-axis review found no blocker; Ponytail FULL/complete-diff review removed one unnecessary guard wrapper and found no remaining removable architecture. The product owner then physically approved naming, Favorites/Popular/My items placement, scroll reset, fit language, catalog variety/density and interaction behavior; Phase 3 is closed.
+- Phase 4 evidence: focused Display/rotation/manual/picker/presentation tests `160/160`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `473/473` with 0 skips; package policy and `git diff --check` PASS. The native Release WPF smoke launch with Output Off confirmed the cold-start Custom state, eight token chips, contextual panel hiding, Presentation grouping and persistent Live Preview without binding/runtime errors. Product-owner physical QA remains pending.
 
 ## Current extension points to preserve
 
@@ -108,7 +109,7 @@ Purpose: implement validated local catalog loading, filtering and isolated Favor
 - Dependencies: Phase 0 persistence contracts.
 - Out of scope: remote/community catalogs, full-text engine, tags, Recently Used, ratings, broad third-party dataset import.
 
-## Phase 3 — Insert picker UI and shared insertion — implemented; physical QA pending
+## Phase 3 — Insert picker UI and shared insertion — implemented and physically approved
 
 Purpose: replace the three ASCII selectors with one keyboard-usable picker and one caret-aware insertion path.
 
@@ -117,11 +118,11 @@ Purpose: replace the three ASCII selectors with one keyboard-usable picker and o
 - Rendering: Symbols/Hearts/Music use the dense presentation, Kaomoji/Status/Popular/Favorites/My items compact rows, Dividers wide rows, and Text Art/Frames whitespace-preserving monospaced previews. Search delegates to `DecorationLibrary.Search`; built-in Kind modes exclude user items while Favorites preserve saved order and My items remain available without the built-in catalog.
 - State and failure behavior: catalog/state load once during `MainWindow` initialization; explicit Favorite/My-item mutation rebuilds the small in-memory library and saves; failed saves remain understandable for the session; opening/closing does not write; malformed state and unavailable catalog retain Phase 2 semantics.
 - Deterministic tests: caret start/middle/end, selection, multiline Unicode, exact/refused/replacement `MaxLength`, 144/142/nine-line warnings, grapheme parity, all navigation/presentation modes, active-mode search, Favorites ordering, unavailable catalog plus My items and failed decoration-state save isolation.
-- Acceptance evidence: all obsolete ASCII controls/handler/model references are absent from production; XAML compiles; focused and full gates are green. Physical Custom/Status/Manual, keyboard, alternate-theme and small-window QA remains pending because native Windows automation was unavailable on this host.
+- Acceptance evidence: all obsolete ASCII controls/handler/model references are absent from production; XAML compiles; focused and full gates are green. Final Phase 3.2 native WPF behavior was physically approved by the product owner.
 - Dependencies: Phase 2 catalog/state foundation; prospective diagnostics are completed here against each real editor path.
 - Out of scope: drag-and-drop asset management, arbitrary category editing, template library, giant art support.
 
-## Phase 3.1 — Smarter picker and catalog expansion — implemented; physical QA pending
+## Phase 3.1 — Smarter picker and catalog expansion — implemented and superseded by approved Phase 3.2
 
 Purpose: refine the accepted Phase 3 picker without changing its modal, navigation, rendering or insertion architecture.
 
@@ -129,10 +130,10 @@ Purpose: refine the accepted Phase 3 picker without changing its modal, navigati
 - Navigation: Suggested precedes Popular and returns at most 24 built-ins using current fit state, a fixed Custom/Status/Manual Kind preference, Popular and catalog-order tie-breaking. Category modes expose one stable-order Group chip row. Search matches Name, Content, Kind, Group and bounded aliases. Favorites and My items retain Phase 3 behavior; there is no Recent, learning, usage tracking or recommendation persistence.
 - Fit and interaction: Fits reuses the originating editor's prospective insertion and existing formatter analysis through a per-picker cache. Required units are reported as Fits/Will truncate, editor overflow remains distinct, and double-click joins Enter/footer Insert while single-click remains selection.
 - Deterministic tests: optional metadata validation and immutability; catalog distribution; groups/All/group+search/group+Fits; alias/Kind/Group search; target-aware stable Suggested ranking and bound; final-composition Fits at 142/144/nine lines plus editor capacity; existing insertion, state and failure behavior.
-- Acceptance: focused and full gates plus renewed native WPF product-owner QA with Output Off. Phase 3 is not finally accepted until that physical QA completes.
+- Acceptance: focused/full gates passed; final physical acceptance is recorded under Phase 3.2.
 - Out of scope: Phase 4, nested taxonomies, user tags, fuzzy/full-text search, global fit cache, online content, AI recommendations, Recent/history and usage analytics.
 
-## Phase 3.2 — Final picker UX refinement and catalog expansion — implemented; physical QA pending
+## Phase 3.2 — Final picker UX refinement and catalog expansion — implemented and physically approved
 
 Purpose: apply the final product-owner picker corrections without entering the Phase 4 Display redesign.
 
@@ -140,17 +141,21 @@ Purpose: apply the final product-owner picker corrections without entering the P
 - Viewport: category, My-items, group, search and fit-filter changes schedule the native WPF list ScrollViewer to the top after layout. Favorite and My-item mutations refresh in place without requesting a top reset.
 - Fit: the toggle says Only show items that fit and explains current VRChat truncation. Footer copy describes the full prospective output and distinguishes fits, truncation, editor capacity and a genuinely unchanged visible output. Current and prospective composition share the same timestamp/context and use the existing composer/alignment/formatter only.
 - Catalog: 327 local entries, maximum 384/1 MiB, with counts Symbol 72, TextArt 39, Kaomoji 45, Divider 39, Frame 30, Heart 36, Music 36 and Status 30. Content remains project-composed/generic; no dataset, dependency, network or notice change.
-- Acceptance: focused/full gates and product-owner native WPF QA with Output Off. Phase 3 is not finally accepted until that physical QA completes.
-- Deferred exactly to Phase 4: clickable composition token chips, Display reorganization, rotating-message editor, contextual Lyric Context and Status/Rotating Message UI.
+- Acceptance: focused/full gates passed. The product owner physically approved menu/picker naming, Favorites placement, Popular default, My items footer, scroll reset, fit language, the 327-item catalog, density/variety and interaction behavior.
+- Deferred work completed in Phase 4: clickable composition token chips, Display reorganization, rotating-message editor and contextual Lyric Context/Status messages UI.
 
-## Phase 4 — Display UX simplification and rotation editor
+## Phase 4 — Display UX simplification and rotation editor — implemented; physical QA pending
 
 Purpose: reorganize Display around the five user concepts and expose the bounded per-profile message list.
 
 - Likely files: `src/LyricsChatbox/MainWindow.xaml`, `src/LyricsChatbox/MainWindow.xaml.cs`, `src/LyricsChatbox/MainWindow.Presentation.cs`, `src/LyricsChatbox/MainWindow.PresentationState.cs`, `src/LyricsChatbox/DisplayProfiles.cs`, `src/LyricsChatbox/ChatboxComposer.cs`, `src/LyricsChatbox/LyricContextComposer.cs`, `tests/LyricsChatbox.Tests/DisplayTests.cs`, `tests/LyricsChatbox.Tests/PresentationTests.cs`, `tests/LyricsChatbox.Tests/RotationTests.cs`.
 - Invariants: preset semantics and profile ownership remain; status visibility derives from effective `{message}`; context availability derives from `{lyrics}` at cold start and every transition; token chips use shared insertion semantics; alignment/Floating and preview payload are unchanged; rotation list edits save only the selected profile.
 - Deterministic tests: each preset's visibility; Custom adds/removes `{message}` and `{lyrics}`; cold-start selected Custom without `{lyrics}` disables context immediately; token insertion/selection; profile switching and separate rotation lists; item mutation rules; preview/output parity; existing alignment and normal/floating budgets remain green.
-- Acceptance: no large active Status editor when irrelevant; a no-token rotation state looks inactive and explains how to enable it; the page reads Profile/Composition/Context/Presentation/Preview without losing features; existing profile migration still passes.
+- Acceptance: no large active Status editor when irrelevant; a no-token rotation state looks inactive and explains how to enable it; the page reads Profile/Composition/Status messages/Lyric Context/Presentation/Live Preview without losing features; existing profile migration still passes.
+- Implementation: one exact composer-token predicate drives `{lyrics}`/`{message}` support; one derived-state refresh owns Custom, Status, Lyric Context and alignment visibility from cold start onward. Token chips reuse `TextInsertion`. The profile-owned editor supports toggle, supported intervals, bounded add/edit/delete/enable/reorder and the approved Decorations picker with prospective active-message budget wording.
+- Runtime: one MainWindow-owned `MessageRotator` receives the existing monotonic Tick and supplies `{message}` before composition. Output Off, Output Pause, Manual ownership and absent `{message}` freeze the remainder. `ManualChat.AutomaticAvailable` resolves timed-hold expiry before composition without duplicating ownership rules. Track/lyric changes do not enter the rotator; formatter/scheduler/OSC ownership remains unchanged; runtime progression writes no state.
+- Persistence: `CurrentProfile` now updates presentation fields on the selected profile instead of reconstructing it from AppSettings, preserving Rotation across every unrelated Display edit. Configuration saves keep `DisplayProfile.Message` and `AppSettings.Message` as the first-enabled legacy mirror; duplicate copies configuration under a new runtime ID and rename keeps the existing ID/state.
+- Verification: focused Phase 4 suite `160/160`; locked restore PASS; Release build 0 warnings/0 errors; full suite `473/473`, 0 skips; package policy and `git diff --check` PASS. Native smoke launch with Output Off passed; product-owner physical QA is still required.
 - Dependencies: Phases 1 and 3.
 - Out of scope: new tokens, multiple rotating templates, rules, alternate profile framework or standalone fix architecture for the v0.6.2 cosmetic issue.
 
@@ -229,4 +234,4 @@ Purpose: prepare, but do not publish, v0.7.0 only after automated and physical a
 
 ## Open product questions
 
-None for implemented Phases 0–3. The canonical VRChat URL is resolved. Physical Phase 3 picker QA remains an execution gate, not an open product decision.
+None for implemented Phases 0–4. The canonical VRChat URL is resolved. Phase 4 product-owner physical QA remains an execution gate, not an open product decision.

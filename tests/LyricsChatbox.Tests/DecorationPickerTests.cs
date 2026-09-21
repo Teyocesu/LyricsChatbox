@@ -225,6 +225,30 @@ public sealed class DecorationPickerTests : IDisposable
     }
 
     [Fact]
+    public void RotatingMessagePreviewSubstitutesProspectiveActiveValueAndUsesTargetSpecificCopy()
+    {
+        var insertion = TextInsertion.Insert("Ready", 5, 0, 512, " ♡");
+        var raw = LyricContextComposer.ComposeProfile(new("previous", "current", "next"), CoreTests.Track,
+            "Custom", "{message}\n{title}\n{lyrics}", insertion.Text, "Current only", false,
+            new DateTimeOffset(2026, 9, 20, 12, 0, 0, TimeSpan.Zero), 10, "Left");
+        var preview = TextInsertion.Preview(insertion, MessageLayout.Align(raw, "Left"), false);
+
+        Assert.Contains("Ready ♡", raw);
+        Assert.Equal($"Output when this message is active: {preview.VisibleUnits} / 144 · Fits",
+            DecorationPickerPolicy.PreviewText(preview, DecorationPreviewWording.ActiveMessage));
+
+        var longInsertion = TextInsertion.Insert("", 0, 0, 512, new string('x', 143));
+        var floating = TextInsertion.Preview(longInsertion, longInsertion.Text, true);
+        Assert.Equal("Output when this message is active: 143 / 142 · Will be truncated",
+            DecorationPickerPolicy.PreviewText(floating, DecorationPreviewWording.ActiveMessage));
+
+        var tenLines = TextInsertion.Insert("", 0, 0, 512, string.Join('\n', Enumerable.Repeat("line", 10)));
+        var lines = TextInsertion.Preview(tenLines, tenLines.Text, false);
+        Assert.True(lines.WouldTruncate);
+        Assert.Contains("Will be truncated", DecorationPickerPolicy.PreviewText(lines, DecorationPreviewWording.ActiveMessage));
+    }
+
+    [Fact]
     public void SearchPreservesActiveKindAndFavoriteOrderAndReturnsEmptyStateText()
     {
         var catalog = Load([

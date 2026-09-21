@@ -280,6 +280,156 @@ public sealed class RotationTests : IDisposable
         AssertCurrent(rotator.Current("p", Rotation(true, 5, Message("c", "C")), "legacy", 100, true), "c", "C", 5);
     }
 
+    [Fact]
+    public void UnrelatedDisplayEditsRenameAndDuplicatePreserveRotationConfiguration()
+    {
+        var rotation = Rotation(true, 30, Message("a", "A"), Message("b", "B", false), Message("c", "C"));
+        var profile = new DisplayProfile("profile", "Profile", "Custom", "Adaptive", true, "Center",
+            "{message}\n{lyrics}", "A", Rotation: rotation);
+        var changed = profile.UpdatePresentation(new(Preset: "Status / Time", CustomTemplate: "{message}",
+            Compact: false, CustomAlignment: "Right", Message: "must not replace mirror"), "Current + next");
+
+        Assert.Same(rotation, changed.Rotation);
+        Assert.Equal("A", changed.Message);
+        Assert.Equal("Status / Time", changed.Preset);
+        Assert.Equal("{message}", changed.CustomTemplate);
+        Assert.Equal("Right", changed.Alignment);
+        Assert.False(changed.Compact);
+        Assert.Equal("Current + next", changed.ContextMode);
+
+        var rotator = new MessageRotator();
+        Assert.Equal("A", rotator.Current(profile.Id, rotation, "A", 0, true).Text);
+        Assert.Equal("C", rotator.Current(profile.Id, rotation, "A", 30, true).Text);
+
+        var library = new ProfileLibrary(1, profile.Id, [profile]);
+        var renamed = library.Save(changed with { Name = "Renamed" })!;
+        Assert.Same(rotation, renamed.Selected.Rotation);
+        Assert.Equal("C", rotator.Current(renamed.SelectedId, rotation, "A", 31, true).Text);
+        var duplicate = renamed.Duplicate(renamed.Selected)!;
+        Assert.NotEqual(renamed.SelectedId, duplicate.SelectedId);
+        Assert.Equal(rotation, duplicate.Selected.Rotation);
+        Assert.Equal("A", rotator.Current(duplicate.SelectedId, duplicate.Selected.Rotation!, "A", 31, true).Text);
+    }
+
+    [Fact]
+    public void ImmutableRotationMutationsEnforceBoundsAndLegacyMirror()
+    {
+        var rotation = Rotation(false, 15, Message("a", "A"), Message("b", "B"));
+        rotation = rotation.SetEnabled(true)!;
+        rotation = rotation.SetInterval(30)!;
+        rotation = rotation.Edit("a", "A edited")!;
+        rotation = rotation.SetItemEnabled("a", false)!;
+        rotation = rotation.Move("b", -1)!;
+        rotation = rotation.Add(Message("c", "C"))!;
+
+        Assert.True(rotation.Enabled);
+        Assert.Equal(30, rotation.IntervalSeconds);
+        Assert.Equal(["b", "a", "c"], rotation.Items!.Select(item => item.Id));
+        Assert.False(rotation.Items!.Single(item => item.Id == "a").Enabled);
+        Assert.Equal("B", rotation.LegacyMessage);
+        Assert.Null(rotation.Move("b", -1));
+        Assert.Null(rotation.Move("c", 1));
+        Assert.Null(rotation.Edit("missing", "text"));
+        Assert.Null(rotation.SetItemEnabled("missing", false));
+        Assert.Null(rotation.SetInterval(7));
+        Assert.Null(rotation.Add(Message("blank", "  ")));
+
+        rotation = rotation.Delete("b")!;
+        Assert.Equal("C", rotation.LegacyMessage);
+        rotation = rotation.SetItemEnabled("c", false)!;
+        Assert.Equal("", rotation.LegacyMessage);
+        Assert.Null(rotation.Delete("missing"));
+
+        var full = Rotation(false, 15, Enumerable.Range(0, MessageRotation.Maximum)
+            .Select(index => Message("item-" + index, "Text " + index)).ToArray());
+        Assert.Null(full.Add(Message("extra", "Extra")));
+    }
+
+    [Fact]
+    public void ActiveMessageFeedsCompositionAndSchedulerWithoutChangingTemplateOrPlaybackContent()
+    {
+        var rotation = Rotation(true, 5, Message("a", "A"), Message("b", "B"), Message("c", "C"));
+        var rotator = new MessageRotator();
+        const string template = "{message}\n♫ {title} — {artist}\n{lyrics}";
+        var context = new LyricContext("previous", "current", "next");
+        var at = new DateTimeOffset(2026, 9, 20, 12, 0, 0, TimeSpan.Zero);
+
+        string Compose(double now, bool eligible, TrackIdentity track, LyricContext lyrics)
+        {
+            var message = rotator.Current("profile", rotation, "A", now, eligible).Text;
+            return LyricContextComposer.ComposeProfile(lyrics, track, "Custom", template, message,
+                "Current only", false, at, 10, "Left");
+        }
+
+        var changedTrack = CoreTests.Track with { Title = "Changed song", Album = "changed" };
+        var changedLyrics = context with { Current = "changed lyric" };
+        var first = Compose(0, true, CoreTests.Track, context);
+        var metadataChanged = Compose(3, true, changedTrack, changedLyrics);
+        var second = Compose(5, true, changedTrack, changedLyrics);
+        Assert.Equal("A\n♫ Song — Artist\ncurrent", first);
+        Assert.Equal("A\n♫ Changed song — Artist\nchanged lyric", metadataChanged);
+        Assert.Equal("B\n♫ Changed song — Artist\nchanged lyric", second);
+        Assert.Equal(template, "{message}\n♫ {title} — {artist}\n{lyrics}");
+
+        var scheduler = new ChatboxScheduler();
+        scheduler.Set(1, second, true);
+        var packet = scheduler.Take(5)!.Value;
+        Assert.Equal(ChatboxFormatter.Visible(ChatboxFormatter.Format(second)), ChatboxFormatter.Visible(packet.Text));
+        Assert.Equal(1.05, ChatboxScheduler.IntervalSeconds);
+    }
+
+    [Fact]
+    public void EligibilityPolicyFreezesForOffPauseManualAndMissingMessageThenResumesRemainder()
+    {
+        var rotation = Rotation(true, 10, Message("a", "A"), Message("b", "B"));
+        var rotator = new MessageRotator();
+        var manual = new ManualChat();
+        bool Eligible(bool consumes = true, bool output = true, bool paused = false, double now = 0) =>
+            MessageRotator.IsEligible(consumes, output, paused, manual.AutomaticAvailable(now));
+
+        Assert.Equal("A", rotator.Current("p", rotation, "A", 0, Eligible(now: 0)).Text);
+        Assert.Equal(6, rotator.Current("p", rotation, "A", 4, Eligible(output: false, now: 4)).RemainingSeconds, 6);
+        Assert.Equal(6, rotator.Current("p", rotation, "A", 24, Eligible(paused: true, now: 24)).RemainingSeconds, 6);
+        Assert.Equal(6, rotator.Current("p", rotation, "A", 44, Eligible(consumes: false, now: 44)).RemainingSeconds, 6);
+
+        manual.PrepareDraft("manual");
+        Assert.Equal(6, rotator.Current("p", rotation, "A", 64, Eligible(now: 64)).RemainingSeconds, 6);
+        manual.Resume();
+        Assert.Equal("A", rotator.Current("p", rotation, "A", 64, Eligible(now: 64)).Text);
+        Assert.Equal("A", rotator.Current("p", rotation, "A", 69, Eligible(now: 69)).Text);
+        Assert.Equal("B", rotator.Current("p", rotation, "A", 70, Eligible(now: 70)).Text);
+
+        manual.Edit("manual", false, 72);
+        manual.Send();
+        manual.Sent(72);
+        Assert.Equal(8, rotator.Current("p", rotation, "A", 72, Eligible(now: 72)).RemainingSeconds, 6);
+        Assert.Equal("B", rotator.Current("p", rotation, "A", 80, Eligible(now: 80)).Text);
+        Assert.Equal("A", rotator.Current("p", rotation, "A", 88, Eligible(now: 88)).Text);
+    }
+
+    [Fact]
+    public void RuntimeAdvanceNeverChangesProfileSettingsOrPersistedLegacyMessage()
+    {
+        var profile = new DisplayProfile("profile", "Profile", "Custom", CustomTemplate: "{message}", Message: "stale",
+            Rotation: Rotation(true, 5, Message("a", "A"), Message("b", "B"), Message("c", "C")));
+        var data = new LocalData(root);
+        var library = new ProfileLibrary(1, profile.Id, [profile]);
+        Assert.True(data.SaveProfiles(library));
+        var saved = data.ReadProfiles(new()).Selected;
+        var settings = saved.Apply(new());
+        Assert.True(data.SaveSettings(settings));
+
+        var rotator = new MessageRotator();
+        Assert.Equal("A", rotator.Current(saved.Id, saved.Rotation!, saved.Message, 0, true).Text);
+        Assert.Equal("B", rotator.Current(saved.Id, saved.Rotation!, saved.Message, 5, true).Text);
+        Assert.Equal("A", saved.Message);
+        Assert.Equal("A", settings.Message);
+        Assert.Equal("A", data.ReadProfiles(new()).Selected.Message);
+        Assert.Equal("A", data.ReadSettings().Message);
+        using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "profiles.json")));
+        Assert.Equal("A", json.RootElement.GetProperty("Items")[0].GetProperty("Message").GetString());
+    }
+
     private static RotatingMessage Message(string id, string text, bool enabled = true) => new(id, text, enabled);
     private static MessageRotation Rotation(bool enabled, int interval, params RotatingMessage[] items) =>
         new(Enabled: enabled, IntervalSeconds: interval, Items: items);

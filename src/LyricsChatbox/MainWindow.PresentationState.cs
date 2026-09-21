@@ -8,7 +8,8 @@ public partial class MainWindow
 {
     private sealed record PlaybackView(string Track, string Artist, string Album, string Lyric, string LyricsStatus);
     private sealed record ProgressView(double Value, string Text);
-    private sealed record PreviewView(string Text, bool Placeholder, bool PreserveLayout, int PayloadLength, string Profile, bool Compact, string Owner);
+    private sealed record PreviewView(string Text, bool Placeholder, bool PreserveLayout, int VisibleUnits, int Limit,
+        string Profile, bool Compact, string Owner);
     private sealed record ManualView(string Budget, string State, bool Enabled);
     private sealed record LyricsDetailsView(bool HasTrack, bool CanSearch, string? SearchHint, string IgnoreContent,
         RecoveryPresentation Recovery, string Source, string Cache, string Match, string Duration,
@@ -56,20 +57,21 @@ public partial class MainWindow
         PositionProgress.Value = view.Value; PositionText.Text = view.Text;
     }
 
-    private void ApplyPreviewView(string visible, bool preserveLayout, int payloadLength, bool showContext, string? desired)
+    private void ApplyPreviewView(string visible, bool preserveLayout, bool showContext, string? desired)
     {
         var preview = PresentationText.Preview(visible);
         var profile = (manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
             : profiles.Selected.Name + " · " + (showContext ? contextMode : settings.Preset)) + (settings.Compact ? " · Floating" : "");
         var owner = !engine.Enabled ? "Output off · preview" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output paused · preview" : manual.IsManual
             ? desired is null ? "Manual · unsent draft" : "Manual · preview" : "Automatic · preview";
-        var view = new PreviewView(preview.Text, preview.IsPlaceholder, preserveLayout, payloadLength, profile, settings.Compact, owner);
+        var view = new PreviewView(preview.Text, preview.IsPlaceholder, preserveLayout, visible.Length,
+            settings.Compact ? 142 : 144, profile, settings.Compact, owner);
         if (!previewView.ShouldApply(view)) return;
         PreviewText.Text = view.Text;
         PreviewText.SetResourceReference(TextBlock.ForegroundProperty, view.Placeholder ? "MutedBrush" : "TextBrush");
         PreviewText.FontStyle = view.Placeholder ? FontStyles.Italic : FontStyles.Normal;
         PreviewText.FontFamily = view.PreserveLayout ? LayoutFont : TextFont;
-        BudgetText.Text = view.PayloadLength + " / 144";
+        BudgetText.Text = view.VisibleUnits + " / " + view.Limit;
         PreviewProfileText.Text = view.Profile;
         if (view.Compact) PreviewBubble.Background = Brushes.Transparent;
         else PreviewBubble.SetResourceReference(Border.BackgroundProperty, "RaisedBrush");

@@ -207,6 +207,42 @@ public sealed class OutputPauseTests : IDisposable
     }
 
     [Fact]
+    public void AutomaticAvailabilityOwnsEveryManualStateAndExpiresHoldAtTheBoundary()
+    {
+        var manual = new ManualChat();
+        Assert.True(manual.AutomaticAvailable(0));
+
+        manual.Focus(true);
+        Assert.False(manual.AutomaticAvailable(1));
+        manual.Focus(false);
+        Assert.False(manual.AutomaticAvailable(2));
+        manual.PrepareDraft("prepared");
+        Assert.False(manual.AutomaticAvailable(3));
+
+        manual.Edit("sent", false, 4);
+        manual.Send();
+        Assert.False(manual.AutomaticAvailable(100));
+        manual.Sent(100);
+        Assert.False(manual.AutomaticAvailable(107.999));
+        Assert.True(manual.AutomaticAvailable(108));
+        Assert.False(manual.IsManual);
+
+        manual.Edit("paused hold", false, 200);
+        manual.Send();
+        manual.Sent(200);
+        manual.PauseOutput(203);
+        Assert.False(manual.AutomaticAvailable(500));
+        manual.ResumeOutput(500);
+        Assert.False(manual.AutomaticAvailable(504.999));
+        Assert.True(manual.AutomaticAvailable(505));
+
+        manual.Edit("indefinite", true, 600);
+        Assert.False(manual.AutomaticAvailable(1000));
+        manual.Resume();
+        Assert.True(manual.AutomaticAvailable(1000));
+    }
+
+    [Fact]
     public void ResumeQueuesOnlyLatestAutomaticStateAndNoManualBacklog()
     {
         var scheduler = new ChatboxScheduler();

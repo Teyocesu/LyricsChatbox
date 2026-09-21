@@ -18,6 +18,7 @@ public partial class DecorationPicker : Window
     private readonly DecorationCatalog catalog;
     private readonly Func<DecorationState, bool> saveState;
     private readonly Func<string, DecorationInsertionPreview> preview;
+    private readonly DecorationPreviewWording previewWording;
     private readonly Dictionary<string, DecorationInsertionPreview> previewCache = new(StringComparer.Ordinal);
     private DecorationState state;
     private DecorationLibrary library;
@@ -29,13 +30,15 @@ public partial class DecorationPicker : Window
     public string? SelectedContent { get; private set; }
 
     public DecorationPicker(DecorationCatalog catalog, DecorationState state, DecorationLibrary library,
-        Func<DecorationState, bool> saveState, Func<string, DecorationInsertionPreview> preview)
+        Func<DecorationState, bool> saveState, Func<string, DecorationInsertionPreview> preview,
+        DecorationPreviewWording previewWording = DecorationPreviewWording.CurrentOutput)
     {
         this.catalog = catalog;
         this.state = state;
         this.library = library;
         this.saveState = saveState;
         this.preview = preview;
+        this.previewWording = previewWording;
         InitializeComponent();
         ModeList.ItemsSource = DecorationPickerPolicy.Options;
         ItemKindBox.ItemsSource = DecorationPickerPolicy.KindOptions;
@@ -101,7 +104,7 @@ public partial class DecorationPicker : Window
         var result = PreviewFor(item.Entry);
         var lines = item.Entry.Content.Count(c => c == '\n') + 1;
         SelectedText.Text = item.Entry.Name + (lines > 1 ? $" · {lines} lines" : "");
-        PreviewStatus.Text = DecorationPickerPolicy.PreviewText(result);
+        PreviewStatus.Text = DecorationPickerPolicy.PreviewText(result, previewWording);
         PreviewStatus.SetResourceReference(TextBlock.ForegroundProperty,
             !result.CanInsert || result.WouldTruncate ? "WarningBrush" : "MutedBrush");
         InsertButton.IsEnabled = result.CanInsert;

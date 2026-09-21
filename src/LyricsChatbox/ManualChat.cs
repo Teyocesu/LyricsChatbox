@@ -64,9 +64,14 @@ public sealed class ManualChat
         IsManual = false; desired = null; pendingSend = false;
         lastEdit = double.NegativeInfinity; resumeAt = double.PositiveInfinity; pausedHold = null;
     }
-    public string? Desired(string automatic, double now)
+    public bool AutomaticAvailable(double now)
     {
         if (IsManual && now >= resumeAt) Resume();
+        return !IsManual;
+    }
+    public string? Desired(string automatic, double now)
+    {
+        AutomaticAvailable(now);
         return IsManual ? desired : automatic;
     }
     public bool Typing(double now) => IsManual && focused && !pendingSend && Draft.Length > 0 && now - lastEdit < 3;

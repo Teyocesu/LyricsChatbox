@@ -22,13 +22,15 @@ public partial class MainWindow
         var target = targetName switch
         {
             "Custom" => TemplateBox,
-            "Status" => MessageBox,
+            "Rotation" => RotationMessageBox,
             "Manual" => DraftBox,
             _ => null
         };
         if (target is null) return;
         var picker = new DecorationPicker(decorationCatalog, decorationState, decorationLibrary,
-            SaveDecorationState, content => PreviewDecorationInsertion(target, content)) { Owner = this };
+            SaveDecorationState, content => PreviewDecorationInsertion(target, content),
+            target == RotationMessageBox ? DecorationPreviewWording.ActiveMessage : DecorationPreviewWording.CurrentOutput)
+            { Owner = this };
         try
         {
             if (picker.ShowDialog() == true && picker.SelectedContent is { } content)
@@ -55,7 +57,7 @@ public partial class MainWindow
         {
             if (target == DraftBox) return MessageLayout.Align(text, settings.ManualAlignment);
             var template = target == TemplateBox ? text : settings.CustomTemplate;
-            var message = target == MessageBox ? text : settings.Message;
+            var message = target == RotationMessageBox ? text : activeRotationMessage.Text ?? profiles.Selected.Message;
             var raw = LyricContextComposer.ComposeProfile(engine.Context(monotonicNow), engine.Track, settings.Preset, template,
                 message, contextMode, settings.Compact, wallNow, engine.Position(monotonicNow), settings.CustomAlignment);
             return MessageLayout.Align(raw, settings.CustomAlignment);

@@ -5,6 +5,51 @@ namespace LyricsChatbox.Tests;
 
 public class DisplayTests
 {
+    public static IEnumerable<object[]> CompositionTokenCases() =>
+        ChatboxComposer.Tokens.Select(token => new object[] { token.Token, token.Description });
+
+    [Theory]
+    [MemberData(nameof(CompositionTokenCases))]
+    public void EveryCompositionTokenUsesSharedCaretSelectionAndCapacityRules(string token, string description)
+    {
+        Assert.False(string.IsNullOrWhiteSpace(description));
+        var atCaret = TextInsertion.Insert("beforeafter", 6, 0, 512, token);
+        Assert.True(atCaret.CanInsert);
+        Assert.Equal("before" + token + "after", atCaret.Text);
+        Assert.Equal(6 + token.Length, atCaret.CaretIndex);
+
+        var replacement = TextInsertion.Insert("before selected after", 7, 8, 512, token);
+        Assert.True(replacement.CanInsert);
+        Assert.Equal("before " + token + " after", replacement.Text);
+        Assert.Equal(7 + token.Length, replacement.CaretIndex);
+
+        var full = new string('x', 512);
+        var refused = TextInsertion.Insert(full, full.Length, 0, 512, token);
+        Assert.False(refused.CanInsert);
+        Assert.Equal(full, refused.Text);
+        Assert.Equal(full.Length, refused.CaretIndex);
+    }
+
+    [Theory]
+    [InlineData("Lyrics Only", "{message}", false, true, false)]
+    [InlineData("Song + Lyrics", "{message}", false, true, false)]
+    [InlineData("Status / Time", "{lyrics}", true, false, false)]
+    [InlineData("Custom", "{lyrics}", false, true, true)]
+    [InlineData("Custom", "{message}", true, false, true)]
+    [InlineData("Custom", "{message}\n{lyrics}", true, true, true)]
+    [InlineData("Custom", "{Message}\n{ lyrics }", false, false, true)]
+    public void DisplayDerivedStateExactlyMatchesComposerTokenSemantics(string preset, string template,
+        bool message, bool lyrics, bool custom)
+    {
+        var state = DisplayDerivedState.From(preset, template);
+        Assert.Equal(message, state.ShowStatusMessages);
+        Assert.Equal(lyrics, state.ShowLyricContext);
+        Assert.Equal(custom, state.ShowCustomEditor);
+        Assert.Equal(preset is "Custom" or "Status / Time", state.ShowAlignment);
+        Assert.Equal(message, ChatboxComposer.ConsumesToken(preset, template, "{message}"));
+        Assert.Equal(lyrics, ChatboxComposer.ConsumesToken(preset, template, "{lyrics}"));
+    }
+
     [Theory]
     [InlineData("{lyrics}", "日本語 🎵")]
     [InlineData("{title} — {artist}", "Song — Artist")]

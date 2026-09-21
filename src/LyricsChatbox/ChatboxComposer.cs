@@ -5,6 +5,17 @@ namespace LyricsChatbox;
 public static class ChatboxComposer
 {
     public static readonly string[] Presets = ["Lyrics Only", "Song + Lyrics", "Status / Time", "Custom"];
+    public static readonly IReadOnlyList<CompositionToken> Tokens = Array.AsReadOnly(new[]
+    {
+        new CompositionToken("{lyrics}", "Current synchronized lyric"),
+        new CompositionToken("{title}", "Current song title"),
+        new CompositionToken("{artist}", "Current artist"),
+        new CompositionToken("{album}", "Current album"),
+        new CompositionToken("{message}", "Current status or rotating message"),
+        new CompositionToken("{elapsed}", "Current playback position"),
+        new CompositionToken("{duration}", "Track duration"),
+        new CompositionToken("{time}", "Current local time")
+    });
     public static string Template(string preset, string custom) => preset switch
     {
         "Song + Lyrics" => "♫ {title} — {artist}\n{lyrics}",
@@ -12,6 +23,8 @@ public static class ChatboxComposer
         "Custom" => custom,
         _ => "{lyrics}"
     };
+    public static bool ConsumesToken(string preset, string custom, string token) =>
+        Tokens.Any(item => item.Token == token) && Template(preset, custom).Contains(token, StringComparison.Ordinal);
     public static string Time(double? seconds) => DurationFormatter.Format(seconds);
 
     public static string Compose(string? template, TrackIdentity? track, string lyrics, string message,
@@ -51,3 +64,5 @@ public static class ChatboxComposer
         return string.Join("\n", lines).Trim('\n');
     }
 }
+
+public sealed record CompositionToken(string Token, string Description);

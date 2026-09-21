@@ -9,7 +9,7 @@ public static class LyricContextComposer
 {
     public static readonly string[] Modes = ["Current only", "Current + next", "Previous + current + next", "Adaptive"];
     public static bool SupportsContext(string preset, string customTemplate) =>
-        ChatboxComposer.Template(preset, customTemplate).Contains("{lyrics}", System.StringComparison.Ordinal);
+        ChatboxComposer.ConsumesToken(preset, customTemplate, "{lyrics}");
     public static string ComposeProfile(LyricContext context, TrackIdentity? track, string preset, string customTemplate,
         string message, string mode, bool compact, DateTimeOffset localTime = default, double? position = null,
         string customAlignment = "Left")

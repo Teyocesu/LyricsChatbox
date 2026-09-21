@@ -6,6 +6,7 @@ public enum DecorationNavigation
 }
 
 public enum DecorationPresentation { Dense, Compact, Wide, Art }
+public enum DecorationPreviewWording { CurrentOutput, ActiveMessage }
 
 public sealed record DecorationNavigationOption(DecorationNavigation Mode, string Label);
 public sealed record DecorationKindOption(string Kind, string Label);
@@ -59,7 +60,11 @@ public static class DecorationPickerPolicy
         Kind(mode) is null ? [] : Filter(library, mode, null).Select(item => item.Group).OfType<string>()
             .Distinct(StringComparer.Ordinal).ToArray();
 
-    public static string PreviewText(DecorationInsertionPreview preview) => !preview.CanInsert ? "Not enough editor space"
+    public static string PreviewText(DecorationInsertionPreview preview,
+        DecorationPreviewWording wording = DecorationPreviewWording.CurrentOutput) => !preview.CanInsert ? "Not enough editor space"
+        : wording == DecorationPreviewWording.ActiveMessage ? preview.WouldTruncate
+            ? $"Output when this message is active: {preview.VisibleUnits} / {preview.Limit} · Will be truncated"
+            : $"Output when this message is active: {preview.VisibleUnits} / {preview.Limit} · Fits"
         : !preview.OutputChanged ? $"Current output unchanged: {preview.VisibleUnits} / {preview.Limit}"
         : preview.WouldTruncate ? $"Current output after insertion: {preview.VisibleUnits} / {preview.Limit} · Will be truncated"
         : $"Current output after insertion: {preview.VisibleUnits} / {preview.Limit} · Fits";

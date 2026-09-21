@@ -15,7 +15,9 @@ public partial class MainWindow
     {
         ContextBox.ItemsSource = LyricContextComposer.Modes;
         ContextBox.SelectedItem = contextMode;
-        RefreshProfiles(); RefreshQuickMessages();
+        TokenChips.ItemsSource = ChatboxComposer.Tokens;
+        InitializeRotation();
+        RefreshProfiles(); RefreshQuickMessages(); RefreshDisplayDerivedState();
     }
     private void RefreshProfiles()
     {
@@ -30,19 +32,16 @@ public partial class MainWindow
         }
         finally { changingProfiles = false; }
     }
-    private DisplayProfile CurrentProfile() => DisplayProfile.FromSettings(settings, profiles.SelectedId, profiles.Selected.Name)
-        with { ContextMode = contextMode, BuiltIn = profiles.Selected.BuiltIn };
+    private DisplayProfile CurrentProfile() => profiles.Selected.UpdatePresentation(settings, contextMode);
     private void RememberProfileChanges()
     {
         profiles = profiles.Save(CurrentProfile()) ?? profiles;
-        var supportsContext = CurrentProfile().SupportsLyricContext;
-        ContextBox.IsEnabled = supportsContext;
-        ProfileContextBox.IsEnabled = supportsContext;
-        ContextHint.Text = !supportsContext ? "Lyric context needs a {lyrics} line in the template."
-            : contextMode == "Adaptive" ? "Adds nearby lyrics when they fit. The current lyric always stays."
+        settings = settings with { Message = profiles.Selected.Message };
+        RefreshDisplayDerivedState();
+        ContextHint.Text = contextMode == "Adaptive" ? "Adds nearby lyrics when they fit. The current lyric always stays."
             : contextMode == "Previous + current + next" ? "Shows all three lyrics when they fit. The current lyric always stays."
             : "The current lyric always stays when space is limited.";
-        ContextHint.Visibility = supportsContext ? Visibility.Collapsed : Visibility.Visible;
+        ContextHint.Visibility = Visibility.Collapsed;
         // Replacing immutable items updates card summaries without changing the selected profile.
         RefreshProfiles(); ProfileStatus.Text = "Changes save automatically. Appearance stays global.";
     }
@@ -58,14 +57,27 @@ public partial class MainWindow
         try
         {
             PresetBox.SelectedItem = settings.Preset; TemplateBox.Text = settings.CustomTemplate;
-            MessageBox.Text = settings.Message; CompactBox.IsChecked = settings.Compact;
+            CompactBox.IsChecked = settings.Compact;
             CustomAlignmentBox.SelectedItem = settings.CustomAlignment; ContextBox.SelectedItem = contextMode;
-            TemplateBox.IsEnabled = settings.Preset == "Custom";
-            CustomPanel.Visibility = settings.Preset == "Custom" ? Visibility.Visible : Visibility.Collapsed;
-            StatusPanel.Visibility = settings.Preset is "Custom" or "Status / Time" ? Visibility.Visible : Visibility.Collapsed;
+            RefreshRotationEditor(resetEditor: true);
+            RefreshDisplayDerivedState();
         }
         finally { changingProfiles = false; }
         RememberProfileChanges(); Save(); UpdateTray(); Tick();
+    }
+
+    private void RefreshDisplayDerivedState()
+    {
+        var state = DisplayDerivedState.From(settings.Preset, settings.CustomTemplate);
+        CustomPanel.Visibility = state.ShowCustomEditor ? Visibility.Visible : Visibility.Collapsed;
+        TemplateBox.IsEnabled = state.ShowCustomEditor;
+        StatusPanel.Visibility = state.ShowStatusMessages ? Visibility.Visible : Visibility.Collapsed;
+        CustomMessageHint.Visibility = state.ShowCustomEditor && !state.ShowStatusMessages
+            ? Visibility.Visible : Visibility.Collapsed;
+        LyricContextPanel.Visibility = ContextCard.Visibility = state.ShowLyricContext
+            ? Visibility.Visible : Visibility.Collapsed;
+        ContextBox.IsEnabled = ProfileContextBox.IsEnabled = state.ShowLyricContext;
+        AlignmentPanel.Visibility = state.ShowAlignment ? Visibility.Visible : Visibility.Collapsed;
     }
     private void ContextChanged(object sender, SelectionChangedEventArgs e)
     {
