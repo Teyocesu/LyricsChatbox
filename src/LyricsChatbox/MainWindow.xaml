@@ -28,11 +28,23 @@
           </StackPanel>
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom">
+          <StackPanel x:Name="AboutNavigationPanel" Margin="0,0,0,10">
+            <RadioButton x:Name="AboutNav" Tag="About" AutomationProperties.Name="About" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE946;" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                <TextBlock Text="About"/>
+              </StackPanel>
+            </RadioButton>
+          </StackPanel>
           <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Padding="10,12">
             <StackPanel>
-              <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"><TextBlock Text="Output" FontSize="12"/></CheckBox>
-              <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource Caption}" Margin="22,5,0,8"/>
-              <WrapPanel>
+              <DockPanel>
+                <TextBlock x:Name="OutputPowerText" Text="OFF" DockPanel.Dock="Right" Foreground="{DynamicResource MutedBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Output power status"/>
+                <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"><TextBlock Text="Output" FontSize="12"/></CheckBox>
+              </DockPanel>
+              <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource Caption}" Margin="22,5,0,2"/>
+              <TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource Caption}" Margin="22,0,0,8" Visibility="Collapsed"/>
+              <WrapPanel Margin="0,6,0,0">
               <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="0,0,6,0" AutomationProperties.Name="Resume Chatbox output"/>
               <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource SmallButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
                 <Button.ContextMenu>
@@ -446,45 +458,15 @@
           </Border>
           <Border Style="{StaticResource Card}" Margin="0,0,8,16">
             <StackPanel>
-              <TextBlock Text="Updates" Style="{StaticResource SectionTitle}"/>
-              <TextBlock x:Name="UpdateStatus" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
-              <WrapPanel><Button x:Name="CheckUpdatesButton" Content="Check now" Click="CheckUpdates" Margin="0,0,8,8"/><Button x:Name="ViewReleaseButton" Content="View release" Click="ViewRelease" Visibility="Collapsed" Margin="0,0,0,8"/></WrapPanel>
-              <StackPanel x:Name="ReleaseDetails" Visibility="Collapsed" Margin="0,8,0,12">
-                <TextBlock Text="What's new" Style="{StaticResource SectionTitle}"/>
-                <TextBox x:Name="UpdateNotes" IsReadOnly="True" TextWrapping="Wrap" MinHeight="64" MaxHeight="200" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Release notes"/>
-                <WrapPanel Margin="0,12,0,8">
-                  <Button x:Name="DownloadInstallerButton" Content="Download verified installer" Click="DownloadInstaller" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"/>
-                  <Button x:Name="SkipUpdateButton" Content="Skip this version" Click="SkipUpdate" Margin="0,0,8,8"/>
-                  <Button x:Name="CancelDownloadButton" Content="Cancel download" Click="CancelInstallerDownload" Visibility="Collapsed" Margin="0,0,0,8"/>
-                </WrapPanel>
-                <ProgressBar x:Name="DownloadProgress" Maximum="100" Height="4" Visibility="Collapsed" Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource RaisedBrush}"/>
-              </StackPanel>
-              <TextBlock x:Name="DownloadStatus" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
-              <Button x:Name="LaunchInstallerButton" Content="Open verified installer…" Click="LaunchInstaller" Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-              <CheckBox x:Name="AutoUpdateBox" Content="Check for updates at startup" Checked="AutomaticUpdatesChanged" Unchecked="AutomaticUpdatesChanged" Margin="0,8,0,8"/>
-              <TextBlock Text="Checks GitHub only when requested or enabled here. Updates are never downloaded or installed automatically." Style="{StaticResource Caption}"/>
-            </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel>
               <TextBlock Text="Lyrics sources" Style="{StaticResource SectionTitle}"/>
               <TextBlock Text="Local LRC → cache → LRCLIB → NetEase" Foreground="{DynamicResource AccentBrush}"/>
               <TextBlock Text="NetEase is a best-effort fallback, searched only when LRCLIB cannot supply synchronized lyrics. No account or key is needed." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
               <WrapPanel>
                 <Button x:Name="ImportButton" Content="Import local LRC…" Click="ImportLrc" Margin="0,0,8,8"/>
-                <Button Content="Open data folder" Click="OpenData" Margin="0,0,8,8"/>
                 <Button Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,8,8"/>
                 <Button x:Name="ForgetMatchButton" Content="Forget manual match" Click="ForgetMatch" IsEnabled="False" Margin="0,0,8,8"/>
               </WrapPanel>
               <TextBlock Text="Searches send song metadata to the lyrics source. Settings and cached lyrics stay on this computer. Community endpoints may change or be unavailable in some regions." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
-            </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel>
-              <TextBlock Text="Diagnostics" Style="{StaticResource SectionTitle}"/>
-              <TextBlock Text="Current playback, provider and output state. No lyrics or chat messages. Review before sharing." Style="{StaticResource Caption}" Margin="0,0,0,12"/>
-              <WrapPanel><Button Content="Copy diagnostics" Click="CopyDiagnostics" Margin="0,0,8,8"/><Button Content="Export diagnostics…" Click="ExportDiagnostics" Margin="0,0,0,8"/></WrapPanel>
-              <TextBlock x:Name="DiagnosticsStatus" Style="{StaticResource Caption}"/>
             </StackPanel>
           </Border>
           <Border Style="{StaticResource Card}" Margin="0,0,8,16">
@@ -513,6 +495,77 @@
                   <Button Grid.Column="2" Content="Apply" Click="ApplyOsc" VerticalAlignment="Bottom"/>
                 </Grid>
               </Expander>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+      <ScrollViewer x:Name="AboutPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="LyricsChatbox" FontSize="20" FontWeight="SemiBold"/>
+              <TextBlock x:Name="AboutVersionText" Style="{StaticResource Caption}" Margin="0,4,0,8"/>
+              <TextBlock Text="Made by Teyocesu" Margin="0,0,0,12"/>
+              <TextBlock Text="LyricsChatbox runs locally and does not require an account or collect telemetry. When synchronized lyrics are needed, song metadata may be sent to the configured public lyrics providers. Update checks contact GitHub only when requested or enabled. VRChat communication uses OSC on the configured destination." Style="{StaticResource Caption}" TextWrapping="Wrap"/>
+              <TextBlock x:Name="AboutStatus" Style="{StaticResource Caption}" Margin="0,8,0,0"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Author" Style="{StaticResource SectionTitle}"/>
+              <WrapPanel Margin="0,0,0,8">
+                <Button Content="GitHub" Click="OpenAuthorGitHub" Margin="0,0,8,8" AutomationProperties.Name="GitHub profile" ToolTip="https://github.com/Teyocesu"/>
+                <Button Content="VRChat profile" Click="OpenVrChatProfile" Margin="0,0,8,8" AutomationProperties.Name="VRChat profile"/>
+                <Button Content="Copy Discord: teyocesu" Click="CopyDiscordName" Margin="0,0,0,8" AutomationProperties.Name="Copy Discord username"/>
+              </WrapPanel>
+              <TextBlock Text="Project" Style="{StaticResource SectionTitle}"/>
+              <WrapPanel>
+                <Button Content="View repository" Click="ViewRepository" Margin="0,0,8,8" AutomationProperties.Name="View repository"/>
+                <Button Content="View releases" Click="ViewReleases" Margin="0,0,8,8" AutomationProperties.Name="View releases"/>
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Updates" Style="{StaticResource SectionTitle}"/>
+              <TextBlock x:Name="UpdateStatus" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
+              <WrapPanel><Button x:Name="CheckUpdatesButton" Content="Check now" Click="CheckUpdates" Margin="0,0,8,8"/><Button x:Name="ViewReleaseButton" Content="View release" Click="ViewRelease" Visibility="Collapsed" Margin="0,0,0,8"/></WrapPanel>
+              <StackPanel x:Name="ReleaseDetails" Visibility="Collapsed" Margin="0,8,0,12">
+                <TextBlock Text="What's new" Style="{StaticResource SectionTitle}"/>
+                <TextBox x:Name="UpdateNotes" IsReadOnly="True" TextWrapping="Wrap" MinHeight="64" MaxHeight="200" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Release notes"/>
+                <WrapPanel Margin="0,12,0,8">
+                  <Button x:Name="DownloadInstallerButton" Content="Download verified installer" Click="DownloadInstaller" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"/>
+                  <Button x:Name="SkipUpdateButton" Content="Skip this version" Click="SkipUpdate" Margin="0,0,8,8"/>
+                  <Button x:Name="CancelDownloadButton" Content="Cancel download" Click="CancelInstallerDownload" Visibility="Collapsed" Margin="0,0,0,8"/>
+                </WrapPanel>
+                <ProgressBar x:Name="DownloadProgress" Maximum="100" Height="4" Visibility="Collapsed" Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource RaisedBrush}"/>
+              </StackPanel>
+              <TextBlock x:Name="DownloadStatus" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+              <Button x:Name="LaunchInstallerButton" Content="Open verified installer…" Click="LaunchInstaller" Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+              <CheckBox x:Name="AutoUpdateBox" Content="Check for updates at startup" Checked="AutomaticUpdatesChanged" Unchecked="AutomaticUpdatesChanged" Margin="0,8,0,8"/>
+              <TextBlock Text="Checks GitHub only when requested or enabled here. Updates are never downloaded or installed automatically." Style="{StaticResource Caption}"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Support and maintenance" Style="{StaticResource SectionTitle}"/>
+              <WrapPanel Margin="0,0,0,8">
+                <Button Content="Open data folder" Click="OpenData" Margin="0,0,8,8" AutomationProperties.Name="Open data folder"/>
+                <Button Content="Copy diagnostics" Click="CopyDiagnostics" Margin="0,0,8,8" AutomationProperties.Name="Copy diagnostics"/>
+                <Button Content="Export diagnostics…" Click="ExportDiagnostics" Margin="0,0,8,8" AutomationProperties.Name="Export diagnostics"/>
+                <Button Content="Report an issue" Click="ReportIssue" Margin="0,0,0,8" AutomationProperties.Name="Report issue from support"/>
+              </WrapPanel>
+              <TextBlock Text="Current playback, provider and output state. No lyrics or chat messages. Review before sharing." Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+              <TextBlock x:Name="DiagnosticsStatus" Style="{StaticResource Caption}"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Third-party notices" Style="{StaticResource SectionTitle}"/>
+              <WrapPanel>
+                <Button Content="Open third-party notices" Click="OpenThirdPartyNotices" Margin="0,0,8,8" AutomationProperties.Name="Third-party notices"/>
+                <Button Content="View notices on GitHub" Click="ViewNoticesOnGitHub" Margin="0,0,0,8" AutomationProperties.Name="View notices on GitHub"/>
+              </WrapPanel>
             </StackPanel>
           </Border>
         </StackPanel>

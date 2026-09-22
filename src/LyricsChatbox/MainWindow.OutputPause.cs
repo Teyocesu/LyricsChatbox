@@ -81,13 +81,19 @@ public partial class MainWindow
     private void RefreshOutputPauseView(DateTimeOffset nowUtc)
     {
         var paused = IsOutputPaused(nowUtc);
-        var primary = !engine.Enabled ? "Off" : paused ? outputPause.Summary(nowUtc) : "Active";
-        var secondary = !engine.Enabled && paused ? " · pause remains" : "";
-        var text = primary + secondary;
-        if (OutputStateText.Text != text) OutputStateText.Text = text;
-        var button = paused ? "Change" : "Pause";
-        if (!Equals(OutputPauseButton.Content, button)) OutputPauseButton.Content = button;
-        OutputResumeButton.Visibility = paused ? Visibility.Visible : Visibility.Collapsed;
+        var state = OutputSidebarPresentation.Describe(engine.Enabled, paused, outputPause.Summary(nowUtc));
+        var power = engine.Enabled ? "ON" : "OFF";
+        if (OutputPowerText.Text != power)
+        {
+            OutputPowerText.Text = power;
+            OutputPowerText.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, engine.Enabled ? "AccentBrush" : "MutedBrush");
+        }
+        if (OutputStateText.Text != state.Primary) OutputStateText.Text = state.Primary;
+        if (OutputPauseHint.Text != state.Secondary) OutputPauseHint.Text = state.Secondary;
+        OutputPauseHint.Visibility = string.IsNullOrEmpty(state.Secondary) ? Visibility.Collapsed : Visibility.Visible;
+        if (!Equals(OutputPauseButton.Content, state.PauseContent)) OutputPauseButton.Content = state.PauseContent;
+        OutputPauseButton.Visibility = state.ShowPause ? Visibility.Visible : Visibility.Collapsed;
+        OutputResumeButton.Visibility = state.ShowResume ? Visibility.Visible : Visibility.Collapsed;
         PauseUntilTrackMenuItem.IsEnabled = engine.Track is not null;
     }
 

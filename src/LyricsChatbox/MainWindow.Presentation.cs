@@ -115,9 +115,12 @@ public partial class MainWindow
     private void ManageQuickMessages(object sender, RoutedEventArgs e) => ShowPage("Manual");
     private void ShowPage(string page)
     {
-        var item = NavigationPanel.Children.OfType<RadioButton>().FirstOrDefault(r => (string?)r.Tag == page);
-        if (item is not null) item.IsChecked = true;
+        if (FindNavigationButton(page) is { } item) item.IsChecked = true;
     }
+
+    private RadioButton? FindNavigationButton(string page) =>
+        NavigationPanel.Children.OfType<RadioButton>().FirstOrDefault(r => (string?)r.Tag == page)
+        ?? AboutNavigationPanel.Children.OfType<RadioButton>().FirstOrDefault(r => (string?)r.Tag == page);
 
     private void RefreshQuickMessages()
     {

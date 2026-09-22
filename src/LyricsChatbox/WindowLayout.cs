@@ -14,7 +14,7 @@ internal static class WindowLayout
         Find<Border>("Sidebar").Padding = shortWindow ? new(12, 16, 12, 12) : new(12, 26, 12, 20);
         Find<StackPanel>("BrandPanel").Margin = new(0, 0, 0, shortWindow ? 18 : 28);
         Find<TextBlock>("VersionCaption").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
-        foreach (var item in Find<StackPanel>("NavigationPanel").Children.OfType<RadioButton>())
+        foreach (var item in Find<StackPanel>("NavigationPanel").Children.OfType<RadioButton>().Concat(Find<StackPanel>("AboutNavigationPanel").Children.OfType<RadioButton>()))
             item.Padding = shortWindow ? new(12, 8, 12, 8) : new(16, 11, 16, 11);
         Find<Grid>("ContentPanel").Margin = shortWindow ? new(16, 38, 16, 10) : new(28, 48, 28, 16);
         Find<StackPanel>("HeadingPanel").Margin = new(0, 0, 0, shortWindow ? 8 : 16);

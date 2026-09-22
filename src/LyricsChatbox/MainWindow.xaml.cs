@@ -78,6 +78,7 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         Deactivated += (_, _) => { manual.Focus(false); Tick(); };
         InitializeLifecycle();
+        InitializeAbout();
         InitializeUpdates();
         InitializeDiscovery();
         InitializePresentation();
@@ -252,6 +253,7 @@ public partial class MainWindow : Window
         DisplayPage.Visibility = page == "Display" ? Visibility.Visible : Visibility.Collapsed;
         ManualPage.Visibility = page == "Manual" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        AboutPage.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
         PageTitle.Text = page;
         WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
         activeSection = page;
@@ -381,8 +383,8 @@ public partial class MainWindow : Window
     private void RetryLyrics(object sender, RoutedEventArgs e) { ClearError(); StartLookup(true); }
     private void OpenData(object sender, RoutedEventArgs e)
     {
-        try { Directory.CreateDirectory(data.Root); Process.Start(new ProcessStartInfo(data.Root) { UseShellExecute = true }); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception) { ErrorText.Text = "Could not open data folder."; }
+        try { Directory.CreateDirectory(data.Root); Process.Start(new ProcessStartInfo(data.Root) { UseShellExecute = true }); AboutStatus.Text = ""; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception) { AboutStatus.Text = "Could not open data folder."; }
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
     {

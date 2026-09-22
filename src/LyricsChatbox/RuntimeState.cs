@@ -12,7 +12,7 @@ public sealed record WindowRestorePlan(double X, double Y, double Width, double 
 
 public static class RuntimeStatePolicy
 {
-    public static readonly string[] Sections = ["Home", "Display", "Manual", "Settings"];
+    public static readonly string[] Sections = ["Home", "Display", "Manual", "Settings", "About"];
 
     public static RuntimeState Normalize(RuntimeState? state, DateTimeOffset nowUtc)
     {

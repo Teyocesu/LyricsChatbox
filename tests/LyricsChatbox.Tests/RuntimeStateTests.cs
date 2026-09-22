@@ -11,6 +11,7 @@ public sealed class RuntimeStateTests : IDisposable
     [InlineData("Display")]
     [InlineData("Manual")]
     [InlineData("Settings")]
+    [InlineData("About")]
     public void KnownNavigationSectionsRestore(string section) =>
         Assert.Equal(section, RuntimeStatePolicy.Normalize(new(Section: section), Now).Section);
 

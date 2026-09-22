@@ -1,12 +1,12 @@
-# v0.7.0 execution plan — Phases 0–4.2 implemented
+# v0.7.0 execution plan — Phases 0–5 implemented
 
 ## State and baseline
 
 - Planning date: 2026-09-20.
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
-- Product assembly/file version remains `0.6.2`. This planning task changes only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: obtain product-owner physical QA for the final Phase 4.2 Display polish. About implementation, Output redesign, version bump, tag, release and main merge remain out of scope.
+- Product assembly/file version remains `0.6.2`. The initial planning task changed only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
+- Current goal: obtain product-owner physical QA for Phase 5 About, Settings and Output presentation. Phase 4.2 has the product owner's physical approval. Version bump, tag, release and main merge remain out of scope.
 - Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
 - Phase 2 evidence: focused Decorations + rotation regression tests `44/44`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `434/434` with 0 skips; package-policy test PASS; `git diff --check` PASS. Systematic content review found 90 entries, 10,228 source bytes, 19 curated Popular flags, no duplicate IDs/content, no tabs/trailing garbage, maximum content length 48, maximum six lines and no item over 144 UTF-16 units. Security/quality review made the catalog collections actually read-only and moved the shared Unicode validator to neutral ownership; Ponytail FULL found no removable architecture.
 - Phase 3 evidence: focused picker/decorations/layout/display tests `50/50`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `447/447` with 0 skips; package-policy test and `git diff --check` PASS. Native WPF interaction QA is still required: the available computer-use host exposed browser tabs but no native Windows app surface, so no visual/keyboard/theme claim is recorded.
@@ -144,7 +144,7 @@ Purpose: apply the final product-owner picker corrections without entering the P
 - Acceptance: focused/full gates passed. The product owner physically approved menu/picker naming, Favorites placement, Popular default, My items footer, scroll reset, fit language, the 327-item catalog, density/variety and interaction behavior.
 - Deferred work completed in Phase 4: clickable composition token chips, Display reorganization, rotating-message editor and contextual Lyric Context/Status messages UI.
 
-## Phase 4 — Display UX simplification and rotation editor — implemented; physical QA pending
+## Phase 4 — Display UX simplification and rotation editor — closed after Phase 4.2 approval
 
 Purpose: reorganize Display around the five user concepts and expose the bounded per-profile message list.
 
@@ -159,7 +159,7 @@ Purpose: reorganize Display around the five user concepts and expose the bounded
 - Dependencies: Phases 1 and 3.
 - Out of scope: new tokens, multiple rotating templates, rules, alternate profile framework or standalone fix architecture for the v0.6.2 cosmetic issue.
 
-## Phase 4.1 — rotation UX and stable Home derived state — implemented; physical QA pending
+## Phase 4.1 — rotation UX and stable Home derived state — closed after Phase 4.2 approval
 
 Purpose: correct only the concrete findings from the first Phase 4 product-owner physical review.
 
@@ -172,7 +172,7 @@ Purpose: correct only the concrete findings from the first Phase 4 product-owner
 - Verification: focused Display/Presentation/Rotation/OutputPause/DecorationPicker suite `168/168`; locked restore PASS; Release build 0 warnings/0 errors; full suite `481/481`, 0 skips; package policy and `git diff --check` PASS. Scope inspection found no runtime-core, README or Phase 5 diff, native rotation dialog or newly hardcoded theme color. Native Release smoke with Output Off confirmed themed rotation rows, no implicit row selection/editor, and the stable disabled Lyric Context card with explanatory copy; product-owner physical QA remains pending.
 - Out of scope: Decorations redesign/catalog work, rotation runtime changes, Phase 5/About/Output UI, version bump, tag, release or main merge.
 
-## Phase 4.2 — final Display QA polish — implemented; physical QA pending
+## Phase 4.2 — final Display QA polish — physically approved; closed
 
 Purpose: correct only the three concrete findings from the Phase 4.1 physical QA pass.
 
@@ -180,16 +180,18 @@ Purpose: correct only the three concrete findings from the Phase 4.1 physical QA
 - Profiles: fresh migration contains exactly five canonical starters in order: Lyrics, Minimal, Music Info, Status / Time and Custom. Existing built-in `status` profiles are renamed and moved before canonical Custom without resetting rotation or presentation settings; missing status is inserted there when capacity permits; user-owned profiles and full 20-profile libraries are preserved.
 - Lyrics Details: the existing track duration / candidate duration values are labeled `Track / lyrics duration`; playback position and matching semantics are unchanged, and the redundant footnote is removed.
 - Verification: focused Display/profile/duration tests `96/96`; locked restore PASS; Release build 0 warnings/0 errors; full tests `484/484`, 0 skips; package policy and `git diff --check` PASS.
-- Physical QA: not claimed. The Release app is left open with Output Off for product-owner inspection of disabled context styling, starter order, Status / Time behavior and the duration label.
+- Physical QA: the product owner physically approved Phase 4.2 per the Phase 5 brief (disabled context visuals, five canonical profiles, Status / Time ordering, duration-label clarification, Display redesign, token chips, rotating messages, runtime behavior). Phase 4 is closed.
 - Out of scope: rotation runtime/editor behavior, Decorations, output behavior, playback/lyric matching, scheduler, Manual, Quick Messages and all Phase 5 work.
 
-## Phase 5 — About, sidebar and Output UI
+## Phase 5 — About, sidebar and Output UI — implemented; physical QA pending
 
 Purpose: separate settings from identity/maintenance/legal actions and make Output states unambiguous.
 
 - Likely files: `src/LyricsChatbox/MainWindow.xaml`, `src/LyricsChatbox/MainWindow.Lifecycle.cs`, `src/LyricsChatbox/MainWindow.Updates.cs`, `src/LyricsChatbox/MainWindow.OutputPause.cs`, `src/LyricsChatbox/RuntimeState.cs`, `src/LyricsChatbox/ProductIdentity.cs`, optionally one small new `src/LyricsChatbox/ExternalLinks.cs`, `tests/LyricsChatbox.Tests/RuntimeStateTests.cs`, `tests/LyricsChatbox.Tests/OutputPauseTests.cs`, `tests/LyricsChatbox.Tests/UpdateTests.cs`, and optionally new `tests/LyricsChatbox.Tests/AboutTests.cs`.
 - Invariants: About is one persisted top-level section; maintenance controls move, not duplicate; installed version comes from ProductIdentity; only fixed allowlisted HTTPS URLs launch; Discord only copies; local folder/notice targets are app-owned constants; `RefreshOutputPauseView()` stays authoritative; master Off and Pause remain separate.
 - Deterministic tests: About normalization/restore; version text; exact allowed/rejected URI cases; launcher/clipboard exceptions become UI failure results; no clipboard read; Output Off/Active/each Paused summary/pause-remains-while-Off/Resume/Change; all existing pause modes and no-replay/typing tests.
+- Implementation: `About` added to `RuntimeStatePolicy.Sections`; canonical author/project/VRChat/Discord identities centralized in `ProductIdentity`; one minimal `ExternalLinks` helper owns the HTTPS host allowlist (`github.com`, `vrchat.com`), shell-launch failure mapping and the fixed bundled-notice path; one pure `OutputSidebarPresentation.Describe` owns the four Off/Active/Paused/scheduled presentation states consumed by `RefreshOutputPauseView()`; Updates, Open data folder and diagnostics moved verbatim to a scrollable About page while Settings keeps playback/appearance/behavior/lyrics/OSC; About navigation sits above the Output card with a shared lookup helper; version still comes from `ProductIdentity.DisplayVersion`.
+- Verification: locked restore PASS; Release build 0 warnings/0 errors; focused About/runtime/output/updater suite `98/98`; full suite `501/501`, 0 skips; package policy PASS under PowerShell 7; `git diff --check` PASS. XAML inspection found one Updates control set and one diagnostics set, both under About, with no data-folder action in Settings. Review confirmed no updater behavior or Output transmission path changed, no new mode, no version bump and no release work. The native Release app launched with persisted Output Off (PID `41292`); product-owner physical QA remains pending.
 - Acceptance: Settings contains settings; About contains identity/version/maintenance/links/legal; no crash on unavailable shell or clipboard; Off hides active pause actions; re-enable returns to an extant pause truthfully; small-height sidebar remains usable.
 - Dependencies: fixed About identities recorded above. Existing update/data-folder code is reused.
 - Out of scope: embedded browser, arbitrary link input, Discord URL, new pause mode, Output semantics rewrite or duplicate view model.
