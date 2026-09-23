@@ -21,10 +21,12 @@
     </Grid.ColumnDefinitions>
     <Border x:Name="Sidebar" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource SidebarBrush}" Padding="20,28,20,16">
       <Border.Resources>
-        <!-- Decorative playback-activity motion only: started while the selected source is Playing with Output enabled and unpaused. -->
+        <!-- Decorative playback-activity motion only: started while the selected source is Playing with Output enabled and unpaused.
+             Shape deformation (shear + breath about the center); the motif never translates as a rigid asset. -->
         <Storyboard x:Key="OutputWaveformStory">
-          <DoubleAnimation Storyboard.TargetName="WaveMain" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="-5" To="5" Duration="0:0:2.6" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="WaveEchoUp" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="4" To="-4" Duration="0:0:3.1" BeginTime="0:0:0.5" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="WaveMainSkew" Storyboard.TargetProperty="AngleX" From="-8" To="8" Duration="0:0:2.8" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="WaveMainBreath" Storyboard.TargetProperty="ScaleY" From="1" To="1.1" Duration="0:0:3.7" BeginTime="0:0:0.3" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="WaveEchoUpBreath" Storyboard.TargetProperty="ScaleY" From="1" To="1.16" Duration="0:0:4.3" BeginTime="0:0:0.6" AutoReverse="True" RepeatBehavior="Forever"/>
           <DoubleAnimation Storyboard.TargetName="WaveEchoDown" Storyboard.TargetProperty="Opacity" From="0.3" To="0.6" Duration="0:0:3.6" BeginTime="0:0:0.2" AutoReverse="True" RepeatBehavior="Forever"/>
         </Storyboard>
       </Border.Resources>
@@ -66,12 +68,17 @@
             </Button>
           </WrapPanel>
           <Grid x:Name="OutputVisualizer" Height="58" Margin="0,16,0,6" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
-            <Path x:Name="WaveEchoUp" Data="M0,23 L8,25 L16,26.5 L24,24.6 L32,19.4 L40,14.6 L48,14.5 L56,20.1 L64,28 L72,32.9 L80,31.5 L88,25.5 L96,19.4 L104,17.4 L112,19.5 L120,22.4 L128,23" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.28" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center">
-              <Path.RenderTransform><TranslateTransform/></Path.RenderTransform>
+            <Path x:Name="WaveEchoUp" Data="M0,23 L8,25 L16,26.5 L24,24.6 L32,19.4 L40,14.6 L48,14.5 L56,20.1 L64,28 L72,32.9 L80,31.5 L88,25.5 L96,19.4 L104,17.4 L112,19.5 L120,22.4 L128,23" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.28" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+              <Path.RenderTransform><ScaleTransform x:Name="WaveEchoUpBreath" ScaleX="1" ScaleY="1"/></Path.RenderTransform>
             </Path>
             <Path x:Name="WaveEchoDown" Data="M0,35 L8,35.6 L16,38.5 L24,40.6 L32,38.6 L40,32.5 L48,26.5 L56,25.1 L64,30 L72,37.9 L80,43.5 L88,43.4 L96,38.6 L104,33.4 L112,31.5 L120,33 L128,35" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.45" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            <Path x:Name="WaveMain" Data="M0,29 L8,31.6 L16,36.3 L24,36.5 L32,29 L40,17.8 L48,11.4 L56,15.8 L64,29 L72,42.2 L80,46.6 L88,40.2 L96,29 L104,21.5 L112,21.7 L120,26.4 L128,29" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.75" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center">
-              <Path.RenderTransform><TranslateTransform/></Path.RenderTransform>
+            <Path x:Name="WaveMain" Data="M0,29 L8,31.6 L16,36.3 L24,36.5 L32,29 L40,17.8 L48,11.4 L56,15.8 L64,29 L72,42.2 L80,46.6 L88,40.2 L96,29 L104,21.5 L112,21.7 L120,26.4 L128,29" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.75" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+              <Path.RenderTransform>
+                <TransformGroup>
+                  <SkewTransform x:Name="WaveMainSkew" AngleX="0" AngleY="0"/>
+                  <ScaleTransform x:Name="WaveMainBreath" ScaleX="1" ScaleY="1"/>
+                </TransformGroup>
+              </Path.RenderTransform>
             </Path>
           </Grid>
         </StackPanel>

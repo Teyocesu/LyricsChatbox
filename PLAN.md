@@ -154,6 +154,24 @@ Native QA evidence (Release exe, captures in local temp `p13-*.png`, not committ
 
 QA side-effects: app LEFT OPEN and playing-adjacent (owner session active — closing would kill live OSC output): output restored ON + unpaused, Home, 1448×990. No pause persisted; no settings flipped.
 
-## Next action
+## Next action (Phase 1.3 superseded by 1.4 below)
 
 Product-owner physical review of Phase 1.3 wave redesign; do not start Phase 2 until accepted.
+
+## Phase 1.4 wave motion correction (2026-09-23, branch `codex/v0.8.0`)
+
+Starting HEAD `c13f8e836137e507b43b0e94b0e535a22eedd310`, worktree clean, `main` at `b663555fa604ec86062a6348876f1c27fc31a041`. Owner verdict on 1.3: vector paths approved, but lateral `TranslateTransform.X` drift reads as a rigid sticker sliding — the wave must deform its shape, not translate. This phase changes motion only.
+
+Implementation: removed all translation; the same 3 paths now morph about their center (`RenderTransformOrigin 0.5,0.5`): main gets skew shear (±8°, 2.8s) plus amplitude breath (ScaleY 1→1.1, 3.7s), upper echo breathes at a different period (1→1.16, 4.3s), lower echo keeps opacity breathing (0.3→0.6, 3.6s). Ends stay anchored while crests sweep and swell — centroid fixed, silhouette evolves. Transforms are named Freezables targeted directly (no indexed paths). Same storyboard key/gate, so code-behind untouched; static base values unchanged, `Stop()` restores them.
+
+Files changed (production): `MainWindow.xaml` only (storyboard + path transforms). Tests: none — no logic touched. Ponytail notes: 4 small animations replace 3; no new elements, abstractions, state, or semantics.
+
+Test evidence: focused 75/75 green before edits; after: locked restore, Release build 0/0, full suite 515/515, package-policy PASS, `git diff --check` clean.
+
+Native QA evidence (Release exe, captures in local temp `p14-*.png`, not committed): owner's Apple Music session genuinely PLAYING (no transport commands sent, nothing paused). Sending hierarchy correct; three wave-region frames 1.4s apart show visibly different crest/valley configurations with anchored ends (`p14-deform-strip.png`); wave-region pixel-diff 267/4250 per interval confirms live motion; Off shows dim static wave; Paused at 820×650 correct. No VRChat running; loopback-only destination. QA answer: true shape deformation, not rigid slide.
+
+QA side-effects: app LEFT OPEN on the live owner session (closing would kill mid-song OSC output): pause resumed, output restored Off (launch-found state), Home, 1280×940. Music and Apple Music untouched.
+
+## Next action
+
+Product-owner physical review of Phase 1.4 wave motion; do not start Phase 2 until accepted.
