@@ -12,7 +12,8 @@ internal static class WindowLayout
         var shortWindow = contentHeight < 540;
         T Find<T>(string name) => (T)scope.FindName(name);
         Find<Border>("Sidebar").Padding = shortWindow ? new(12, 16, 12, 12) : new(20, 28, 20, 16);
-        Find<StackPanel>("BrandPanel").Margin = new(0, 0, 0, shortWindow ? 18 : 28);
+        Find<StackPanel>("BrandPanel").Margin = shortWindow ? new(0, 0, 0, 16) : new(0, 6, 0, 30);
+        Find<Image>("BrandIcon").Width = Find<Image>("BrandIcon").Height = shortWindow ? 38 : 52;
         Find<TextBlock>("VersionCaption").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
         foreach (var item in Find<StackPanel>("NavigationPanel").Children.OfType<RadioButton>())
             item.Padding = shortWindow ? new(12, 8, 12, 8) : new(16, 11, 16, 11);

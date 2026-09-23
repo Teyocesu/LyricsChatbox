@@ -1,11 +1,13 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media.Animation;
 
 namespace LyricsChatbox;
 
 public partial class MainWindow
 {
+    private bool visualizerAnimating;
     private bool IsOutputPaused(DateTimeOffset nowUtc) => outputPause.IsPaused(nowUtc);
 
     private void InitializeOutputPause()
@@ -82,13 +84,17 @@ public partial class MainWindow
     {
         var paused = IsOutputPaused(nowUtc);
         var state = OutputSidebarPresentation.Describe(engine.Enabled, paused, outputPause.Summary(nowUtc));
-        var power = engine.Enabled ? "ON" : "OFF";
-        if (OutputPowerText.Text != power)
-        {
-            OutputPowerText.Text = power;
-            OutputPowerText.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, engine.Enabled ? "AccentBrush" : "MutedBrush");
-        }
-        if (OutputStateText.Text != state.Primary) OutputStateText.Text = state.Primary;
+        var active = engine.Enabled && !paused;
+        var sending = OutputSidebarPresentation.IsSending(engine.Enabled, paused,
+            engine.Snapshot?.State == PlaybackState.Playing, manual.AutomaticAvailable(MonotonicClock.Now));
+        var status = active ? OutputSidebarPresentation.ActiveStatusText : state.Primary;
+        if (OutputStateText.Text != status) OutputStateText.Text = status;
+        OutputStateText.SetResourceReference(TextBlock.ForegroundProperty,
+            active ? "SuccessBrush" : paused ? "TextBrush" : "MutedBrush");
+        OutputStatusDot.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
+        var activity = sending ? OutputSidebarPresentation.SendingText : OutputSidebarPresentation.ReadyText;
+        if (OutputActivityText.Text != activity) OutputActivityText.Text = activity;
+        OutputActivityText.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
         if (OutputPauseHint.Text != state.Secondary) OutputPauseHint.Text = state.Secondary;
         OutputPauseHint.Visibility = string.IsNullOrEmpty(state.Secondary) ? Visibility.Collapsed : Visibility.Visible;
         if (!Equals(OutputPauseButton.Content, state.PauseContent)) OutputPauseButton.Content = state.PauseContent;
@@ -98,10 +104,17 @@ public partial class MainWindow
         var effective = destinationSelection.Effective(settings);
         var destination = OutputSidebarPresentation.FormatDestination(effective.Host, effective.Port);
         if (OutputDestinationText.Text != destination) OutputDestinationText.Text = destination;
-        // The sidebar motif is decorative: full opacity only while output is Active, dim otherwise.
-        var visualActive = state.ShowPause && !state.ShowResume;
-        var opacity = visualActive ? 1d : 0.35d;
+        // The motif is decorative playback activity, never measured audio or delivery proof:
+        // full opacity while Active, dim otherwise; motion only while sending (and animations allowed).
+        var opacity = active ? 1d : 0.35d;
         if (!OutputVisualizer.Opacity.Equals(opacity)) OutputVisualizer.Opacity = opacity;
+        var animate = sending && SystemParameters.ClientAreaAnimation;
+        if (animate != visualizerAnimating)
+        {
+            visualizerAnimating = animate;
+            var story = (Storyboard)Sidebar.FindResource("OutputWaveformStory");
+            if (animate) story.Begin(this, true); else story.Stop(this);
+        }
     }
 
     private void RequestManualSend()

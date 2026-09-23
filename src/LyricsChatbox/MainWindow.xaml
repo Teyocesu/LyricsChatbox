@@ -20,22 +20,41 @@
       <ColumnDefinition/>
     </Grid.ColumnDefinitions>
     <Border x:Name="Sidebar" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource SidebarBrush}" Padding="20,28,20,16">
+      <Border.Resources>
+        <!-- Decorative playback-activity motion only: started while the selected source is Playing with Output enabled and unpaused. -->
+        <Storyboard x:Key="OutputWaveformStory">
+          <DoubleAnimation Storyboard.TargetName="VizBar1" Storyboard.TargetProperty="Height" From="8" To="20" Duration="0:0:0.9" BeginTime="0:0:0.1" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar2" Storyboard.TargetProperty="Height" From="16" To="28" Duration="0:0:0.7" BeginTime="0:0:0" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar4" Storyboard.TargetProperty="Height" From="14" To="26" Duration="0:0:1" BeginTime="0:0:0.3" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar5" Storyboard.TargetProperty="Height" From="22" To="34" Duration="0:0:0.8" BeginTime="0:0:0.2" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar7" Storyboard.TargetProperty="Height" From="40" To="52" Duration="0:0:0.7" BeginTime="0:0:0.4" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar8" Storyboard.TargetProperty="Height" From="28" To="40" Duration="0:0:0.9" BeginTime="0:0:0.1" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar10" Storyboard.TargetProperty="Height" From="32" To="44" Duration="0:0:0.8" BeginTime="0:0:0.5" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar11" Storyboard.TargetProperty="Height" From="20" To="32" Duration="0:0:1.1" BeginTime="0:0:0" AutoReverse="True" RepeatBehavior="Forever"/>
+        </Storyboard>
+      </Border.Resources>
       <DockPanel>
-        <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,0,0,28">
-          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <Image Source="Assets/AppIcon.png" Width="36" Height="36" Margin="0,0,12,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-            <StackPanel VerticalAlignment="Center"><TextBlock Text="LyricsChatbox" FontSize="15" FontWeight="SemiBold"/><TextBlock x:Name="VersionCaption" Style="{StaticResource Caption}" FontSize="11" Margin="0,2,0,0"/></StackPanel>
-          </StackPanel>
+        <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,6,0,30">
+          <Image x:Name="BrandIcon" Source="Assets/AppIcon.png" Width="52" Height="52" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+          <TextBlock Text="LyricsChatbox" FontSize="17" FontWeight="SemiBold" TextAlignment="Center" Margin="0,12,0,0"/>
+          <TextBlock x:Name="VersionCaption" Style="{StaticResource Caption}" FontSize="11" TextAlignment="Center" Margin="0,3,0,0"/>
         </StackPanel>
         <StackPanel x:Name="OutputPanel" DockPanel.Dock="Bottom">
           <Border Height="1" Background="{DynamicResource LineBrush}" Margin="0,0,0,14"/>
-          <DockPanel Margin="0,0,0,2">
-            <TextBlock x:Name="OutputPowerText" Text="OFF" DockPanel.Dock="Right" Foreground="{DynamicResource MutedBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Output power status"/>
-            <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"><TextBlock Text="Output" FontSize="12"/></CheckBox>
+          <DockPanel Margin="0,0,0,2" VerticalAlignment="Center">
+            <CheckBox x:Name="EnabledBox" DockPanel.Dock="Right" VerticalAlignment="Center" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE713;" FontSize="16" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center"/>
+              <TextBlock Text="Output" FontSize="13" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
           </DockPanel>
-          <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource Caption}" Margin="22,5,0,2"/>
-          <TextBlock x:Name="OutputDestinationText" Text="" Style="{StaticResource Caption}" Margin="22,0,0,2" FontSize="11" AutomationProperties.Name="Configured OSC destination"/>
-          <TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource Caption}" Margin="22,0,0,8" Visibility="Collapsed"/>
+          <StackPanel Orientation="Horizontal" Margin="0,10,0,0" VerticalAlignment="Center">
+            <Ellipse x:Name="OutputStatusDot" Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" Margin="2,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+            <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource Caption}" FontSize="12" VerticalAlignment="Center"/>
+          </StackPanel>
+          <TextBlock x:Name="OutputDestinationText" Text="" Style="{StaticResource Caption}" Margin="0,4,0,0" FontSize="11" AutomationProperties.Name="Configured OSC destination"/>
+          <TextBlock x:Name="OutputActivityText" Text="" Style="{StaticResource Caption}" Margin="0,4,0,0" FontSize="11" Visibility="Collapsed"/>
+          <TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource Caption}" Margin="0,4,0,0" Visibility="Collapsed"/>
           <WrapPanel Margin="0,6,0,0">
             <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="0,0,6,0" AutomationProperties.Name="Resume Chatbox output"/>
             <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource SmallButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
@@ -51,57 +70,53 @@
               </Button.ContextMenu>
             </Button>
           </WrapPanel>
-          <StackPanel x:Name="OutputVisualizer" Orientation="Horizontal" VerticalAlignment="Center" Height="36" Margin="22,12,0,0" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
-            <Border Width="3" CornerRadius="1.5" Height="6" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="10" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="16" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="24" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="14" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="20" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="30" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="18" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="12" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="22" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="32" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="20" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="12" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="16" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="26" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="14" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="8" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
-            <Border Width="3" CornerRadius="1.5" Height="6" VerticalAlignment="Center" Background="{DynamicResource AccentBrush}"/>
+          <StackPanel x:Name="OutputVisualizer" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Height="56" Margin="0,14,0,6" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
+            <Border x:Name="VizBar0" Width="3" CornerRadius="1.5" Height="8" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar1" Width="3" CornerRadius="1.5" Height="14" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar2" Width="3" CornerRadius="1.5" Height="22" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar3" Width="3" CornerRadius="1.5" Height="32" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar4" Width="3" CornerRadius="1.5" Height="20" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar5" Width="3" CornerRadius="1.5" Height="28" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar6" Width="3" CornerRadius="1.5" Height="40" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar7" Width="3" CornerRadius="1.5" Height="46" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar8" Width="3" CornerRadius="1.5" Height="34" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar9" Width="3" CornerRadius="1.5" Height="24" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar10" Width="3" CornerRadius="1.5" Height="38" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar11" Width="3" CornerRadius="1.5" Height="26" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar12" Width="3" CornerRadius="1.5" Height="16" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar13" Width="3" CornerRadius="1.5" Height="10" VerticalAlignment="Center" Background="{DynamicResource AccentBrush}"/>
           </StackPanel>
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="NavigationPanel">
           <RadioButton Tag="Home" AutomationProperties.Name="Home" GroupName="Navigation" IsChecked="True" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Home"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Home" FontSize="15"/>
             </StackPanel>
           </RadioButton>
           <RadioButton Tag="Display" AutomationProperties.Name="Display" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE7F4;" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Display"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE7F4;" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Display" FontSize="15"/>
             </StackPanel>
           </RadioButton>
           <RadioButton Tag="Manual" AutomationProperties.Name="Manual" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8F2;" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Manual"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8F2;" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Manual" FontSize="15"/>
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="SettingsNav" Tag="Settings" AutomationProperties.Name="Settings" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Settings"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Settings" FontSize="15"/>
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="AboutNav" Tag="About" AutomationProperties.Name="About" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE946;" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="About"/>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE946;" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
+              <TextBlock Text="About" FontSize="15"/>
             </StackPanel>
           </RadioButton>
         </StackPanel>

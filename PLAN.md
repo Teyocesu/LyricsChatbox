@@ -94,6 +94,26 @@ Deviations from reference: brand version shows real v0.7.0 (product truth; no 0.
 
 Deferred: About body redesign (Phase 2); multi-theme visual sweep beyond Rose/Midnight (geometry identical, DynamicResources only — needs product-owner eyes); 125/150/200% DPI matrix (policy unchanged, owner to confirm).
 
+## Phase 1.1 shell fidelity correction (2026-09-23, branch `codex/v0.8.0`)
+
+Starting HEAD `fae9efde1eb07acf47a94a5c77181b0eb848ed41`, worktree clean, `main` at `b663555fa604ec86062a6348876f1c27fc31a041`. Owner verdict on Phase 1: functional PASS, visual fidelity FAIL — sidebar kept too much v0.7.0 language. No Phase 2 content; no behavior change.
+
+Files changed (production):
+- `SPEC.md` — one-line normative update: waveform is a decorative playback-activity motif (no capture/analysis); animation only while selected source Playing + Output enabled + unpaused; static otherwise, under reduced motion, dim when Off/paused.
+- `src/LyricsChatbox/MainWindow.xaml` — brand recomposed vertical/centered (52px current asset, 17pt wordmark, centered version; short heights shrink to 38px via `WindowLayout`); nav icons 20→22, labels to 15pt; Output header is now gear icon + `Output` label with the real content-less `EnabledBox` switch docked right (redundant ON/OFF text removed); status row is a `SuccessBrush` dot + status text, destination, new activity line (`Sending lyrics...`/`Ready`), unchanged buttons, bigger centered 14-bar motif (56px, wave silhouette).
+- `src/LyricsChatbox/Themes/Dark.xaml` — nav rows get more rhythm (padding 16,13; margin 6); new shared `ContextMenu` (explicit dark template — the default template leaked a white gutter), flat `MenuItem` and `Separator` styles, all `DynamicResource`. Fixes “no white surface” violation; only flat menus exist (Pause menu).
+- `src/LyricsChatbox/OutputSidebarPresentation.cs` — pure additions only: `ActiveStatusText`/`SendingText`/`ReadyText` constants and `IsSending(enabled, paused, sourcePlaying, automaticAvailable)`. `Describe()` semantics untouched.
+- `src/LyricsChatbox/MainWindow.OutputPause.cs` — `RefreshOutputPauseView()` derives active/sending from existing state (`engine.Snapshot.State`, `manual.AutomaticAvailable`), drives dot/activity/destination/opacity, and starts/stops the Storyboard on transitions only (single bool guard, no timer/engine). Animation additionally gated on `ClientAreaAnimation`.
+- `src/LyricsChatbox/WindowLayout.cs` — brand margin/icon short-height values for the new vertical brand.
+
+Files changed (tests): `AboutTests.cs` — 6-case `IsSending` theory. No existing test weakened.
+
+Ponytail FULL notes: static motif shipped in 1.0, animated in 1.1 per explicit owner decision; animation is 8 XAML `DoubleAnimation`s (staggered, ±6 around base heights), no engine/worker; `Storyboard.Stop` restores base heights. Flat-menu template carries a scope comment.
+
+Test evidence: focused 69/69 green before edits; after: locked restore, Release build 0/0, full suite 515/515, package-policy PASS, `git diff --check` clean.
+
+Native QA evidence (Release exe, captures in local temp `p11-*.png`, not committed): 1448×990 reference-like Home/Off; ON-no-playback shows green `OSC Output Active` + `Ready` (no false Sending) with static full motif; dark Pause menu verified after template fix (white gutter gone, disabled item dimmed); Paused shows summary + Resume/Change + dim motif; About at 1448×990; 820×650 minimum all reachable. Playing+ON animation path NOT observed live: no player installed and this box reports `ClientAreaAnimation=False`; gate logic unit-tested, bar names verified against storyboard targets, API usage compile-checked — owner must confirm motion with real playback. No VRChat running; no transmission occurred. QA side-effects reset (Home, 1280×940 Normal, output off, Chrome window restored).
+
 ## Next action
 
 Review Phase 0's `SPEC.md` visual contract and stored reference with the product owner before implementing Phase 1.
