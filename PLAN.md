@@ -1,4 +1,4 @@
-# v0.8.0 execution plan — Phase 1 COMPLETE (shell + Output + Skia ribbon approved)
+# v0.8.0 execution plan — Phase 1 COMPLETE; Phase 2 About implementation validated, owner QA pending
 
 ## State and baseline
 
@@ -158,6 +158,30 @@ Final validation (2026-09-23, finalizer session): locked restore PASS; Release b
 
 Product owner reviewed the Skia music ribbon physically and confirmed: “me gusta como quedó”. The wave is FROZEN — no SKGLElement migration, no SkSL, no trace-count/motion/glow/size/renderer changes.
 
+## Phase 2 — About high-fidelity implementation (2026-09-23)
+
+Status: implementation, native implementation-side visual QA, and full validation complete; commit/push and product-owner physical review remain. Starting state matched the required branch and SHA (`codex/v0.8.0`, `d932a0df653bd58e9ca97c4662e37e01a9b5aac6`); `origin/codex/v0.8.0` matched, the worktree was clean, and `main`/`origin/main` remained `b663555fa604ec86062a6348876f1c27fc31a041`.
+
+Production files changed:
+- `src/LyricsChatbox/MainWindow.xaml` — replaced the About card stack with a continuous hero and two-column Grid: Overview / Community & Contact, then Project & Tools / Privacy & Data, followed by full-width Updates. Added a few semantic About styles, thin theme-brush separators, keyboard-focusable action rows, accessible names/live statuses and static, non-interactive, accent-tinted hero curves. Discord remains copy-only; diagnostics keeps copy and export actions; packaged third-party notices remain the existing workflow.
+- `src/LyricsChatbox/WindowLayout.cs` — applies the About-only 900-DIP content-width breakpoint, placing sections in the specified single-column reading order below it and remapping the update summary. Suppresses the persistent Live Preview and page heading while About is selected; existing preview reparenting/restoration and all shell/output/ribbon behavior remain in place.
+- `src/LyricsChatbox/MainWindow.About.cs` and `src/LyricsChatbox/MainWindow.xaml.cs` — retain existing safe link, clipboard, notices, data-folder actions and route feedback to the relevant section status.
+- `src/LyricsChatbox/MainWindow.Updates.cs` — keeps the existing stable update checker/download/verification/skip/cancel/launch flow and controls; initializes the presentation as “Not checked yet” and displays the local time after a completed check. The check timestamp is session-only; no updater state or service was added.
+
+No tests or package dependencies were changed. Existing focused About/updater/runtime/lifecycle coverage passed 88/88 after implementation; full validation is recorded below. No `SPEC.md` change was needed. Product version remains `0.7.0`; no release, tag, installer or `main` change is in scope.
+
+Native QA used a temporary copy of the required starting tree and a Release build with an isolated `UserData` root and playback polling disabled in the temporary copy. The normal product data and running playback were not used. Captures are local temporary artifacts, not repository files: `C:\Users\jhvan\AppData\Local\Temp\LyricsChatbox-AboutQA-1790203623086\captures\about-reference-size.png`, `about-lower-updates.png`, `about-minimum-top.png`, `about-minimum-bottom.png`, and `about-blue-graphite.png`. UI Automation expanded Update preferences and confirmed its startup checkbox and the stable update action are exposed by name and visible; no external update request was triggered.
+
+At the available 1448×1080 native window size, the eyebrow, hero mark/title/copy, section starts, paired columns, central divider, row rules and full-width Updates summary follow the reference's hierarchy and rhythm. A second viewport shows the lower rows and Updates controls. At 820×650, the page collapses to Overview → Community → Project → Privacy → Updates, remains vertically scrollable, and does not introduce horizontal page scrolling. A Blue/Graphite theme retained the same geometry with blue semantic accents. The implementation intentionally uses the actual installed display version (`0.7.0` at this starting point), accurate supported-source/privacy copy, and “Not checked yet” rather than the mock reference's static `0.8.0` / latest-release claim. Static curves stand in for the reference's more elaborate star field; they are theme-aware and do not animate. Product-owner physical comparison remains pending.
+
+Full validation:
+- `dotnet restore LyricsChatbox.slnx --locked-mode` — PASS; all projects up to date.
+- `dotnet build LyricsChatbox.slnx -c Release --no-restore` — PASS; 0 warnings, 0 errors.
+- `dotnet test LyricsChatbox.slnx -c Release --no-restore` — PASS; 520/520.
+- `pwsh -NoProfile -File scripts/Test-PackagePolicy.ps1` — PASS.
+- Focused About/updater/runtime/lifecycle checks — PASS; 88/88.
+- `git diff --check` — PASS after final source and documentation edits.
+
 ## Next action
 
-Phase 2 — About high-fidelity implementation.
+Commit and push the reviewed Phase 2 changes on `codex/v0.8.0`, then hand off for product-owner physical review of About. Do not start Phase 3 until that review is complete.

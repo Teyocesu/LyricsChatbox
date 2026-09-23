@@ -1,6 +1,7 @@
-# Handoff — LyricsChatbox v0.8.0 Phase 1 COMPLETE
+# Handoff — LyricsChatbox v0.8.0 Phase 2
 
-- Branch: `codex/v0.8.0`. `main` untouched at `b663555fa604ec86062a6348876f1c27fc31a041`. Product version still `0.7.0`.
-- Phase 1 COMPLETE: shell, navigation, Output and Skia music ribbon all product-owner approved (“me gusta como quedó”). Ribbon frozen: 28-wire SkiaSharp 4.151.2 model, state-aware decorative animation, no audio capture, reduced-motion respected, licenses/packaging integrated.
-- Final validation: locked restore, Release build 0/0, 520/520 tests, package-policy PASS, fresh publish verified (libSkiaSharp present, PDB excluded, 12 licenses, live smoke against playing Apple Music). QA Skia build left open for the owner.
-- Next exact action: Phase 2 — About high-fidelity implementation.
+- Branch: `codex/v0.8.0`; current HEAD contains the validated Phase 2 implementation. `main` remains at `b663555fa604ec86062a6348876f1c27fc31a041`; product version remains `0.7.0`.
+- Phase 1 shell, navigation, Output and Skia ribbon remain owner-approved and frozen.
+- Phase 2 About implementation and full validation are complete. The continuous hero, paired section rows, responsive single-column layout and full-width Updates use the existing product state and actions.
+- Native implementation-side QA passed at reference-like and minimum sizes plus Blue/Graphite. Product-owner physical review of About is pending.
+- Next exact action: product owner compares About with the canonical reference and accepts or requests visual corrections. Do not start Phase 3 before that review.

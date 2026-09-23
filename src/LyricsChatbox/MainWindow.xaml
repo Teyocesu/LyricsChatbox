@@ -11,6 +11,62 @@
     <Style x:Key="DashboardTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="15"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
     <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Padding" Value="10,5"/><Setter Property="MinHeight" Value="30"/><Setter Property="FontSize" Value="11"/></Style>
     <Style x:Key="StatusPill" TargetType="Border"><Setter Property="Background" Value="{DynamicResource RaisedBrush}"/><Setter Property="BorderBrush" Value="{DynamicResource LineBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="14"/><Setter Property="Padding" Value="10,5"/></Style>
+    <Style x:Key="AboutSectionLabel" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="AboutAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="4,4"/>
+      <Setter Property="MinHeight" Value="34"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="ActionSurface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="ActionSurface" Property="BorderBrush" Value="{DynamicResource FocusBrush}"/><Setter TargetName="ActionSurface" Property="Background" Value="{DynamicResource SelectedBrush}"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="ActionSurface" Property="Opacity" Value="0.72"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="ActionSurface" Property="Opacity" Value="0.42"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="AboutCheckButton" TargetType="Button" BasedOn="{StaticResource AboutAction}">
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+      <Setter Property="Padding" Value="14,7"/>
+      <Setter Property="MinHeight" Value="42"/>
+      <Setter Property="HorizontalAlignment" Value="Right"/>
+      <Setter Property="MinWidth" Value="205"/>
+    </Style>
+    <Style x:Key="AboutRowLabel" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="AboutRowIcon" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+      <Setter Property="FontSize" Value="20"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="AboutRowValue" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
     <DataTemplate x:Key="DashboardQuickTemplate"><Button Click="UseQuickMessage" Margin="0,0,6,6" Padding="6,8" MinHeight="38" ToolTip="Load as an unsent manual draft"><TextBlock Text="{Binding Name}" TextAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis" MaxHeight="34"/></Button></DataTemplate>
     <DataTemplate x:Key="QuickMessageTemplate"><Button Content="{Binding Name}" Click="UseQuickMessage" Margin="0,0,8,8" MinWidth="92" ToolTip="Load as an unsent manual draft"/></DataTemplate>
   </Window.Resources>
@@ -505,75 +561,231 @@
           </Border>
         </StackPanel>
       </ScrollViewer>
-      <ScrollViewer x:Name="AboutPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel>
-              <TextBlock Text="LyricsChatbox" FontSize="20" FontWeight="SemiBold"/>
-              <TextBlock x:Name="AboutVersionText" Style="{StaticResource Caption}" Margin="0,4,0,8"/>
-              <TextBlock Text="Made by Teyocesu" Margin="0,0,0,12"/>
-              <TextBlock Text="LyricsChatbox runs locally and does not require an account or collect telemetry. When synchronized lyrics are needed, song metadata may be sent to the configured public lyrics providers. Update checks contact GitHub only when requested or enabled. VRChat communication uses OSC on the configured destination." Style="{StaticResource Caption}" TextWrapping="Wrap"/>
-              <TextBlock x:Name="AboutStatus" Style="{StaticResource Caption}" Margin="0,8,0,0"/>
+      <ScrollViewer x:Name="AboutPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" AutomationProperties.Name="About content">
+        <StackPanel x:Name="AboutBody">
+          <Grid Height="22" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Border Background="{DynamicResource AccentBrush}"/>
+            <TextBlock Grid.Column="2" Text="A B O U T" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="About"/>
+          </Grid>
+          <Grid x:Name="AboutHero" MinHeight="288" Margin="0,0,0,24" ClipToBounds="True">
+            <Grid x:Name="AboutHeroArt" IsHitTestVisible="False" Focusable="False" AutomationProperties.Name=" ">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/></Grid.ColumnDefinitions>
+              <Path Grid.Column="1" Data="M 0,152 C 130,90 174,20 292,91 S 425,204 545,115 S 730,36 920,142" Stretch="Fill" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.2" Margin="0,22,0,24"/>
+              <Path Grid.Column="1" Data="M 0,170 C 142,112 192,53 300,111 S 442,204 554,133 S 738,72 920,166" Stretch="Fill" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.13" Margin="0,34,0,12"/>
+              <Path Grid.Column="1" Data="M 0,132 C 119,65 172,8 287,74 S 420,185 542,98 S 725,20 920,123" Stretch="Fill" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.12" Margin="0,10,0,36"/>
+              <Ellipse Grid.Column="1" Width="3" Height="3" Fill="{DynamicResource AccentBrush}" Opacity="0.6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="52,24,0,0"/>
+              <Ellipse Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource AccentBrush}" Opacity="0.55" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,68,154,0"/>
+              <Ellipse Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource AccentBrush}" Opacity="0.45" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,82,46"/>
+              <Ellipse Grid.Column="1" Width="3" Height="3" Fill="{DynamicResource AccentBrush}" Opacity="0.45" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,48,0,0"/>
+              <Ellipse Grid.Column="1" Width="2" Height="2" Fill="{DynamicResource AccentBrush}" Opacity="0.55" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="108,0,0,26"/>
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+              <TextBlock x:Name="AboutHeroNote" Text="&#xE189;" FontFamily="Segoe Fluent Icons" FontSize="96" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,12,0,0" AutomationProperties.Name=" "/>
+              <StackPanel x:Name="AboutHeroCopy" Grid.Column="1" VerticalAlignment="Top" Margin="0,68,18,0">
+                <TextBlock x:Name="AboutHeroTitle" FontSize="68" FontWeight="Bold" TextWrapping="NoWrap" AutomationProperties.Name="LyricsChatbox">
+                  <Run Text="Lyrics"/><Run Text="Chatbox" Foreground="{DynamicResource AccentBrush}"/>
+                </TextBlock>
+                <TextBlock x:Name="AboutHeroDescription" Text="A Windows desktop app that sends synced lyrics from Apple Music for Windows and Spotify Desktop to VRChat, with control over their appearance." FontSize="18" Foreground="{DynamicResource MutedBrush}" MaxWidth="520" Margin="0,14,0,0"/>
+                <TextBlock x:Name="AboutOriginText" Text="I made LyricsChatbox because I wanted to see the real, synchronized lyrics of the music I was listening to in VRChat—not just the track title. Existing tools also lacked the customization I wanted, so I built the app I wanted to use." FontSize="15" Foreground="{DynamicResource MutedBrush}" MaxWidth="680" Margin="0,28,0,0"/>
+              </StackPanel>
+            </Grid>
+          </Grid>
+          <Grid x:Name="AboutSections">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="48"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <StackPanel x:Name="AboutOverview" Grid.Row="0" Grid.Column="0">
+              <TextBlock Text="O V E R V I E W" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Overview"/>
+              <Border Height="2" Background="{DynamicResource AccentBrush}" Margin="0,4,0,4"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition/></Grid.RowDefinitions>
+                <TextBlock Text="&#xE950;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Version" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <TextBlock x:Name="AboutVersionText" Grid.Column="2" Text="" Style="{StaticResource AboutRowValue}"/>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE7F4;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Platform" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <TextBlock Grid.Column="2" Text="Windows 10 (2004+) / 11 · x64" Style="{StaticResource AboutRowValue}"/>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE890;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Playback sources" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <TextBlock Grid.Column="2" Text="Apple Music for Windows&#x0a;Spotify Desktop (Microsoft Store version verified)" Style="{StaticResource AboutRowValue}"/>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE77B;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Made by" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <TextBlock Grid.Column="2" Text="Teyocesu" Style="{StaticResource AboutRowValue}"/>
+              </Grid>
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel>
-              <TextBlock Text="Author" Style="{StaticResource SectionTitle}"/>
-              <WrapPanel Margin="0,0,0,8">
-                <Button Content="GitHub" Click="OpenAuthorGitHub" Margin="0,0,8,8" AutomationProperties.Name="GitHub profile" ToolTip="https://github.com/Teyocesu"/>
-                <Button Content="VRChat profile" Click="OpenVrChatProfile" Margin="0,0,8,8" AutomationProperties.Name="VRChat profile"/>
-                <Button Content="Copy Discord: teyocesu" Click="CopyDiscordName" Margin="0,0,0,8" AutomationProperties.Name="Copy Discord username"/>
-              </WrapPanel>
-              <TextBlock Text="Project" Style="{StaticResource SectionTitle}"/>
-              <WrapPanel>
-                <Button Content="View repository" Click="ViewRepository" Margin="0,0,8,8" AutomationProperties.Name="View repository"/>
-                <Button Content="View releases" Click="ViewReleases" Margin="0,0,8,8" AutomationProperties.Name="View releases"/>
-              </WrapPanel>
+            <StackPanel x:Name="AboutCommunity" Grid.Row="0" Grid.Column="2">
+              <TextBlock Text="C O M M U N I T Y  &amp;  C O N T A C T" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Community and Contact"/>
+              <Border Height="2" Background="{DynamicResource AccentBrush}" Margin="0,4,0,4"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <Path Width="20" Height="20" Stretch="Uniform" Fill="{DynamicResource TextBrush}" Data="M8,0 C3.58,0 0,3.58 0,8 C0,11.54 2.29,14.53 5.47,15.59 C5.87,15.66 6.02,15.42 6.02,15.21 C6.02,15.02 6.01,14.4 6.01,13.73 C4,14.1 3.48,13.24 3.32,12.79 C3.23,12.56 2.84,11.85 2.5,11.66 C2.22,11.51 1.82,11.14 2.49,11.13 C3.12,11.12 3.57,11.71 3.72,11.95 C4.44,13.16 5.59,12.82 6.05,12.61 C6.12,12.09 6.33,11.74 6.56,11.54 C4.78,11.34 3,10.65 3,7.59 C3,6.72 3.31,6 3.82,5.44 C3.74,5.24 3.46,4.42 3.9,3.32 C3.9,3.32 4.57,3.11 6.1,4.14 C6.74,3.96 7.36,3.87 8.04,3.87 C8.72,3.87 9.4,3.96 10.04,4.14 C11.57,3.1 12.24,3.32 12.24,3.32 C12.68,4.42 12.4,5.24 12.32,5.44 C12.83,6 13.14,6.71 13.14,7.59 C13.14,10.66 11.27,11.34 9.49,11.54 C9.78,11.79 10.03,12.27 10.03,13.02 C10.03,14.09 10.02,14.95 10.02,15.22 C10.02,15.43 10.17,15.68 10.57,15.6 C13.74,14.53 16,11.53 16,8 C16,3.58 12.42,0 8,0 Z" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="GitHub" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <Button Grid.Column="2" Grid.ColumnSpan="2" Click="OpenAuthorGitHub" Style="{StaticResource AboutAction}" ToolTip="https://github.com/Teyocesu" AutomationProperties.Name="Open Teyocesu GitHub profile">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="View my profile" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE72A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <Grid Width="30" Height="24" AutomationProperties.Name=" ">
+                  <Border Height="18" Background="White" VerticalAlignment="Top"><TextBlock Text="VRCHAT" Foreground="#111318" FontSize="8" FontWeight="Bold" TextAlignment="Center" VerticalAlignment="Center"/></Border>
+                  <Path Data="M 0,0 L 7,0 L 4,5 Z" Fill="White" Width="7" Height="5" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
+                </Grid>
+                <TextBlock Grid.Column="1" Text="VRChat" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <Button Grid.Column="2" Grid.ColumnSpan="2" Click="OpenVrChatProfile" Style="{StaticResource AboutAction}" AutomationProperties.Name="Open Teyocesu VRChat profile">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="Find me in VRChat" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE72A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE8BD;" FontFamily="Segoe Fluent Icons" FontSize="21" Foreground="#5865F2" HorizontalAlignment="Center" VerticalAlignment="Center" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Discord" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <Button Grid.Column="2" Grid.ColumnSpan="2" Click="CopyDiscordName" Style="{StaticResource AboutAction}" AutomationProperties.Name="Copy Discord username">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="teyocesu" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE8C8;" Foreground="{DynamicResource TextBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <TextBlock x:Name="CommunityStatus" Style="{StaticResource Caption}" FontSize="11" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite"/>
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel>
-              <TextBlock Text="Updates" Style="{StaticResource SectionTitle}"/>
-              <TextBlock x:Name="UpdateStatus" Style="{StaticResource Caption}" Margin="0,0,0,12"/>
-              <WrapPanel><Button x:Name="CheckUpdatesButton" Content="Check now" Click="CheckUpdates" Margin="0,0,8,8"/><Button x:Name="ViewReleaseButton" Content="View release" Click="ViewRelease" Visibility="Collapsed" Margin="0,0,0,8"/></WrapPanel>
-              <StackPanel x:Name="ReleaseDetails" Visibility="Collapsed" Margin="0,8,0,12">
-                <TextBlock Text="What's new" Style="{StaticResource SectionTitle}"/>
-                <TextBox x:Name="UpdateNotes" IsReadOnly="True" TextWrapping="Wrap" MinHeight="64" MaxHeight="200" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Release notes"/>
-                <WrapPanel Margin="0,12,0,8">
-                  <Button x:Name="DownloadInstallerButton" Content="Download verified installer" Click="DownloadInstaller" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"/>
-                  <Button x:Name="SkipUpdateButton" Content="Skip this version" Click="SkipUpdate" Margin="0,0,8,8"/>
-                  <Button x:Name="CancelDownloadButton" Content="Cancel download" Click="CancelInstallerDownload" Visibility="Collapsed" Margin="0,0,0,8"/>
+            <Border x:Name="AboutCenterDivider" Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Width="1" Background="{DynamicResource LineBrush}" HorizontalAlignment="Center"/>
+            <StackPanel x:Name="AboutProject" Grid.Row="1" Grid.Column="0" Margin="0,38,0,0">
+              <TextBlock Text="P R O J E C T  &amp;  T O O L S" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Project and Tools"/>
+              <Border Height="2" Background="{DynamicResource AccentBrush}" Margin="0,4,0,4"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <Path Width="20" Height="20" Stretch="Uniform" Fill="{DynamicResource TextBrush}" Data="M8,0 C3.58,0 0,3.58 0,8 C0,11.54 2.29,14.53 5.47,15.59 C5.87,15.66 6.02,15.42 6.02,15.21 C6.02,15.02 6.01,14.4 6.01,13.73 C4,14.1 3.48,13.24 3.32,12.79 C3.23,12.56 2.84,11.85 2.5,11.66 C2.22,11.51 1.82,11.14 2.49,11.13 C3.12,11.12 3.57,11.71 3.72,11.95 C4.44,13.16 5.59,12.82 6.05,12.61 C6.12,12.09 6.33,11.74 6.56,11.54 C4.78,11.34 3,10.65 3,7.59 C3,6.72 3.31,6 3.82,5.44 C3.74,5.24 3.46,4.42 3.9,3.32 C3.9,3.32 4.57,3.11 6.1,4.14 C6.74,3.96 7.36,3.87 8.04,3.87 C8.72,3.87 9.4,3.96 10.04,4.14 C11.57,3.1 12.24,3.32 12.24,3.32 C12.68,4.42 12.4,5.24 12.32,5.44 C12.83,6 13.14,6.71 13.14,7.59 C13.14,10.66 11.27,11.34 9.49,11.54 C9.78,11.79 10.03,12.27 10.03,13.02 C10.03,14.09 10.02,14.95 10.02,15.22 C10.02,15.43 10.17,15.68 10.57,15.6 C13.74,14.53 16,11.53 16,8 C16,3.58 12.42,0 8,0 Z" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Project Repository" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <Button Grid.Column="2" Grid.ColumnSpan="2" Click="ViewRepository" Style="{StaticResource AboutAction}" AutomationProperties.Name="Open LyricsChatbox project repository">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="View on GitHub" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE72A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE8EC;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Releases" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <Button Grid.Column="2" Grid.ColumnSpan="2" Click="ViewReleases" Style="{StaticResource AboutAction}" AutomationProperties.Name="View LyricsChatbox releases">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="See what's new" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE72A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE730;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Report Issue" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <Button Grid.Column="2" Grid.ColumnSpan="2" Click="ReportIssue" Style="{StaticResource AboutAction}" AutomationProperties.Name="Report an issue on GitHub">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="Help make it better" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE72A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE8A5;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Third-party Notices" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <Button Grid.Column="2" Grid.ColumnSpan="2" Click="OpenThirdPartyNotices" Style="{StaticResource AboutAction}" AutomationProperties.Name="Open packaged third-party notices">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="Open source licenses" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE72A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE8B7;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Open Data Folder" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <Button Grid.Column="2" Grid.ColumnSpan="2" Click="OpenData" Style="{StaticResource AboutAction}" AutomationProperties.Name="Open LyricsChatbox data folder">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="View app data" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE72A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE9D9;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/>
+                <TextBlock Grid.Column="1" Text="Diagnostics" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/>
+                <StackPanel Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="32"/></Grid.ColumnDefinitions>
+                    <Button Click="CopyDiagnostics" Style="{StaticResource AboutAction}" AutomationProperties.Name="Copy diagnostic information" ToolTip="Current playback, provider and output state; no lyrics or chat messages."><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><TextBlock Text="Generate diagnostic info" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="&#xE72A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid></Button>
+                    <Button Grid.Column="1" Click="ExportDiagnostics" Style="{StaticResource AboutAction}" ToolTip="Export diagnostics" AutomationProperties.Name="Export diagnostics"><TextBlock Text="&#xE74E;" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Center" VerticalAlignment="Center"/></Button>
+                  </Grid>
+                  <TextBlock x:Name="DiagnosticsStatus" Style="{StaticResource Caption}" FontSize="11" AutomationProperties.LiveSetting="Polite"/>
+                </StackPanel>
+              </Grid>
+              <TextBlock x:Name="ProjectStatus" Style="{StaticResource Caption}" FontSize="11" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite"/>
+            </StackPanel>
+            <StackPanel x:Name="AboutPrivacy" Grid.Row="1" Grid.Column="2" Margin="0,38,0,0">
+              <TextBlock Text="P R I V A C Y  &amp;  D A T A" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Privacy and Data"/>
+              <Border Height="2" Background="{DynamicResource AccentBrush}" Margin="0,4,0,4"/>
+              <Grid MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE7F4;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/><TextBlock Grid.Column="1" Text="Runs locally" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/><TextBlock Grid.Column="2" Text="LyricsChatbox runs on this computer." Style="{StaticResource AboutRowValue}"/></Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE72E;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/><TextBlock Grid.Column="1" Text="No account required" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/><TextBlock Grid.Column="2" Text="No sign-in or personal account is needed." Style="{StaticResource AboutRowValue}"/></Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE7B3;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/><TextBlock Grid.Column="1" Text="No telemetry" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/><TextBlock Grid.Column="2" Text="The app does not collect analytics or usage data." Style="{StaticResource AboutRowValue}"/></Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE753;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/><TextBlock Grid.Column="1" Text="Lyrics lookups" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/><TextBlock Grid.Column="2" Text="Song metadata may be sent to public lyrics providers when synced lyrics are needed." Style="{StaticResource AboutRowValue}"/></Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE895;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/><TextBlock Grid.Column="1" Text="Update checks" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/><TextBlock Grid.Column="2" Text="GitHub may be contacted when checks are requested or enabled." Style="{StaticResource AboutRowValue}"/></Grid>
+              <Border Height="1" Background="{DynamicResource LineBrush}"/>
+              <Grid MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="208"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE774;" Style="{StaticResource AboutRowIcon}" AutomationProperties.Name=" "/><TextBlock Grid.Column="1" Text="OSC output" Style="{StaticResource AboutRowLabel}" Margin="28,0,12,0"/><TextBlock Grid.Column="2" Text="Lyrics go to your configured OSC destination." Style="{StaticResource AboutRowValue}"/></Grid>
+            </StackPanel>
+            <StackPanel x:Name="AboutUpdates" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,28,0,0">
+              <TextBlock Text="U P D A T E S" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Updates"/>
+              <Border Height="2" Background="{DynamicResource AccentBrush}" Margin="0,4,0,4"/>
+              <Grid x:Name="UpdateSummary" MinHeight="64" Margin="0,4,0,0" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="48"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="130"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="190"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <TextBlock x:Name="UpdateSummaryIcon" Grid.Row="0" Grid.RowSpan="3" Text="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="28" Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" AutomationProperties.Name=" "/>
+                <StackPanel x:Name="UpdateStatusGroup" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Margin="6,0,16,0">
+                  <TextBlock Text="Stable channel" FontSize="13"/>
+                  <TextBlock x:Name="UpdateStatus" Text="Check for updates to see the latest stable release." Style="{StaticResource Caption}" Margin="0,3,0,0"/>
+                </StackPanel>
+                <Border x:Name="UpdateCurrentDivider" Grid.Row="0" Grid.Column="2" Grid.RowSpan="3" Width="1" Background="{DynamicResource LineBrush}" Margin="18,0"/>
+                <StackPanel x:Name="UpdateCurrentGroup" Grid.Row="0" Grid.Column="3" VerticalAlignment="Center" Margin="12,0">
+                  <TextBlock Text="Current version" Style="{StaticResource Caption}" FontSize="11"/>
+                  <TextBlock x:Name="UpdateCurrentVersion" Text="" FontSize="14" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border x:Name="UpdateLastCheckedDivider" Grid.Row="0" Grid.Column="4" Grid.RowSpan="3" Width="1" Background="{DynamicResource LineBrush}" Margin="18,0"/>
+                <StackPanel x:Name="UpdateLastCheckedGroup" Grid.Row="0" Grid.Column="5" VerticalAlignment="Center" Margin="12,0">
+                  <TextBlock Text="Last checked" Style="{StaticResource Caption}" FontSize="11"/>
+                  <TextBlock x:Name="UpdateLastChecked" Text="Not checked yet" FontSize="14" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button x:Name="CheckUpdatesButton" Grid.Row="0" Grid.Column="6" Click="CheckUpdates" Style="{StaticResource AboutCheckButton}" AutomationProperties.Name="Check for stable updates">
+                  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="15" VerticalAlignment="Center"/><TextBlock Grid.Column="1" Text="Check for updates" VerticalAlignment="Center" TextAlignment="Center"/></Grid>
+                </Button>
+              </Grid>
+              <Button x:Name="ViewReleaseButton" Content="View release" Click="ViewRelease" Style="{StaticResource AboutAction}" Visibility="Collapsed" HorizontalAlignment="Left" Margin="50,0,0,6" AutomationProperties.Name="View stable release notes on GitHub"/>
+              <StackPanel x:Name="ReleaseDetails" Visibility="Collapsed" Margin="50,6,0,12">
+                <TextBlock Text="What's new" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="What’s new"/>
+                <TextBox x:Name="UpdateNotes" IsReadOnly="True" TextWrapping="Wrap" MinHeight="64" MaxHeight="200" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Release notes" Margin="0,6,0,0"/>
+                <WrapPanel Margin="0,10,0,4">
+                  <Button x:Name="DownloadInstallerButton" Content="Download verified installer" Click="DownloadInstaller" Style="{StaticResource PrimaryButton}" Margin="0,0,8,6" AutomationProperties.Name="Download and verify installer"/>
+                  <Button x:Name="SkipUpdateButton" Content="Skip this version" Click="SkipUpdate" Margin="0,0,8,6"/>
+                  <Button x:Name="CancelDownloadButton" Content="Cancel download" Click="CancelInstallerDownload" Visibility="Collapsed" Margin="0,0,0,6"/>
                 </WrapPanel>
                 <ProgressBar x:Name="DownloadProgress" Maximum="100" Height="4" Visibility="Collapsed" Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource RaisedBrush}"/>
               </StackPanel>
-              <TextBlock x:Name="DownloadStatus" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
-              <Button x:Name="LaunchInstallerButton" Content="Open verified installer…" Click="LaunchInstaller" Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-              <CheckBox x:Name="AutoUpdateBox" Content="Check for updates at startup" Checked="AutomaticUpdatesChanged" Unchecked="AutomaticUpdatesChanged" Margin="0,8,0,8"/>
-              <TextBlock Text="Checks GitHub only when requested or enabled here. Updates are never downloaded or installed automatically." Style="{StaticResource Caption}"/>
+              <TextBlock x:Name="DownloadStatus" Style="{StaticResource Caption}" Margin="50,0,0,4"/>
+              <Button x:Name="LaunchInstallerButton" Content="Open verified installer…" Click="LaunchInstaller" Visibility="Collapsed" HorizontalAlignment="Left" Margin="50,0,0,8" AutomationProperties.Name="Open verified installer"/>
+              <Expander Margin="48,4,0,0" AutomationProperties.Name="Update startup preference">
+                <Expander.Header><TextBlock Text="Update preferences" Style="{StaticResource AboutRowValue}"/></Expander.Header>
+                <StackPanel Margin="20,4,0,8">
+                  <CheckBox x:Name="AutoUpdateBox" Content="Check for updates at startup" Checked="AutomaticUpdatesChanged" Unchecked="AutomaticUpdatesChanged" AutomationProperties.Name="Check for updates at startup"/>
+                  <TextBlock Text="Checks GitHub when requested or when enabled here. Updates are never downloaded or installed automatically." Style="{StaticResource Caption}" Margin="0,5,0,0"/>
+                </StackPanel>
+              </Expander>
             </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel>
-              <TextBlock Text="Support and maintenance" Style="{StaticResource SectionTitle}"/>
-              <WrapPanel Margin="0,0,0,8">
-                <Button Content="Open data folder" Click="OpenData" Margin="0,0,8,8" AutomationProperties.Name="Open data folder"/>
-                <Button Content="Copy diagnostics" Click="CopyDiagnostics" Margin="0,0,8,8" AutomationProperties.Name="Copy diagnostics"/>
-                <Button Content="Export diagnostics…" Click="ExportDiagnostics" Margin="0,0,8,8" AutomationProperties.Name="Export diagnostics"/>
-                <Button Content="Report an issue" Click="ReportIssue" Margin="0,0,0,8" AutomationProperties.Name="Report issue from support"/>
-              </WrapPanel>
-              <TextBlock Text="Current playback, provider and output state. No lyrics or chat messages. Review before sharing." Style="{StaticResource Caption}" Margin="0,0,0,8"/>
-              <TextBlock x:Name="DiagnosticsStatus" Style="{StaticResource Caption}"/>
-            </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel>
-              <TextBlock Text="Third-party notices" Style="{StaticResource SectionTitle}"/>
-              <WrapPanel>
-                <Button Content="Open third-party notices" Click="OpenThirdPartyNotices" Margin="0,0,8,8" AutomationProperties.Name="Third-party notices"/>
-                <Button Content="View notices on GitHub" Click="ViewNoticesOnGitHub" Margin="0,0,0,8" AutomationProperties.Name="View notices on GitHub"/>
-              </WrapPanel>
-            </StackPanel>
-          </Border>
+          </Grid>
         </StackPanel>
       </ScrollViewer>
       <ContentControl x:Name="PersistentPreviewHost" Grid.Row="2" HorizontalContentAlignment="Stretch">

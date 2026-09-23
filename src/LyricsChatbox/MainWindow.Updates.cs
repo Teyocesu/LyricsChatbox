@@ -23,7 +23,7 @@ public partial class MainWindow
         updates = new(http);
         AutoUpdateBox.IsChecked = settings.AutomaticUpdateChecks;
         VersionCaption.Text = "v" + ProductIdentity.DisplayVersion;
-        UpdateStatus.Text = "Version " + ProductIdentity.DisplayVersion;
+        UpdateStatus.Text = "Check for updates to see the latest stable release.";
         if (settings.AutomaticUpdateChecks) Loaded += CheckUpdatesOnce;
     }
     private async void CheckUpdatesOnce(object sender, RoutedEventArgs e)
@@ -52,6 +52,7 @@ public partial class MainWindow
             try { result = await request; }
             finally { pending.Remove(request); }
             if (closing) return;
+            UpdateLastChecked.Text = DateTimeOffset.Now.ToString("g");
             UpdateStatus.Text = result.Status; releaseLink = result.Release;
             availableTag = result.Tag; installerAsset = result.Installer; verifiedInstaller = null;
             UpdateNotes.Text = result.Notes;

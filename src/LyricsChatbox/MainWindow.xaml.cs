@@ -383,8 +383,8 @@ public partial class MainWindow : Window
     private void RetryLyrics(object sender, RoutedEventArgs e) { ClearError(); StartLookup(true); }
     private void OpenData(object sender, RoutedEventArgs e)
     {
-        try { Directory.CreateDirectory(data.Root); Process.Start(new ProcessStartInfo(data.Root) { UseShellExecute = true }); AboutStatus.Text = ""; }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception or InvalidOperationException) { AboutStatus.Text = "Could not open data folder."; }
+        try { Directory.CreateDirectory(data.Root); Process.Start(new ProcessStartInfo(data.Root) { UseShellExecute = true }); ProjectStatus.Text = ""; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception or InvalidOperationException) { ProjectStatus.Text = "Could not open data folder."; }
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
     {
