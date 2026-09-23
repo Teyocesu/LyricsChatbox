@@ -10,10 +10,16 @@ The Windows x64 self-contained distribution includes .NET and Windows interop co
 | C#/WinRT runtime | supplied by the Windows SDK projection package | MIT; [microsoft/CsWinRT license](https://github.com/microsoft/CsWinRT/blob/master/LICENSE) |
 | Zeroconf | 3.7.16 | MIT; © Claire Novotny 2016–2024; [upstream](https://github.com/novotnyllc/Zeroconf/tree/bd4bd55e044a9aa4b8656741214c989a5ee50ded) |
 | System.Reactive (Zeroconf dependency) | 5.0.0 | MIT; .NET Foundation and Contributors; [upstream license](https://github.com/dotnet/reactive/blob/103c252a0ec94eac753f353131ad95cc0be1b390/LICENSE) |
+| SkiaSharp.Views.WPF, SkiaSharp.Views.Desktop.Common, SkiaSharp, SkiaSharp.NativeAssets.Win32 | 4.151.2 | MIT; [SkiaSharp source](https://github.com/mono/SkiaSharp/tree/release/4.151.2); native-component notices are bundled in `licenses/SKIASHARP-THIRD-PARTY-NOTICES.txt` |
+| OpenTK and OpenTK.* modules | 4.3.0 | MIT; [OpenTK source](https://github.com/opentk/opentk/tree/4.3.0) |
+| OpenTK.GLWpfControl | 4.2.3 | MIT; [upstream license](https://github.com/opentk/GLWpfControl/blob/master/LICENSE.md) |
+| OpenTK.redist.glfw | 3.3.0-pre20200830200122 | GLFW zlib license; bundled as `licenses/GLFW-LICENSE.txt`; [GLFW](https://www.glfw.org/) |
 
 The distribution's `licenses` folder contains the .NET license and third-party notices, WPF license, C#/WinRT license and Windows SDK license. The SDK redistributable list explicitly includes Microsoft.Windows.SDK.NET.dll and WinRT.Runtime.dll. These binaries are distributed unmodified for Windows interop.
 
 Zeroconf and System.Reactive license texts are also bundled. Zeroconf is used only for OSCQuery service discovery; LyricsChatbox does not advertise an inbound service or use an additional UI framework.
+
+SkiaSharp is used for the decorative Output ribbon through its CPU-backed WPF `SKElement`. The WPF package also brings OpenTK and `OpenTK.GLWpfControl` transitively; LyricsChatbox does not create an OpenGL control or context. Their required license texts, GLFW's license, SkiaSharp's MIT text, and SkiaSharp's upstream native third-party notices are bundled under `licenses/`.
 
 Development/test-only dependencies are not included in the runnable distribution: xUnit 2.9.3, xUnit analyzers 1.18.0 and Visual Studio runner 3.1.4 (Apache-2.0); Microsoft.NET.Test.Sdk, TestHost, ObjectModel and CodeCoverage 17.14.1 (MIT); Newtonsoft.Json 13.0.3 (MIT). Package license metadata was checked in the restored NuGet packages.
 

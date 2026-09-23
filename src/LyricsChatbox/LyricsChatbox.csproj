@@ -22,6 +22,7 @@
     <EmbeddedResource Include="Assets/Decorations.json" LogicalName="LyricsChatbox.Assets.Decorations.json" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="4.151.2" />
     <PackageReference Include="Zeroconf" Version="3.7.16" />
   </ItemGroup>
 </Project>

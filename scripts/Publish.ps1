@@ -20,6 +20,12 @@ try {
     & dotnet @publishArguments
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
 
+    # SkiaSharp.NativeAssets.Win32 carries a native PDB as a runtime asset; it is not needed to execute Skia.
+    $nativeSymbols = Join-Path $distribution 'libSkiaSharp.pdb'
+    if (Test-Path -LiteralPath $nativeSymbols -PathType Leaf) {
+        Remove-Item -LiteralPath $nativeSymbols -Force -ErrorAction Stop
+    }
+
     foreach ($document in Get-PublicPackageDocuments) {
         $source = Join-Path $repo ($document.Replace('/', [IO.Path]::DirectorySeparatorChar))
         $destination = Join-Path $distribution ($document.Replace('/', [IO.Path]::DirectorySeparatorChar))

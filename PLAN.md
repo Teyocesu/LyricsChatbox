@@ -1,9 +1,9 @@
-# v0.8.0 execution plan — Phase 1.1 implemented, owner review pending
+# v0.8.0 execution plan — Phase 1 COMPLETE (shell + Output + Skia ribbon approved)
 
 ## State and baseline
 
 - Planning date: 2026-09-22. Branch `codex/v0.8.0` was created from exact released `main` commit `b663555fa604ec86062a6348876f1c27fc31a041`. `git fetch --prune` completed; local `main`, `origin/main` and branch base matched; initial worktree was clean and the `v0.7.0` tag existed.
-- Current work is documentation and reference preservation only. Product project version remains `0.7.0`; no UI implementation, behavior change, package or release work has begun.
+- At initial planning (2026-09-22), work was documentation and reference preservation only. Product project version remains `0.7.0`; no package or release work has begun.
 - Canonical visual reference: `docs/visual/v0.8.0-about-reference.png`. Requirements and adaptation policy are in `SPEC.md` § v0.8.0; the screenshot's inaccurate copy and mock data must not be shipped.
 
 ## Existing UI inventory and migration map
@@ -136,42 +136,28 @@ Environment incident (full disclosure): to run the mandated animations-enabled Q
 
 QA side-effects reset: pause resumed (no persisted pause), Home, 1280×940 Normal; `Enabled=True` left untouched as found (owner's own QA state); Chrome window restored.
 
-## Next action (Phase 1.2 superseded by 1.3 below)
+## Phase 1.3–1.4 wave decision history (2026-09-23)
 
-Product-owner physical review of Phase 1.2 shell micro-polish; do not start Phase 2 until accepted.
+The owner replaced the equalizer motif with a continuous ribbon and physically reviewed multiple WPF path revisions. Those iterations confirmed the existing Output-state gate and motion behavior, but the latest visual feedback still called out line merging, one-way travel and underuse of the available space. The owner explicitly authorized SkiaSharp for this visual. The old WPF waveform and its storyboard are now removed; no prior renderer remains active.
 
-## Phase 1.3 Output wave motif redesign (2026-09-23, branch `codex/v0.8.0`)
+## Phase 1.5 — Skia music ribbon (2026-09-23)
 
-Starting HEAD `122f78a83e657ed84e25fa3ea57fd1bc1ac37e29`, worktree clean, `main` at `b663555fa604ec86062a6348876f1c27fc31a041`. Shell approved except the motif: owner rejects bars/capsules/equalizer look, wants a continuous ribbon/wave per the canonical sidebar motif (no second wave image was attached — derived from `docs/visual/v0.8.0-about-reference.png`). Visual-only iteration; no behavior change.
+Committed HEAD remains e0be07fd74109f160ed5e47f6ae97c017507227b on codex/v0.8.0; product version remains 0.7.0. This is local, uncommitted work. No reset, restore, checkout, stash, commit or push.
 
-Implementation choice: 3 overlaid vector `Path`s (main 1.75px full `AccentBrush`; two phase-shifted compressed echoes at 0.45/0.28) forming one tapered wave packet (~128 DIP wide, 58px tall, round joins/caps), centered in the `OutputVisualizer` cell (container changed `StackPanel`→`Grid`, one-line `WindowLayout` lookup update). Animation is lateral counter-drift on main/upper echo (2.6s/3.1s) plus opacity breathing on the lower echo (3.6s) — same `OutputWaveformStory` key and gating (`IsSending` + `ClientAreaAnimation`), so code-behind is untouched. No timers/services/dependencies; green dot stays the only semantic green.
+The Output slot remains 74 DIP and keeps the existing hide-first responsive rule and surrounding shell. MusicRibbonWaveform is an SKElement using SkiaSharp 4.151.2's CPU raster backend. MusicRibbonWaveModel produces 28 traces from normalized horizontal u, depth v and elapsed time t: broad/medium/fine center fields, four uneven localized lobes, a sign-changing twist/spread field, small depth-dependent phase and x perspective, and a smooth edge envelope that converges every trace onto the center axis. Three back-to-front depth tiers vary opacity/width; a restrained same-accent wider pass adds glow. WPF's live AccentBrush supplies color. Canvas pixel dimensions are converted to WPF DIPs using the actual SKElement dimensions, so geometry and stroke widths track display scaling.
 
-Files changed (production): `MainWindow.xaml` (storyboard + motif), `WindowLayout.cs` (container type). Tests: none — no logic touched. Ponytail notes: bars deleted, no new abstractions/state/semantics; geometry points computed once via script, pasted as static data.
+Motion is driven by Stopwatch elapsed seconds and CompositionTarget.Rendering, subscribed only while the existing IsSending && ClientAreaAnimation gate is true and the element is loaded and visible. Hiding/unloading detaches rendering; SKPathBuilders and SKPaints are cached and disposed on unload, with only three tier snapshots created and disposed per frame. All other states render deterministic t=0, full geometry; the parent retains the existing Off/Paused dimming.
 
-Test evidence: focused 75/75 green before edits; after: locked restore, Release build 0/0, full suite 515/515, package-policy PASS, `git diff --check` clean.
+The project adds only the direct SkiaSharp.Views.WPF reference at 4.151.2. Locked transitives include SkiaSharp/Views.Desktop.Common/NativeAssets.Win32 4.151.2, OpenTK modules 4.3.0, OpenTK.GLWpfControl 4.2.3, and OpenTK.redist.glfw 3.3.0-pre20200830200122. The required MIT/GLFW license texts and Skia native third-party notices are bundled; package-policy allowlist is updated. Publish.ps1 strips only the unneeded native libSkiaSharp.pdb, leaving the runtime DLL and the existing no-symbol policy intact.
 
-Native QA evidence (Release exe, captures in local temp `p13-*.png`, not committed): owner’s Apple Music session found genuinely PLAYING (untouched — no transport commands sent). Sending state shows green `OSC Output Active` + `Sending lyrics...`; wave renders as one continuous layered form (closeups confirm); pixel-diff of the wave region across 1.3s proves live motion (291/3750 sampled pixels changed, sidebar-only crop); Off shows dim static wave; Paused at 820×650 shows summary + aligned Resume/Change. No VRChat running; loopback-only destination.
+Automated evidence: focused geometry tests 5/5; full Release suite 520/520; locked restore PASS; solution Release build 0 warnings/0 errors; package-policy PASS; published ZIP/staging parity PASS (506 files, 12 license/notice files); libSkiaSharp.dll present (12,274,488 bytes); an isolated bitmap/draw smoke using the published SkiaSharp assemblies and native DLL PASS; dotnet list package --vulnerable --include-transitive reports none; git diff --check PASS. The release app's normal executable was not overwritten.
 
-QA side-effects: app LEFT OPEN and playing-adjacent (owner session active — closing would kill live OSC output): output restored ON + unpaused, Home, 1448×990. No pause persisted; no settings flipped.
+Final validation (2026-09-23, finalizer session): locked restore PASS; Release build 0/0; full suite 520/520; package-policy PASS; fresh `Publish.ps1` to an isolated verify folder PASS (506 files, 12 licenses, ZIP parity + SHA256); libSkiaSharp.dll present, libSkiaSharp.pdb excluded, no stray PDBs; the fresh publish launches with a real window against live Apple Music (Playing) showing Output Active/Sending and the ribbon rendering. The isolated verify folder was removed afterwards; the QA artifact folder remains a local integration artifact only.
 
-## Next action (Phase 1.3 superseded by 1.4 below)
+## Phase 1.5 visual QA: PASS
 
-Product-owner physical review of Phase 1.3 wave redesign; do not start Phase 2 until accepted.
-
-## Phase 1.4 wave motion correction (2026-09-23, branch `codex/v0.8.0`)
-
-Starting HEAD `c13f8e836137e507b43b0e94b0e535a22eedd310`, worktree clean, `main` at `b663555fa604ec86062a6348876f1c27fc31a041`. Owner verdict on 1.3: vector paths approved, but lateral `TranslateTransform.X` drift reads as a rigid sticker sliding — the wave must deform its shape, not translate. This phase changes motion only.
-
-Implementation: removed all translation; the same 3 paths now morph about their center (`RenderTransformOrigin 0.5,0.5`): main gets skew shear (±8°, 2.8s) plus amplitude breath (ScaleY 1→1.1, 3.7s), upper echo breathes at a different period (1→1.16, 4.3s), lower echo keeps opacity breathing (0.3→0.6, 3.6s). Ends stay anchored while crests sweep and swell — centroid fixed, silhouette evolves. Transforms are named Freezables targeted directly (no indexed paths). Same storyboard key/gate, so code-behind untouched; static base values unchanged, `Stop()` restores them.
-
-Files changed (production): `MainWindow.xaml` only (storyboard + path transforms). Tests: none — no logic touched. Ponytail notes: 4 small animations replace 3; no new elements, abstractions, state, or semantics.
-
-Test evidence: focused 75/75 green before edits; after: locked restore, Release build 0/0, full suite 515/515, package-policy PASS, `git diff --check` clean.
-
-Native QA evidence (Release exe, captures in local temp `p14-*.png`, not committed): owner's Apple Music session genuinely PLAYING (no transport commands sent, nothing paused). Sending hierarchy correct; three wave-region frames 1.4s apart show visibly different crest/valley configurations with anchored ends (`p14-deform-strip.png`); wave-region pixel-diff 267/4250 per interval confirms live motion; Off shows dim static wave; Paused at 820×650 correct. No VRChat running; loopback-only destination. QA answer: true shape deformation, not rigid slide.
-
-QA side-effects: app LEFT OPEN on the live owner session (closing would kill mid-song OSC output): pause resumed, output restored Off (launch-found state), Home, 1280×940. Music and Apple Music untouched.
+Product owner reviewed the Skia music ribbon physically and confirmed: “me gusta como quedó”. The wave is FROZEN — no SKGLElement migration, no SkSL, no trace-count/motion/glow/size/renderer changes.
 
 ## Next action
 
-Product-owner physical review of Phase 1.4 wave motion; do not start Phase 2 until accepted.
+Phase 2 — About high-fidelity implementation.

@@ -1,13 +1,11 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Media.Animation;
 
 namespace LyricsChatbox;
 
 public partial class MainWindow
 {
-    private bool visualizerAnimating;
     private bool IsOutputPaused(DateTimeOffset nowUtc) => outputPause.IsPaused(nowUtc);
 
     private void InitializeOutputPause()
@@ -109,12 +107,7 @@ public partial class MainWindow
         var opacity = active ? 1d : 0.35d;
         if (!OutputVisualizer.Opacity.Equals(opacity)) OutputVisualizer.Opacity = opacity;
         var animate = sending && SystemParameters.ClientAreaAnimation;
-        if (animate != visualizerAnimating)
-        {
-            visualizerAnimating = animate;
-            var story = (Storyboard)Sidebar.FindResource("OutputWaveformStory");
-            if (animate) story.Begin(this, true); else story.Stop(this);
-        }
+        OutputMusicWave.IsAnimating = animate;
     }
 
     private void RequestManualSend()
