@@ -16,51 +16,61 @@
   </Window.Resources>
   <Grid x:Name="ContentRoot">
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="194"/>
+      <ColumnDefinition Width="240"/>
       <ColumnDefinition/>
     </Grid.ColumnDefinitions>
-    <Border x:Name="Sidebar" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource SidebarBrush}" Padding="16,28,16,20">
+    <Border x:Name="Sidebar" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource SidebarBrush}" Padding="20,28,20,16">
       <DockPanel>
-        <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,0,0,32">
-          <StackPanel Orientation="Horizontal">
-            <Image Source="Assets/AppIcon.png" Width="34" Height="34" Margin="4,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-            <StackPanel VerticalAlignment="Center"><TextBlock Text="LyricsChatbox" FontSize="14" FontWeight="SemiBold"/><TextBlock x:Name="VersionCaption" Style="{StaticResource Caption}" FontSize="11" Margin="0,3,0,0"/></StackPanel>
+        <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,0,0,28">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Image Source="Assets/AppIcon.png" Width="36" Height="36" Margin="0,0,12,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <StackPanel VerticalAlignment="Center"><TextBlock Text="LyricsChatbox" FontSize="15" FontWeight="SemiBold"/><TextBlock x:Name="VersionCaption" Style="{StaticResource Caption}" FontSize="11" Margin="0,2,0,0"/></StackPanel>
           </StackPanel>
         </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom">
-          <StackPanel x:Name="AboutNavigationPanel" Margin="0,0,0,10">
-            <RadioButton x:Name="AboutNav" Tag="About" AutomationProperties.Name="About" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
-              <StackPanel Orientation="Horizontal">
-                <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE946;" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
-                <TextBlock Text="About"/>
-              </StackPanel>
-            </RadioButton>
+        <StackPanel x:Name="OutputPanel" DockPanel.Dock="Bottom">
+          <Border Height="1" Background="{DynamicResource LineBrush}" Margin="0,0,0,14"/>
+          <DockPanel Margin="0,0,0,2">
+            <TextBlock x:Name="OutputPowerText" Text="OFF" DockPanel.Dock="Right" Foreground="{DynamicResource MutedBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Output power status"/>
+            <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"><TextBlock Text="Output" FontSize="12"/></CheckBox>
+          </DockPanel>
+          <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource Caption}" Margin="22,5,0,2"/>
+          <TextBlock x:Name="OutputDestinationText" Text="" Style="{StaticResource Caption}" Margin="22,0,0,2" FontSize="11" AutomationProperties.Name="Configured OSC destination"/>
+          <TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource Caption}" Margin="22,0,0,8" Visibility="Collapsed"/>
+          <WrapPanel Margin="0,6,0,0">
+            <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="0,0,6,0" AutomationProperties.Name="Resume Chatbox output"/>
+            <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource SmallButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
+              <Button.ContextMenu>
+                <ContextMenu>
+                  <MenuItem Header="Pause for 5 minutes" Tag="5" Click="PauseOutputSelected"/>
+                  <MenuItem Header="Pause for 15 minutes" Tag="15" Click="PauseOutputSelected"/>
+                  <MenuItem Header="Pause for 30 minutes" Tag="30" Click="PauseOutputSelected"/>
+                  <Separator/>
+                  <MenuItem x:Name="PauseUntilTrackMenuItem" Header="Pause until next track" Tag="track" Click="PauseOutputSelected"/>
+                  <MenuItem Header="Pause until I resume" Tag="resume" Click="PauseOutputSelected"/>
+                </ContextMenu>
+              </Button.ContextMenu>
+            </Button>
+          </WrapPanel>
+          <StackPanel x:Name="OutputVisualizer" Orientation="Horizontal" VerticalAlignment="Center" Height="36" Margin="22,12,0,0" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
+            <Border Width="3" CornerRadius="1.5" Height="6" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="10" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="16" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="24" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="14" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="20" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="30" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="18" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="12" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="22" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="32" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="20" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="12" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="16" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="26" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="14" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="8" VerticalAlignment="Center" Margin="0,0,3,0" Background="{DynamicResource AccentBrush}"/>
+            <Border Width="3" CornerRadius="1.5" Height="6" VerticalAlignment="Center" Background="{DynamicResource AccentBrush}"/>
           </StackPanel>
-          <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Padding="10,12">
-            <StackPanel>
-              <DockPanel>
-                <TextBlock x:Name="OutputPowerText" Text="OFF" DockPanel.Dock="Right" Foreground="{DynamicResource MutedBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" AutomationProperties.Name="Output power status"/>
-                <CheckBox x:Name="EnabledBox" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"><TextBlock Text="Output" FontSize="12"/></CheckBox>
-              </DockPanel>
-              <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource Caption}" Margin="22,5,0,2"/>
-              <TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource Caption}" Margin="22,0,0,8" Visibility="Collapsed"/>
-              <WrapPanel Margin="0,6,0,0">
-              <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="0,0,6,0" AutomationProperties.Name="Resume Chatbox output"/>
-              <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource SmallButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
-                <Button.ContextMenu>
-                  <ContextMenu>
-                    <MenuItem Header="Pause for 5 minutes" Tag="5" Click="PauseOutputSelected"/>
-                    <MenuItem Header="Pause for 15 minutes" Tag="15" Click="PauseOutputSelected"/>
-                    <MenuItem Header="Pause for 30 minutes" Tag="30" Click="PauseOutputSelected"/>
-                    <Separator/>
-                    <MenuItem x:Name="PauseUntilTrackMenuItem" Header="Pause until next track" Tag="track" Click="PauseOutputSelected"/>
-                    <MenuItem Header="Pause until I resume" Tag="resume" Click="PauseOutputSelected"/>
-                  </ContextMenu>
-                </Button.ContextMenu>
-              </Button>
-              </WrapPanel>
-            </StackPanel>
-          </Border>
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="NavigationPanel">
@@ -86,6 +96,12 @@
             <StackPanel Orientation="Horizontal">
               <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <TextBlock Text="Settings"/>
+            </StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="AboutNav" Tag="About" AutomationProperties.Name="About" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE946;" FontSize="20" Width="24" Margin="0,0,14,0" VerticalAlignment="Center"/>
+              <TextBlock Text="About"/>
             </StackPanel>
           </RadioButton>
         </StackPanel>

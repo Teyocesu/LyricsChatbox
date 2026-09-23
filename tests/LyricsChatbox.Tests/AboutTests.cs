@@ -76,6 +76,15 @@ public sealed class AboutTests : IDisposable
         Assert.False(state.ShowPause); Assert.False(state.ShowResume);
     }
 
+    [Theory]
+    [InlineData("127.0.0.1", 9000, "To 127.0.0.1:9000")]
+    [InlineData("localhost", 9000, "To localhost:9000")]
+    [InlineData("192.168.1.10", 9001, "To 192.168.1.10:9001")]
+    [InlineData("::1", 9000, "To [::1]:9000")]
+    [InlineData("fe80::1", 9000, "To [fe80::1]:9000")]
+    public void OutputDestinationFormatsActualDestinationWithoutClaimingDelivery(string host, int port, string expected) =>
+        Assert.Equal(expected, OutputSidebarPresentation.FormatDestination(host, port));
+
     [Fact]
     public void DisabledOutputWithScheduledPauseKeepsSecondaryHint()
     {

@@ -95,6 +95,13 @@ public partial class MainWindow
         OutputPauseButton.Visibility = state.ShowPause ? Visibility.Visible : Visibility.Collapsed;
         OutputResumeButton.Visibility = state.ShowResume ? Visibility.Visible : Visibility.Collapsed;
         PauseUntilTrackMenuItem.IsEnabled = engine.Track is not null;
+        var effective = destinationSelection.Effective(settings);
+        var destination = OutputSidebarPresentation.FormatDestination(effective.Host, effective.Port);
+        if (OutputDestinationText.Text != destination) OutputDestinationText.Text = destination;
+        // The sidebar motif is decorative: full opacity only while output is Active, dim otherwise.
+        var visualActive = state.ShowPause && !state.ShowResume;
+        var opacity = visualActive ? 1d : 0.35d;
+        if (!OutputVisualizer.Opacity.Equals(opacity)) OutputVisualizer.Opacity = opacity;
     }
 
     private void RequestManualSend()

@@ -119,8 +119,7 @@ public partial class MainWindow
     }
 
     private RadioButton? FindNavigationButton(string page) =>
-        NavigationPanel.Children.OfType<RadioButton>().FirstOrDefault(r => (string?)r.Tag == page)
-        ?? AboutNavigationPanel.Children.OfType<RadioButton>().FirstOrDefault(r => (string?)r.Tag == page);
+        NavigationPanel.Children.OfType<RadioButton>().FirstOrDefault(r => (string?)r.Tag == page);
 
     private void RefreshQuickMessages()
     {
