@@ -1,4 +1,4 @@
-# v0.8.0 execution plan — Phase 1 COMPLETE; Phase 2 About implementation validated, owner QA pending
+# v0.8.0 execution plan — Phase 1 COMPLETE; Phase 2 About implemented and delivered, owner QA pending
 
 ## State and baseline
 
@@ -160,7 +160,7 @@ Product owner reviewed the Skia music ribbon physically and confirmed: “me gus
 
 ## Phase 2 — About high-fidelity implementation (2026-09-23)
 
-Status: implementation, native implementation-side visual QA, and full validation complete; commit/push and product-owner physical review remain. Starting state matched the required branch and SHA (`codex/v0.8.0`, `d932a0df653bd58e9ca97c4662e37e01a9b5aac6`); `origin/codex/v0.8.0` matched, the worktree was clean, and `main`/`origin/main` remained `b663555fa604ec86062a6348876f1c27fc31a041`.
+Status: implementation, native implementation-side visual QA, full validation, commit and push are complete; product-owner physical review remains. Starting state matched the required branch and SHA (`codex/v0.8.0`, `d932a0df653bd58e9ca97c4662e37e01a9b5aac6`); `origin/codex/v0.8.0` matched, the worktree was clean, and `main`/`origin/main` remained `b663555fa604ec86062a6348876f1c27fc31a041`.
 
 Production files changed:
 - `src/LyricsChatbox/MainWindow.xaml` — replaced the About card stack with a continuous hero and two-column Grid: Overview / Community & Contact, then Project & Tools / Privacy & Data, followed by full-width Updates. Added a few semantic About styles, thin theme-brush separators, keyboard-focusable action rows, accessible names/live statuses and static, non-interactive, accent-tinted hero curves. Discord remains copy-only; diagnostics keeps copy and export actions; packaged third-party notices remain the existing workflow.
@@ -182,6 +182,8 @@ Full validation:
 - Focused About/updater/runtime/lifecycle checks — PASS; 88/88.
 - `git diff --check` — PASS after final source and documentation edits.
 
+Delivery: Phase 2 implementation commit `a7eea90` was pushed to `origin/codex/v0.8.0`; `main` was not modified. The delivery-state documentation update is committed and pushed separately after implementation validation.
+
 ## Next action
 
-Commit and push the reviewed Phase 2 changes on `codex/v0.8.0`, then hand off for product-owner physical review of About. Do not start Phase 3 until that review is complete.
+Product owner compares About with the canonical reference and accepts or requests visual corrections. Do not start Phase 3 until that review is complete.
