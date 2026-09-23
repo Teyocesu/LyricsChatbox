@@ -183,6 +183,7 @@
               <StackPanel>
                 <TextBlock Text="Lyric context" Style="{StaticResource DashboardTitle}" Margin="0,0,0,8"/>
                 <ListBox x:Name="ContextBox" SelectionChanged="ContextChanged" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Lyric context mode" Padding="0" ToolTip="{Binding Text, ElementName=ContextHint}">
+                  <ListBox.Template><ControlTemplate TargetType="ListBox"><ItemsPresenter/></ControlTemplate></ListBox.Template>
                   <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
                   <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource PresetItem}"><Setter Property="Padding" Value="7,7"/><Setter Property="Margin" Value="0,0,5,5"/><Setter Property="VerticalContentAlignment" Value="Center"/></Style></ListBox.ItemContainerStyle>
                   <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="11" TextAlignment="Center"/></DataTemplate></ListBox.ItemTemplate>

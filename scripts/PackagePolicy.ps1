@@ -124,6 +124,7 @@ function Get-PackagePathViolation {
     }
 
     if ($leaf -in @('.gitignore', '.gitattributes', 'app.manifest', 'packages.lock.json') -or
+        $leaf -match '\.pdb$' -or
         $leaf -match '\.(cs|csproj|slnx|xaml|props|targets)$') {
         return 'source or project metadata'
     }

@@ -121,13 +121,13 @@ public partial class MainWindow
             DownloadStatus.Text = "Installer opened. Follow its steps to update LyricsChatbox.";
         }
         catch (OperationCanceledException) { }
-        catch (System.ComponentModel.Win32Exception) { DownloadStatus.Text = "Could not open the installer. Nothing was installed by LyricsChatbox."; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { DownloadStatus.Text = "Could not open the installer. Nothing was installed by LyricsChatbox."; }
         finally { if (!closing) LaunchInstallerButton.IsEnabled = true; }
     }
     private void ViewRelease(object sender, RoutedEventArgs e)
     {
         if (releaseLink is null) return;
         try { Process.Start(new ProcessStartInfo(releaseLink.AbsoluteUri) { UseShellExecute = true }); }
-        catch (System.ComponentModel.Win32Exception) { UpdateStatus.Text = "Could not open your browser."; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { UpdateStatus.Text = "Could not open your browser."; }
     }
 }

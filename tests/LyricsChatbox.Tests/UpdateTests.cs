@@ -59,6 +59,8 @@ public class UpdateTests
     [InlineData("0.6.1", false, "v0.6.2", true)]
     [InlineData("0.6.2", false, "v0.6.2", false)]
     [InlineData("0.6.2", false, "v0.6.1", false)]
+    [InlineData("0.6.2", false, "v0.7.0", true)]
+    [InlineData("0.7.0", false, "v0.7.0", false)]
     public async Task PrereleaseAwareStableComparison(string current, bool prerelease, string latest, bool offered)
     {
         using var http = new HttpClient(new Handler((_, _) => Task.FromResult(Json(latest))));
@@ -79,6 +81,7 @@ public class UpdateTests
     [InlineData("0.5.4", "0.5.4")]
     [InlineData("v0.6.2", "0.6.2")]
     [InlineData("v0.6.2-rc.1", null)]
+    [InlineData("v0.7.0", "0.7.0")]
     public void PrereleaseTagsAreNotStableVersions(string tag, string? expected)
     {
         Assert.Equal(expected is null ? null : Version.Parse(expected), UpdateChecker.StableVersion(tag));

@@ -384,7 +384,7 @@ public partial class MainWindow : Window
     private void OpenData(object sender, RoutedEventArgs e)
     {
         try { Directory.CreateDirectory(data.Root); Process.Start(new ProcessStartInfo(data.Root) { UseShellExecute = true }); AboutStatus.Text = ""; }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception) { AboutStatus.Text = "Could not open data folder."; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception or InvalidOperationException) { AboutStatus.Text = "Could not open data folder."; }
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
     {

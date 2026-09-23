@@ -16,7 +16,7 @@ try {
     $distribution = Join-Path $managedRoot 'win-x64'
     New-Item -ItemType Directory -Path $distribution -Force | Out-Null
 
-    $publishArguments = @('publish', 'src/LyricsChatbox', '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:RestoreLockedMode=true', '-o', $distribution)
+    $publishArguments = @('publish', 'src/LyricsChatbox', '-c', $Configuration, '-r', 'win-x64', '--self-contained', 'true', '-p:RestoreLockedMode=true', '-p:DebugType=None', '-p:IncludeSourceRevisionInInformationalVersion=false', '-o', $distribution)
     & dotnet @publishArguments
     if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
 

@@ -2,6 +2,18 @@
 
 A small Windows app that follows Apple Music or Spotify Desktop playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, player credentials or backend.
 
+## v0.7.0
+
+Display now groups profile, composition, lyric context, presentation and preview controls. Custom composition offers insertable token buttons. Status messages appear when the composition uses `{message}`; Lyric Context stays visible and explains when the composition cannot use it.
+
+The Decorations menu provides searchable symbols, text art, kaomoji, dividers, frames, hearts, music and status snippets for Custom composition, Rotating Messages and Manual drafts. Save favorites or add your own items locally. The picker previews whether an insertion fits the editor and current Chatbox limit.
+
+Profiles can rotate up to 16 messages sequentially through `{message}` at a chosen interval. Rotation pauses while automatic output is unavailable and resumes without catching up on missed messages. Existing single status messages migrate without starting rotation.
+
+About now contains version, author links, update controls, diagnostics, data-folder access and third-party notices. The sidebar shows Output On/Off separately from a temporary pause. Spotify Desktop support has been verified with the Microsoft Store version on Windows.
+
+If you return to v0.6.2, back up `%LocalAppData%\LyricsChatbox` first, or avoid editing and saving profiles in v0.6.2 before returning to v0.7.0. The older version can discard rotating-message settings when it saves a profile.
+
 ## v0.6.0
 
 This update adds Spotify Desktop support alongside Apple Music, with an Apple Music / Spotify / Automatic source selector. New installations default to Automatic, which follows whichever supported player is playing and stays undecided when both play; an explicitly saved choice is always kept. Spotify Desktop support has been verified with the Microsoft Store version on Windows.
@@ -55,7 +67,7 @@ Home has no page scrolling. Smaller windows provide a section selector, and expa
 
 **Settings → VRChat OSC** can discover local VRChat through OSCQuery. New/default-localhost configurations enable this convenience; migrated custom/LAN destinations remain manual. It validates the advertised Chatbox endpoint and falls back to your saved manual destination when discovery fails. Advanced destination → Apply explicitly selects manual mode. Discovery never proves message delivery, and the app does not advertise a server.
 
-**Updates → Check now** shows stable-release notes. An available official installer can be downloaded explicitly; the app checks its SHA256, then offers a separate **Open verified installer…** action that checks the file again. Failed, cancelled or mismatched downloads never launch. Skip this version suppresses automatic notifications only; Check now still reveals the release. Automatic checks remain off by default. The app and installer are currently unsigned; see the [Windows signing investigation](docs/WINDOWS-SIGNING.md) for requirements, costs and CI options.
+**About → Updates → Check now** shows stable-release notes. An available official installer can be downloaded explicitly; the app checks its SHA256, then offers a separate **Open verified installer…** action that checks the file again. Failed, cancelled or mismatched downloads never launch. Skip this version suppresses automatic notifications only; Check now still reveals the release. Automatic checks remain off by default. The app and installer are currently unsigned; see the [Windows signing investigation](docs/WINDOWS-SIGNING.md) for requirements, costs and CI options.
 
 ## Existing daily-use features
 
@@ -63,13 +75,13 @@ v0.4 adds a per-user Inno Setup installer alongside the portable ZIP, with a Sta
 
 **Settings → Application behavior** controls Start with Windows, Start minimized, Minimize to system tray and Close window to system tray. All four default **off**, including migration from v0.3. Tray Open, Output, Compact/Floating and Exit act on the same application. Launching a second copy restores the first. Start minimized uses the taskbar unless Minimize to tray is also enabled. Startup points to the current executable; enable it again after moving a portable copy. The installer never enables background preferences.
 
-**Settings → Updates → Check now** checks the project's latest stable GitHub release. Checks at startup default **off**. Downloads and installer launch each require a deliberate action. Failed checks do not interrupt playback.
+**About → Updates → Check now** checks the project's latest stable GitHub release. Checks at startup default **off**. Downloads and installer launch each require a deliberate action. Failed checks do not interrupt playback.
 
 The offset slider shows the effective value. Adjustments are temporary until **Save for this song** or **Use globally** is selected. Song values override the global value for the exact title/artist/album/duration identity, within ±5 seconds. **Use globally** clears the current song override; **Reset song** restores the global preference. Positive values delay lyrics; no audio analysis is performed.
 
 When automatic matching fails, **Choose another match…** searches up to five candidates, showing recording metadata instead of lyrics. An explicit choice is saved only after verifying timed lyrics. Imported local LRC remains first and blocks remote selection until its file is deliberately removed, followed by validated cache/saved association, then normal strict matching. Missing or changed saved candidates fall back safely. **Forget manual match** removes the association.
 
-Home displays the Windows media thumbnail from the selected player, with no separate artwork service or disk history. **Settings → Diagnostics** copies or exports current playback/provider/output state and up to 100 recent status events. No lyric bodies, drafts, custom messages or credentials are included; review metadata before sharing. Nothing is uploaded automatically.
+Home displays the Windows media thumbnail from the selected player, with no separate artwork service or disk history. **About → Support and maintenance** copies or exports current playback/provider/output state and up to 100 recent status events. No lyric bodies, drafts, custom messages or credentials are included; review metadata before sharing. Nothing is uploaded automatically.
 
 Windows CI restores using the repository's SDK/lock files, builds Release and runs offline tests on pushes and pull requests. To build the installer after publishing, run `scripts/Build-Installer.ps1 -Compiler <path-to-ISCC.exe>` with Inno Setup installed. Build artifacts live under the selected version's directory in `artifacts`.
 
@@ -95,17 +107,17 @@ The **Lyric offset** control is optional and ranges from −5 to +5 seconds in 0
 
 ## Display and manual chat
 
-The **Display** page offers **Lyrics Only**, **Song + Lyrics**, **Status / Time** and **Custom** presets. Custom templates support `{lyrics}`, `{title}`, `{artist}`, `{album}`, `{time}`, `{message}`, `{elapsed}` and `{duration}`. The clock uses local 24-hour time; playback times use minutes and seconds (hours when needed). `{message}` is your saved custom status. Missing fields and unknown tokens are omitted; text inserted through a token is never interpreted as another template. Templates and status text accept up to 512 characters.
+The **Display** page offers **Lyrics Only**, **Song + Lyrics**, **Status / Time** and **Custom** presets. Custom templates support `{lyrics}`, `{title}`, `{artist}`, `{album}`, `{time}`, `{message}`, `{elapsed}` and `{duration}`. The clock uses local 24-hour time; playback times use minutes and seconds (hours when needed). `{message}` uses the active profile message, or a rotating message when enabled. Missing fields and unknown tokens are omitted; text inserted through a token is never interpreted as another template. Templates and messages accept up to 512 characters.
 
 The **Manual** page takes priority while composing. With live edit off, a draft stays local until **Send**. With live edit on, the newest draft updates at the existing 1.05-second send cadence; old keystrokes never queue. **Send** or **Ctrl+Enter** holds the final message for eight seconds after emission, then resumes the current automatic display. **Resume Automatic** returns immediately; **Clear** sends an empty message and holds the empty state for eight seconds. Drafts are not saved. Optional **Typing indicator** sends VRChat's typing state while actively editing, and clears on three seconds of inactivity, focus loss, Send, Clear, resume, output disable or shutdown (best effort over UDP).
 
 **Compact / Floating Chatbox** is opt-in and applies to automatic and manual output. It appends U+0003 followed by U+001F to non-empty payloads, using current VRChat rendering behavior to make the opaque background narrow while text appears to float. This is not an official background-width API and may change after VRChat updates. Toggling it resends the current text at the normal cadence. Empty clears remain empty. The preview hides the suffix, while its character counter includes those two UTF-16 units: compact mode has up to 142 visible units. Both modes preserve whole Unicode grapheme clusters during truncation.
 
-## Message formatting and ASCII
+## Message formatting and Decorations
 
 Custom/Status messages and Manual drafts have separate **Left**, **Center** and **Right** choices. Center and Right insert ordinary spaces over an approximate 24–48-column block. VRChat's font and wrapping can render this differently; OSC does not provide an exact alignment or rich-text styling command. The layout preview uses a monospaced font to make the transmitted spaces visible, not to promise the same font in VRChat.
 
-**Insert ASCII** inserts an editable Cat, AFK sign, Message divider or Music template at the current selection. Custom templates can still contain the eight display tokens. Intentional indentation and internal blank lines are preserved; ordinary Lyrics Only / Song + Lyrics formatting stays unchanged. Spaces count toward the 144-unit payload limit, and compact mode still reserves two units. The final formatter preserves complete graphemes and at most nine explicit lines; the manual counter marks trimmed content. Whitespace-only messages still clear the Chatbox.
+**Decorations menu** inserts the selected item at the current caret or replaces the selection in Custom composition, a rotating message or a Manual draft. Search, Favorites and My items help find reusable snippets; **Only show items that fit** filters out items that would exceed editor space or truncate the current output. Custom templates can still contain the eight display tokens. Intentional indentation and internal blank lines are preserved; ordinary Lyrics Only / Song + Lyrics formatting stays unchanged. Spaces count toward the 144-unit payload limit, and Floating mode still reserves two units. The final formatter preserves complete graphemes and at most nine explicit lines; the manual counter marks trimmed content. Whitespace-only messages still clear the Chatbox.
 
 ## Secondary lyrics source
 
@@ -117,11 +129,11 @@ Fallback availability depends on the external service and network. The app keeps
 
 ## Desktop layout
 
-**Home** shows playback state, song, current lyric, source and quick preset/floating/timing controls. **Display** provides visual presets and shows the token editor only for Custom. **Manual** has a local draft, payload counter and eight-second return countdown. **Settings** keeps import/data/network controls out of the main playback view. The sidebar output switch and final formatted preview remain visible. The preview labels floating mode and omits its control suffix; it is not a replica of VRChat's renderer. The dark native WPF theme uses Windows fonts/icons and adds no UI framework dependency.
+**Home** shows playback state, song, current lyric, source and quick preset/floating/timing controls. **Display** provides profiles, composition, contextual lyric controls, presentation and preview. **Manual** has a local draft, payload counter and eight-second return countdown. **Settings** contains configurable behavior, lyrics and network controls; **About** contains updates, support and notices. The sidebar output switch and final formatted preview remain visible. The preview labels floating mode and omits its control suffix; it is not a replica of VRChat's renderer. The dark native WPF theme uses Windows fonts/icons and adds no UI framework dependency.
 
 ## Local data and privacy
 
-Settings, profiles, reusable quick messages, exact-recording ignore decisions, imported lyrics and a simple successful-lookup cache live in `%LocalAppData%\LyricsChatbox`. **Open data folder** opens that directory. Imported files use a hash of recording metadata; choose them through the app instead of guessing filenames. Cache entries expire after 30 days and retain their source. Existing v0.2 cache entries are read as LRCLIB; existing preferences migrate unchanged. Broken cache/settings files are ignored; writes are atomic where supported by the filesystem. Normal listening does not persist lyric history or diagnostics. Uninstall preserves this local data.
+Settings, profiles and their rotating messages, decoration favorites and My items, reusable quick messages, exact-recording ignore decisions, imported lyrics and a simple successful-lookup cache live in `%LocalAppData%\LyricsChatbox`. **About → Open data folder** opens that directory. Imported files use a hash of recording metadata; choose them through the app instead of guessing filenames. Cache entries expire after 30 days and retain their source. Existing v0.2 cache entries are read as LRCLIB; existing preferences migrate unchanged. Broken cache/settings files are ignored; writes are atomic where supported by the filesystem. Normal listening does not persist lyric history or diagnostics. Uninstall preserves this local data.
 
 **Retry lyrics** checks local files/cache again and repeats lookup if needed. It cannot bypass either source's rate limit. A successful cached recording is reused during normal replay.
 

@@ -104,6 +104,7 @@ try {
         'physical-report.json'
         'diagnostic-export.json'
         'secret-token.txt'
+        'LyricsChatbox.pdb'
     )
     foreach ($relative in $forbiddenCases) {
         if (-not (Get-PackagePathViolation -RelativePath $relative)) {

@@ -4,7 +4,7 @@
 
 v0.7.0 is a Windows-only .NET 10 WPF minor release with exactly four product areas: Display/composition simplification, a local Decorations picker, profile-owned Rotating Messages, and an About/sidebar/Output presentation cleanup. It preserves the current local-first architecture and the pipeline Playback → Track identity → Lyrics → Composition → Formatting → Scheduler → OSC. It adds no account, backend, telemetry, cloud state, runtime scraping, arbitrary player, plugin system, scripting engine or generic Chatbox framework.
 
-Implementation status: Phases 0–5 are implemented on the v0.7.0 development branch. The product owner physically approved the final Phase 3.2 Decorations picker and Phase 4.2 Display polish. Phase 5 completes the About/sidebar/Output presentation cleanup and awaits physical QA.
+Implementation status: Phases 0–5 are implemented on the v0.7.0 development branch. The product owner physically approved the final Decorations picker, Display polish and About/sidebar/Output presentation. The current visual design is accepted for v0.7.0.
 
 ### Display and composition
 

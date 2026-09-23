@@ -1,15 +1,15 @@
-# v0.7.0 execution plan — Phases 0–5 implemented
+# v0.7.0 execution plan — release candidate prepared
 
 ## State and baseline
 
 - Planning date: 2026-09-20.
 - Branch: `codex/v0.7.0`, created from exact stable commit `33838408f29b853c8945a0595fc4400420d41d27`.
 - At cycle start, `HEAD`, local `main`, `origin/main` and tag `v0.6.2` all resolved to that commit; the worktree was clean. No local/remote `v0.7.0` tag or GitHub `v0.7.0` release existed.
-- Product assembly/file version remains `0.6.2`. The initial planning task changed only `SPEC.md`, `PLAN.md` and `HANDOFF.md`.
-- Current goal: obtain product-owner physical QA for Phase 5 About, Settings and Output presentation. Phase 4.2 has the product owner's physical approval. Version bump, tag, release and main merge remain out of scope.
+- At initial planning, product assembly/file version remained `0.6.2`; release preparation bumped the authoritative project version to `0.7.0`.
+- Current state: final audit and release-candidate preparation after product-owner physical acceptance of Phase 5. Tag, GitHub Release, publication and main merge remain out of scope.
 - Phase 0/1 evidence: focused rotation/presentation tests `80/80`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `420/420` with 0 skips; package-policy test PASS; `git diff --check` PASS. Quality/security review fixed null profile-entry normalization; Ponytail FULL review removed a redundant interval array and a tiny-set allocation.
 - Phase 2 evidence: focused Decorations + rotation regression tests `44/44`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `434/434` with 0 skips; package-policy test PASS; `git diff --check` PASS. Systematic content review found 90 entries, 10,228 source bytes, 19 curated Popular flags, no duplicate IDs/content, no tabs/trailing garbage, maximum content length 48, maximum six lines and no item over 144 UTF-16 units. Security/quality review made the catalog collections actually read-only and moved the shared Unicode validator to neutral ownership; Ponytail FULL found no removable architecture.
-- Phase 3 evidence: focused picker/decorations/layout/display tests `50/50`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `447/447` with 0 skips; package-policy test and `git diff --check` PASS. Native WPF interaction QA is still required: the available computer-use host exposed browser tabs but no native Windows app surface, so no visual/keyboard/theme claim is recorded.
+- Phase 3 evidence: focused picker/decorations/layout/display tests `50/50`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `447/447` with 0 skips; package-policy test and `git diff --check` PASS. At that point native WPF interaction QA was unavailable; later product-owner acceptance is recorded under Phase 3.2.
 - Phase 3.1 evidence: focused decoration/picker tests `31/31`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `450/450` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 218 entries, all 90 prior IDs preserved, no duplicate IDs/names/content, no tabs/trailing or blank-line garbage, maximum content length 49, maximum six lines and no item over 144 UTF-16 units. Code-quality review found no blocker; Ponytail FULL and complete-diff Ponytail review found no removable architecture or complexity.
 - Phase 3.2 evidence: focused decoration/picker tests `32/32`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `451/451` with 0 skips; package-policy test and `git diff --check` PASS. Catalog review found 327 entries/27 Popular flags with exact requested distribution, no duplicate IDs/names/content, no tabs/trailing/blank-line garbage, maximum content length 50, maximum six lines and no item over 144 UTF-16 units. Multi-axis review found no blocker; Ponytail FULL/complete-diff review removed one unnecessary guard wrapper and found no remaining removable architecture. The product owner then physically approved naming, Favorites/Popular/My items placement, scroll reset, fit language, catalog variety/density and interaction behavior; Phase 3 is closed.
 - Phase 4 evidence: focused Display/rotation/manual/picker/presentation tests `160/160`; locked restore PASS; Release build PASS with 0 warnings/0 errors; full tests `473/473` with 0 skips; package policy and `git diff --check` PASS. The first product-owner physical pass found rotation-editor transition/styling defects, unstable Lyric Context discoverability/layout and the missing canonical Status profile; those findings are the bounded Phase 4.1 scope below.
@@ -169,7 +169,7 @@ Purpose: correct only the concrete findings from the first Phase 4 product-owner
 - Profiles: Phase 4.1 introduced the canonical `status` built-in with no sample text and an empty valid rotation. Phase 4.2 corrected its visible identity to Status / Time and stabilized its placement before canonical Custom while preserving selection, user profiles, customized settings and full-library safety.
 - Tests: pure editor transition sequences, invalid-save recovery, delete/add-after-delete, cancellation, reorder/enable stability, derived-card support/copy, fresh/existing/customized/full-capacity profile normalization and Status behavior.
 - Runtime invariants: rotator timing, Off/Pause/Manual/no-token freeze, legacy Message mirroring, scheduler ownership and zero runtime writes are unchanged.
-- Verification: focused Display/Presentation/Rotation/OutputPause/DecorationPicker suite `168/168`; locked restore PASS; Release build 0 warnings/0 errors; full suite `481/481`, 0 skips; package policy and `git diff --check` PASS. Scope inspection found no runtime-core, README or Phase 5 diff, native rotation dialog or newly hardcoded theme color. Native Release smoke with Output Off confirmed themed rotation rows, no implicit row selection/editor, and the stable disabled Lyric Context card with explanatory copy; product-owner physical QA remains pending.
+- Verification: focused Display/Presentation/Rotation/OutputPause/DecorationPicker suite `168/168`; locked restore PASS; Release build 0 warnings/0 errors; full suite `481/481`, 0 skips; package policy and `git diff --check` PASS. Scope inspection found no runtime-core, README or Phase 5 diff, native rotation dialog or newly hardcoded theme color. Native Release smoke with Output Off confirmed themed rotation rows, no implicit row selection/editor, and the disabled Lyric Context card with explanatory copy. Product-owner physical acceptance was recorded subsequently under Phase 4.3.
 - Out of scope: Decorations redesign/catalog work, rotation runtime changes, Phase 5/About/Output UI, version bump, tag, release or main merge.
 
 ## Phase 4.2 — final Display QA polish — physically approved; closed
@@ -183,7 +183,7 @@ Purpose: correct only the three concrete findings from the Phase 4.1 physical QA
 - Physical QA: the product owner physically approved Phase 4.2 per the Phase 5 brief (disabled context visuals, five canonical profiles, Status / Time ordering, duration-label clarification, Display redesign, token chips, rotating messages, runtime behavior). Phase 4 is closed.
 - Out of scope: rotation runtime/editor behavior, Decorations, output behavior, playback/lyric matching, scheduler, Manual, Quick Messages and all Phase 5 work.
 
-## Phase 5 — About, sidebar and Output UI — implemented; physical QA pending
+## Phase 5 — About, sidebar and Output UI — implemented and physically accepted
 
 Purpose: separate settings from identity/maintenance/legal actions and make Output states unambiguous.
 
@@ -191,12 +191,12 @@ Purpose: separate settings from identity/maintenance/legal actions and make Outp
 - Invariants: About is one persisted top-level section; maintenance controls move, not duplicate; installed version comes from ProductIdentity; only fixed allowlisted HTTPS URLs launch; Discord only copies; local folder/notice targets are app-owned constants; `RefreshOutputPauseView()` stays authoritative; master Off and Pause remain separate.
 - Deterministic tests: About normalization/restore; version text; exact allowed/rejected URI cases; launcher/clipboard exceptions become UI failure results; no clipboard read; Output Off/Active/each Paused summary/pause-remains-while-Off/Resume/Change; all existing pause modes and no-replay/typing tests.
 - Implementation: `About` added to `RuntimeStatePolicy.Sections`; canonical author/project/VRChat/Discord identities centralized in `ProductIdentity`; one minimal `ExternalLinks` helper owns the HTTPS host allowlist (`github.com`, `vrchat.com`), shell-launch failure mapping and the fixed bundled-notice path; one pure `OutputSidebarPresentation.Describe` owns the four Off/Active/Paused/scheduled presentation states consumed by `RefreshOutputPauseView()`; Updates, Open data folder and diagnostics moved verbatim to a scrollable About page while Settings keeps playback/appearance/behavior/lyrics/OSC; About navigation sits above the Output card with a shared lookup helper; version still comes from `ProductIdentity.DisplayVersion`.
-- Verification: locked restore PASS; Release build 0 warnings/0 errors; focused About/runtime/output/updater suite `98/98`; full suite `501/501`, 0 skips; package policy PASS under PowerShell 7; `git diff --check` PASS. XAML inspection found one Updates control set and one diagnostics set, both under About, with no data-folder action in Settings. Review confirmed no updater behavior or Output transmission path changed, no new mode, no version bump and no release work. The native Release app launched with persisted Output Off (PID `41292`); product-owner physical QA remains pending.
+- Verification at implementation: locked restore PASS; Release build 0 warnings/0 errors; focused About/runtime/output/updater suite `98/98`; full suite `501/501`, 0 skips; package policy PASS under PowerShell 7; `git diff --check` PASS. XAML inspection found one Updates control set and one diagnostics set, both under About, with no data-folder action in Settings. The native Release app launched with persisted Output Off (PID `41292`). The product owner subsequently physically accepted Phase 5 for v0.7.0 and froze its visual design; further cosmetic polish is deferred. Functional, security, persistence, output, updater, crash and packaging defects remain release blockers.
 - Acceptance: Settings contains settings; About contains identity/version/maintenance/links/legal; no crash on unavailable shell or clipboard; Off hides active pause actions; re-enable returns to an extant pause truthfully; small-height sidebar remains usable.
 - Dependencies: fixed About identities recorded above. Existing update/data-folder code is reused.
 - Out of scope: embedded browser, arbitrary link input, Discord URL, new pause mode, Output semantics rewrite or duplicate view model.
 
-## Phase 6 — integration, regression, accessibility and hardening
+## Phase 6 — integration, regression, accessibility and hardening (covered by final gate; no new feature phase)
 
 Purpose: prove the four areas compose safely and clean up only implementation duplication discovered by real call sites.
 
@@ -207,7 +207,7 @@ Purpose: prove the four areas compose safely and clean up only implementation du
 - Dependencies: Phases 0–5.
 - Out of scope: physical claims, publication, speculative abstraction extraction. Add a helper only after at least two real call sites or when it enforces a security boundary.
 
-## Phase 7 — physical QA
+## Phase 7 — physical QA (product-owner final candidate check pending)
 
 Purpose: validate actual WPF interaction and upgrade behavior without claiming release readiness from unit tests.
 
@@ -226,8 +226,19 @@ Purpose: prepare, but do not publish, v0.7.0 only after automated and physical a
 - Invariants: version bump occurs only here after acceptance; user-facing notes omit internal prompts/models/branches/checklists; licenses ship; old tags/releases remain immutable; main is merged only with explicit approval; no credentials.
 - Deterministic checks: clean restore/build/test; portable/installer policy and launch; hashes; GitHub Actions green; diff/scope/secrets/license review; version consistency; candidate artifacts match commit.
 - Acceptance: a reviewable release commit/artifact exists with all gates recorded. Tag/release/publication require separate explicit authorization.
-- Dependencies: Phase 7 accepted.
+- Dependencies for candidate preparation: Phase 5 physical acceptance and green final audit/automated gates. The product owner checks the final candidate before authorizing publication.
 - Out of scope: silent tag/release/merge, branch cleanup before a verified release, unrelated maintenance.
+
+## Final gate and release candidate — 2026-09-22
+
+- Starting repository state: clean `codex/v0.7.0` at `8aeb925d0fde41a2beae0a94d95ac135ed5ad834`, equal to `origin/codex/v0.7.0`; `main` and `origin/main` at `33838408f29b853c8945a0595fc4400420d41d27`; branch 10 ahead/0 behind. `git fetch --prune` succeeded. No v0.7.0 tag or GitHub Release existed.
+- Phase 5: the product owner physically accepted the current implementation and froze its visual language for this release. The audit covers the complete `main...codex/v0.7.0` feature diff, not only the final change. Ponytail review/audit found no justified release-scope simplification. No P0/P1 finding, dependency change, new network endpoint, second OSC sender/formatter/scheduler, or weakening of tests was found.
+- P2 fixes: `Process.Start` launch failures caused by `InvalidOperationException` now surface existing local failure text for notices, data folder, release page and verified installer. README now describes the actual Decorations and About locations. Publish omits PDBs; package policy rejects them. A disabled WPF `ListBox` template painted Lyric Context white over the dark card; the local `ItemsPresenter` template removes that system background. The rebuilt portable visually showed the dark disabled grid. Publish suppresses the transient source-revision suffix in ProductVersion so artifact metadata reports the stable `0.7.0` independently of later documentation commits.
+- Deliberately deferred P3: purely cosmetic changes to the accepted visual design. No architecture or product decisions were changed.
+- Validation: `dotnet restore LyricsChatbox.slnx --locked-mode` PASS; `dotnet build LyricsChatbox.slnx -c Release --no-restore` PASS with 0 warnings/0 errors; focused identity/updater/About suite 53/53; `dotnet test LyricsChatbox.slnx -c Release --no-restore` 504/504, 0 skips after the final UI/package fix; `pwsh -NoProfile -File scripts/Test-PackagePolicy.ps1` PASS; `pwsh -NoProfile -File scripts/Publish.ps1 -Configuration Release` PASS; `pwsh -NoProfile -File scripts/Build-Installer.ps1 -Compiler <Inno Setup 7 ISCC.exe>` PASS; `pwsh -NoProfile -File scripts/Verify-Package.ps1 ... -RequireChecksum -InstallerPath ...` PASS; `git diff --check` PASS. `dotnet list src/LyricsChatbox/LyricsChatbox.csproj package --vulnerable --include-transitive --format json` found no vulnerable package. No package lock or dependency change.
+- Package: 486 staging files, seven licenses, required README/notices/signing document and Decorations asset. ZIP contents match staging; installer source covers the same 486 files. Policy excludes internal plans, prompts, secrets, test output, PDBs and project/source metadata. Portable version label and Windows ProductVersion both showed `0.7.0`; About and Home/Display/Manual/Settings navigation were observed with Output Off. About's real stable-release check reported “You're up to date.” without a fake release. Third-party notice button was present and clicked; bundled notice file and package path were verified. No OSC capture or real VRChat delivery was performed.
+- Artifacts in ignored `artifacts/v0.7.0/`: `LyricsChatbox-0.7.0-win-x64.zip` 84,083,471 bytes, SHA256 `a54af8f9eee7cdd15720e646d9c4a880124c278562753fd6cc887552476957c5`; `LyricsChatbox-Setup-0.7.0.exe` 58,170,631 bytes, SHA256 `43222c405dc3a6305916b79d3605fa4d5b567eeefb2358f95531578872e41f53`; matching `.sha256` sidecars. Installer is unsigned. Release notes are staged only in `docs/RELEASE-NOTES-v0.7.0.md`, not published.
+- Publication boundary: commit/push release preparation to `origin/codex/v0.7.0` only. No tag, GitHub Release, merge to main or artifact publication. Before authorization, the product owner must check the exact final ZIP/installer on Windows: portable launch, installer install/uninstall, navigation/visual acceptance, preserved local state and Output safety; use only loopback for any actual OSC send test and report any regression.
 
 ## Security and hardening checklist for implementation
 
@@ -260,4 +271,4 @@ Purpose: prepare, but do not publish, v0.7.0 only after automated and physical a
 
 ## Open product questions
 
-None for implemented Phases 0–4.2. The canonical VRChat URL is resolved. Phase 4.2 product-owner physical QA remains an execution gate, not an open product decision.
+None for implemented Phases 0–5. The canonical VRChat URL is resolved, and the product owner accepted the current v0.7.0 visuals.

@@ -47,7 +47,7 @@ public partial class MainWindow
             Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
             AboutStatus.Text = "";
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException)
         {
             AboutStatus.Text = "Could not open third-party notices.";
         }
