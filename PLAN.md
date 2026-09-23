@@ -114,6 +114,28 @@ Test evidence: focused 69/69 green before edits; after: locked restore, Release 
 
 Native QA evidence (Release exe, captures in local temp `p11-*.png`, not committed): 1448×990 reference-like Home/Off; ON-no-playback shows green `OSC Output Active` + `Ready` (no false Sending) with static full motif; dark Pause menu verified after template fix (white gutter gone, disabled item dimmed); Paused shows summary + Resume/Change + dim motif; About at 1448×990; 820×650 minimum all reachable. Playing+ON animation path NOT observed live: no player installed and this box reports `ClientAreaAnimation=False`; gate logic unit-tested, bar names verified against storyboard targets, API usage compile-checked — owner must confirm motion with real playback. No VRChat running; no transmission occurred. QA side-effects reset (Home, 1280×940 Normal, output off, Chrome window restored).
 
-## Next action
+## Next action (Phase 1.1 superseded by 1.2 below)
 
 Product-owner physical review of Phase 1.1 shell fidelity; do not start Phase 2 until accepted.
+
+## Phase 1.2 waveform + shell micro-polish (2026-09-23, branch `codex/v0.8.0`)
+
+Starting HEAD `dc22c0bb4b03d343ab39f6bad0904d4ec5487562`, worktree clean, `main` at `b663555fa604ec86062a6348876f1c27fc31a041`. Owner confirmed 1.1 gates work (playback gate, `Sending lyrics...`, animation runs) but rejected: equalizer-like motif, selected-nav fake bold, loose Pause alignment. Visual-only iteration; no behavior change.
+
+Files changed (production):
+- `src/LyricsChatbox/Themes/Dark.xaml` — removed `FontWeight=SemiBold` from the `NavigationItem` checked trigger. Selection is now marker + `SelectedBrush` tint + `AccentBrush` text at identical weight: no width/baseline/row shift.
+- `src/LyricsChatbox/MainWindow.xaml` — waveform redesigned to a 13-bar wave silhouette (thin rounded capsules, dip + dominant center peak, progressive taper, ~87 DIP wide, 58px tall): static bars at the edges, 6 staggered center animations (1.2–1.6s, ±4) replacing the 8 faster uniform ones; action `WrapPanel` rhythm 6→12 top margin so Pause/Resume/Change sit flush with the text block above the motif.
+
+Files changed (tests): none — no logic touched (`IsSending`/`Describe`/destination/persistence/OSC all unchanged). Ponytail notes: one-line style deletion, geometry-only XAML swap, one margin value; no new abstractions, state, or semantics.
+
+Test evidence: focused 75/75 green before edits; after: locked restore, Release build 0/0, full suite 515/515, package-policy PASS, `git diff --check` clean.
+
+Native QA evidence (Release exe, captures in local temp `p12-*.png`, not committed): real Apple Music session found paused (not started by QA — left untouched, no audio played). Home/Settings/About selected at 1448×990 — no bold shift, glyphs/labels stable, marker+tint obvious; new static motif reads as one wave form; Pause flush-aligned with 12/16 rhythm; Paused at 820×650 shows summary + aligned Resume/Change + dim motif with About reachable (IsOffscreen=False). Animated-with-playback path still not observable on demand (source paused; pressing play would intrude on the owner's session) — owner already confirmed motion works on 1.1 geometry and only timing/ports changed. No VRChat running; loopback-only destination.
+
+Environment incident (full disclosure): to run the mandated animations-enabled QA I toggled the OS “Animation effects” (SPI_SETCLIENTAREAANIMATION) on; the enable persisted (registry write 23:40) and subsequent OFF calls via every documented parameter combination report success yet fresh-process `ClientAreaAnimation` still reads True (raw SPI GET read 1 even before any write, suggesting this box disagrees with itself). I did NOT bit-twiddle the registry. Owner restore if desired: Settings > Accessibility > Visual effects > Animation effects → Off. No app, repo, or user-data impact beyond that cosmetic OS toggle.
+
+QA side-effects reset: pause resumed (no persisted pause), Home, 1280×940 Normal; `Enabled=True` left untouched as found (owner's own QA state); Chrome window restored.
+
+## Next action
+
+Product-owner physical review of Phase 1.2 shell micro-polish; do not start Phase 2 until accepted.

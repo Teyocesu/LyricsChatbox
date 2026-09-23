@@ -23,14 +23,12 @@
       <Border.Resources>
         <!-- Decorative playback-activity motion only: started while the selected source is Playing with Output enabled and unpaused. -->
         <Storyboard x:Key="OutputWaveformStory">
-          <DoubleAnimation Storyboard.TargetName="VizBar1" Storyboard.TargetProperty="Height" From="8" To="20" Duration="0:0:0.9" BeginTime="0:0:0.1" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar2" Storyboard.TargetProperty="Height" From="16" To="28" Duration="0:0:0.7" BeginTime="0:0:0" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar4" Storyboard.TargetProperty="Height" From="14" To="26" Duration="0:0:1" BeginTime="0:0:0.3" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar5" Storyboard.TargetProperty="Height" From="22" To="34" Duration="0:0:0.8" BeginTime="0:0:0.2" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar7" Storyboard.TargetProperty="Height" From="40" To="52" Duration="0:0:0.7" BeginTime="0:0:0.4" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar8" Storyboard.TargetProperty="Height" From="28" To="40" Duration="0:0:0.9" BeginTime="0:0:0.1" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar10" Storyboard.TargetProperty="Height" From="32" To="44" Duration="0:0:0.8" BeginTime="0:0:0.5" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar11" Storyboard.TargetProperty="Height" From="20" To="32" Duration="0:0:1.1" BeginTime="0:0:0" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar3" Storyboard.TargetProperty="Height" From="28" To="36" Duration="0:0:1.6" BeginTime="0:0:0.2" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar5" Storyboard.TargetProperty="Height" From="30" To="38" Duration="0:0:1.4" BeginTime="0:0:0" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar6" Storyboard.TargetProperty="Height" From="42" To="50" Duration="0:0:1.2" BeginTime="0:0:0.4" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar7" Storyboard.TargetProperty="Height" From="48" To="56" Duration="0:0:1.2" BeginTime="0:0:0.1" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar8" Storyboard.TargetProperty="Height" From="40" To="48" Duration="0:0:1.4" BeginTime="0:0:0.5" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="VizBar9" Storyboard.TargetProperty="Height" From="30" To="38" Duration="0:0:1.6" BeginTime="0:0:0.3" AutoReverse="True" RepeatBehavior="Forever"/>
         </Storyboard>
       </Border.Resources>
       <DockPanel>
@@ -55,7 +53,7 @@
           <TextBlock x:Name="OutputDestinationText" Text="" Style="{StaticResource Caption}" Margin="0,4,0,0" FontSize="11" AutomationProperties.Name="Configured OSC destination"/>
           <TextBlock x:Name="OutputActivityText" Text="" Style="{StaticResource Caption}" Margin="0,4,0,0" FontSize="11" Visibility="Collapsed"/>
           <TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource Caption}" Margin="0,4,0,0" Visibility="Collapsed"/>
-          <WrapPanel Margin="0,6,0,0">
+          <WrapPanel Margin="0,12,0,0">
             <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="0,0,6,0" AutomationProperties.Name="Resume Chatbox output"/>
             <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource SmallButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
               <Button.ContextMenu>
@@ -70,21 +68,20 @@
               </Button.ContextMenu>
             </Button>
           </WrapPanel>
-          <StackPanel x:Name="OutputVisualizer" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Height="56" Margin="0,14,0,6" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
+          <StackPanel x:Name="OutputVisualizer" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Height="58" Margin="0,16,0,6" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
             <Border x:Name="VizBar0" Width="3" CornerRadius="1.5" Height="8" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
             <Border x:Name="VizBar1" Width="3" CornerRadius="1.5" Height="14" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
             <Border x:Name="VizBar2" Width="3" CornerRadius="1.5" Height="22" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
             <Border x:Name="VizBar3" Width="3" CornerRadius="1.5" Height="32" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar4" Width="3" CornerRadius="1.5" Height="20" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar5" Width="3" CornerRadius="1.5" Height="28" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar6" Width="3" CornerRadius="1.5" Height="40" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar7" Width="3" CornerRadius="1.5" Height="46" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar8" Width="3" CornerRadius="1.5" Height="34" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar9" Width="3" CornerRadius="1.5" Height="24" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar10" Width="3" CornerRadius="1.5" Height="38" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar11" Width="3" CornerRadius="1.5" Height="26" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar12" Width="3" CornerRadius="1.5" Height="16" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar13" Width="3" CornerRadius="1.5" Height="10" VerticalAlignment="Center" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar4" Width="3" CornerRadius="1.5" Height="24" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar5" Width="3" CornerRadius="1.5" Height="34" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar6" Width="3" CornerRadius="1.5" Height="46" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar7" Width="3" CornerRadius="1.5" Height="52" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar8" Width="3" CornerRadius="1.5" Height="44" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar9" Width="3" CornerRadius="1.5" Height="34" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar10" Width="3" CornerRadius="1.5" Height="26" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar11" Width="3" CornerRadius="1.5" Height="18" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
+            <Border x:Name="VizBar12" Width="3" CornerRadius="1.5" Height="12" VerticalAlignment="Center" Background="{DynamicResource AccentBrush}"/>
           </StackPanel>
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">

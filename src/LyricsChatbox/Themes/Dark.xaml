@@ -89,7 +89,6 @@
               <Setter TargetName="Shell" Property="Background" Value="{DynamicResource SelectedBrush}"/>
               <Setter TargetName="Marker" Property="Visibility" Value="Visible"/>
               <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
-              <Setter Property="FontWeight" Value="SemiBold"/>
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
               <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource FocusBrush}"/>
