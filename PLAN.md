@@ -1,4 +1,4 @@
-# v0.8.0 execution plan — Phase 0 ready for review
+# v0.8.0 execution plan — Phase 1.1 implemented, owner review pending
 
 ## State and baseline
 
@@ -116,4 +116,4 @@ Native QA evidence (Release exe, captures in local temp `p11-*.png`, not committ
 
 ## Next action
 
-Review Phase 0's `SPEC.md` visual contract and stored reference with the product owner before implementing Phase 1.
+Product-owner physical review of Phase 1.1 shell fidelity; do not start Phase 2 until accepted.
