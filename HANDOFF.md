@@ -1,7 +1,7 @@
-# Current handoff — v0.7.0 release candidate
+# Handoff — LyricsChatbox v0.7.0 publication
 
-- Branch/HEAD: `codex/v0.7.0` at its pushed release-preparation tip (`git rev-parse HEAD`); `main`/`origin/main` remain `33838408f29b853c8945a0595fc4400420d41d27`.
-- Phase 5 was physically accepted by the product owner. Final full-diff audit found no P0/P1; localized P2 release defects were fixed. The current visual design is frozen.
-- Gates: locked restore and Release build passed (0 warnings/errors); full suite 504/504 with 0 skips; package-policy test, publish, installer build, final package verification and native portable navigation smoke passed. Output stayed Off. No real OSC delivery or installer install/uninstall was tested.
-- Candidate: ignored `artifacts/v0.7.0/` holds the portable ZIP (SHA256 `a54af8f9eee7cdd15720e646d9c4a880124c278562753fd6cc887552476957c5`) and unsigned installer (SHA256 `43222c405dc3a6305916b79d3605fa4d5b567eeefb2358f95531578872e41f53`), with checksum sidecars. Public release notes are in `docs/RELEASE-NOTES-v0.7.0.md`; PLAN has detailed evidence.
-- Next: product owner checks these final artifacts on Windows, including installer install/uninstall, preserved state and Output safety, then explicitly authorizes publication. No v0.7.0 tag, GitHub Release, main merge or publication yet.
+- Release-candidate source/artifact commit: `cbabf1a8ef24715e6acf517834e46a6090ace3a8`. The exact candidate ZIP and unsigned installer are in ignored `artifacts/v0.7.0/`; sizes, SHA256 sidecars and `Verify-Package.ps1` results match the prepared values.
+- Windows CI run `35801740451` completed successfully on that exact SHA. `main` and `origin/main` were `33838408f29b853c8945a0595fc4400420d41d27`; the candidate was 11 commits ahead. The pre-publication check found no v0.7.0 tag or GitHub Release.
+- The product owner authorized publication and waived the additional final ZIP/installer physical smoke: `WAIVED / NOT PERFORMED BY PRODUCT OWNER`. The earlier native portable navigation smoke and automated validations remain valid. Installer install/uninstall and real OSC delivery were not validated.
+- The waiver/authorization update is documentation-only; artifacts remain tied to the candidate commit above and must not be rebuilt when their hashes match.
+- Continue by integrating the approved candidate into `main`, validating main CI, creating the immutable tag and public release, independently verifying the release, then cleaning only the v0.7.0 development branch/worktree. Do not start v0.8.0 in this task.
