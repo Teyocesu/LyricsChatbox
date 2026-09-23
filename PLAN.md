@@ -136,6 +136,24 @@ Environment incident (full disclosure): to run the mandated animations-enabled Q
 
 QA side-effects reset: pause resumed (no persisted pause), Home, 1280×940 Normal; `Enabled=True` left untouched as found (owner's own QA state); Chrome window restored.
 
-## Next action
+## Next action (Phase 1.2 superseded by 1.3 below)
 
 Product-owner physical review of Phase 1.2 shell micro-polish; do not start Phase 2 until accepted.
+
+## Phase 1.3 Output wave motif redesign (2026-09-23, branch `codex/v0.8.0`)
+
+Starting HEAD `122f78a83e657ed84e25fa3ea57fd1bc1ac37e29`, worktree clean, `main` at `b663555fa604ec86062a6348876f1c27fc31a041`. Shell approved except the motif: owner rejects bars/capsules/equalizer look, wants a continuous ribbon/wave per the canonical sidebar motif (no second wave image was attached — derived from `docs/visual/v0.8.0-about-reference.png`). Visual-only iteration; no behavior change.
+
+Implementation choice: 3 overlaid vector `Path`s (main 1.75px full `AccentBrush`; two phase-shifted compressed echoes at 0.45/0.28) forming one tapered wave packet (~128 DIP wide, 58px tall, round joins/caps), centered in the `OutputVisualizer` cell (container changed `StackPanel`→`Grid`, one-line `WindowLayout` lookup update). Animation is lateral counter-drift on main/upper echo (2.6s/3.1s) plus opacity breathing on the lower echo (3.6s) — same `OutputWaveformStory` key and gating (`IsSending` + `ClientAreaAnimation`), so code-behind is untouched. No timers/services/dependencies; green dot stays the only semantic green.
+
+Files changed (production): `MainWindow.xaml` (storyboard + motif), `WindowLayout.cs` (container type). Tests: none — no logic touched. Ponytail notes: bars deleted, no new abstractions/state/semantics; geometry points computed once via script, pasted as static data.
+
+Test evidence: focused 75/75 green before edits; after: locked restore, Release build 0/0, full suite 515/515, package-policy PASS, `git diff --check` clean.
+
+Native QA evidence (Release exe, captures in local temp `p13-*.png`, not committed): owner’s Apple Music session found genuinely PLAYING (untouched — no transport commands sent). Sending state shows green `OSC Output Active` + `Sending lyrics...`; wave renders as one continuous layered form (closeups confirm); pixel-diff of the wave region across 1.3s proves live motion (291/3750 sampled pixels changed, sidebar-only crop); Off shows dim static wave; Paused at 820×650 shows summary + aligned Resume/Change. No VRChat running; loopback-only destination.
+
+QA side-effects: app LEFT OPEN and playing-adjacent (owner session active — closing would kill live OSC output): output restored ON + unpaused, Home, 1448×990. No pause persisted; no settings flipped.
+
+## Next action
+
+Product-owner physical review of Phase 1.3 wave redesign; do not start Phase 2 until accepted.

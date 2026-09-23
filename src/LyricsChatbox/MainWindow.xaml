@@ -23,12 +23,9 @@
       <Border.Resources>
         <!-- Decorative playback-activity motion only: started while the selected source is Playing with Output enabled and unpaused. -->
         <Storyboard x:Key="OutputWaveformStory">
-          <DoubleAnimation Storyboard.TargetName="VizBar3" Storyboard.TargetProperty="Height" From="28" To="36" Duration="0:0:1.6" BeginTime="0:0:0.2" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar5" Storyboard.TargetProperty="Height" From="30" To="38" Duration="0:0:1.4" BeginTime="0:0:0" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar6" Storyboard.TargetProperty="Height" From="42" To="50" Duration="0:0:1.2" BeginTime="0:0:0.4" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar7" Storyboard.TargetProperty="Height" From="48" To="56" Duration="0:0:1.2" BeginTime="0:0:0.1" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar8" Storyboard.TargetProperty="Height" From="40" To="48" Duration="0:0:1.4" BeginTime="0:0:0.5" AutoReverse="True" RepeatBehavior="Forever"/>
-          <DoubleAnimation Storyboard.TargetName="VizBar9" Storyboard.TargetProperty="Height" From="30" To="38" Duration="0:0:1.6" BeginTime="0:0:0.3" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="WaveMain" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="-5" To="5" Duration="0:0:2.6" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="WaveEchoUp" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" From="4" To="-4" Duration="0:0:3.1" BeginTime="0:0:0.5" AutoReverse="True" RepeatBehavior="Forever"/>
+          <DoubleAnimation Storyboard.TargetName="WaveEchoDown" Storyboard.TargetProperty="Opacity" From="0.3" To="0.6" Duration="0:0:3.6" BeginTime="0:0:0.2" AutoReverse="True" RepeatBehavior="Forever"/>
         </Storyboard>
       </Border.Resources>
       <DockPanel>
@@ -68,21 +65,15 @@
               </Button.ContextMenu>
             </Button>
           </WrapPanel>
-          <StackPanel x:Name="OutputVisualizer" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Height="58" Margin="0,16,0,6" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
-            <Border x:Name="VizBar0" Width="3" CornerRadius="1.5" Height="8" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar1" Width="3" CornerRadius="1.5" Height="14" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar2" Width="3" CornerRadius="1.5" Height="22" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar3" Width="3" CornerRadius="1.5" Height="32" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar4" Width="3" CornerRadius="1.5" Height="24" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar5" Width="3" CornerRadius="1.5" Height="34" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar6" Width="3" CornerRadius="1.5" Height="46" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar7" Width="3" CornerRadius="1.5" Height="52" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar8" Width="3" CornerRadius="1.5" Height="44" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar9" Width="3" CornerRadius="1.5" Height="34" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar10" Width="3" CornerRadius="1.5" Height="26" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar11" Width="3" CornerRadius="1.5" Height="18" VerticalAlignment="Center" Margin="0,0,4,0" Background="{DynamicResource AccentBrush}"/>
-            <Border x:Name="VizBar12" Width="3" CornerRadius="1.5" Height="12" VerticalAlignment="Center" Background="{DynamicResource AccentBrush}"/>
-          </StackPanel>
+          <Grid x:Name="OutputVisualizer" Height="58" Margin="0,16,0,6" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
+            <Path x:Name="WaveEchoUp" Data="M0,23 L8,25 L16,26.5 L24,24.6 L32,19.4 L40,14.6 L48,14.5 L56,20.1 L64,28 L72,32.9 L80,31.5 L88,25.5 L96,19.4 L104,17.4 L112,19.5 L120,22.4 L128,23" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.28" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <Path.RenderTransform><TranslateTransform/></Path.RenderTransform>
+            </Path>
+            <Path x:Name="WaveEchoDown" Data="M0,35 L8,35.6 L16,38.5 L24,40.6 L32,38.6 L40,32.5 L48,26.5 L56,25.1 L64,30 L72,37.9 L80,43.5 L88,43.4 L96,38.6 L104,33.4 L112,31.5 L120,33 L128,35" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.45" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Path x:Name="WaveMain" Data="M0,29 L8,31.6 L16,36.3 L24,36.5 L32,29 L40,17.8 L48,11.4 L56,15.8 L64,29 L72,42.2 L80,46.6 L88,40.2 L96,29 L104,21.5 L112,21.7 L120,26.4 L128,29" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.75" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <Path.RenderTransform><TranslateTransform/></Path.RenderTransform>
+            </Path>
+          </Grid>
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="NavigationPanel">

@@ -1,6 +1,6 @@
-# Handoff — LyricsChatbox v0.8.0 Phase 1.2
+# Handoff — LyricsChatbox v0.8.0 Phase 1.3
 
-- Branch: `codex/v0.8.0`, Phase 1.2 committed on top of `dc22c0bb4b03d343ab39f6bad0904d4ec5487562`. `main`/`origin/main` untouched at `b663555fa604ec86062a6348876f1c27fc31a041`. Product version still `0.7.0`.
-- Phase 1.2 status: visual micro-polish done — selected nav no longer bolds (marker+tint+accent only, layout-stable), 13-bar wave-silhouette motif with slower center-emphasized motion, Pause/Resume/Change flush-aligned with 12/16 vertical rhythm. Zero logic/behavior change; About body and other pages still old.
-- QA state: locked restore, Release build 0/0, 515/515 tests, package-policy PASS, diff-check clean; native QA with a real paused Apple Music session at 1448×990 and 820×650 (captures in local temp). Animated-with-playback not re-observable on demand (source paused; owner confirmed motion on 1.1). KNOWN ISSUE: OS “Animation effects” toggle left ON after mandated animations-enabled QA — OFF calls report success but fresh reads stay True; restore via Settings > Accessibility > Visual effects if desired. App state: pause resumed, Home, 1280×940 Normal, Enabled left as found (owner's).
-- Next exact action: product-owner physical review of Phase 1.2. Do NOT start Phase 2 until accepted.
+- Branch: `codex/v0.8.0`, Phase 1.3 committed on top of `122f78a83e657ed84e25fa3ea57fd1bc1ac37e29`. `main`/`origin/main` untouched at `b663555fa604ec86062a6348876f1c27fc31a041`. Product version still `0.7.0`.
+- Phase 1.3 status: wave motif redesigned — 3 layered vector paths (main + 2 phase-shifted echoes, tapered packet, round caps) replacing all bars; drift/breathing animation under the unchanged `IsSending`+reduced-motion gate; code-behind untouched. Zero logic/behavior change; About body and other pages still old.
+- QA state: locked restore, Release build 0/0, 515/515 tests, package-policy PASS, diff-check clean; native QA against genuinely PLAYING Apple Music (untouched): Sending hierarchy correct, wave motion proven by pixel-diff, Off dim-static, Paused+820×650 correct (captures in local temp). App LEFT OPEN (owner session live): output ON unpaused, Home, 1448×990.
+- Next exact action: product-owner physical review of Phase 1.3 wave. Do NOT start Phase 2 until accepted.

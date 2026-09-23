@@ -18,7 +18,7 @@ internal static class WindowLayout
         foreach (var item in Find<StackPanel>("NavigationPanel").Children.OfType<RadioButton>())
             item.Padding = shortWindow ? new(12, 8, 12, 8) : new(16, 11, 16, 11);
         // Decoration hides first at cramped heights; Output text and controls stay accessible.
-        Find<StackPanel>("OutputVisualizer").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
+        Find<Grid>("OutputVisualizer").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
         Find<Grid>("ContentPanel").Margin = shortWindow ? new(16, 38, 16, 10) : new(28, 48, 28, 16);
         Find<StackPanel>("HeadingPanel").Margin = new(0, 0, 0, shortWindow ? 8 : 16);
         var home = Find<ScrollViewer>("HomePage").Visibility == Visibility.Visible;
