@@ -221,6 +221,7 @@ Validation:
 - `scripts/Test-PackagePolicy.ps1` — PASS. Portable self-contained publish — PASS, 506 files / 12 license files; ZIP/staging parity and checksum verification passed. Reflection-based inspection of the published WPF resource bundle found all four new PNG resources.
 - `git diff --check` — PASS.
 - The CUA desktop inventory exposed no native app surfaces (`apps=[]`), so a live screenshot/resize pass and 100/125/150/200% physical DPI matrix were unavailable. The bundled note is substantially higher resolution than its maximum 100 × 116 DIP rendering and uses `HighQuality` scaling; this is resource/configuration evidence, not a physical DPI pass. Product-owner visual review at wide and compact sizes remains pending.
+- Delivery: implementation commit `cd983f4` is pushed to `origin/codex/v0.8.0`. `main` and `origin/main` remain `b663555fa604ec86062a6348876f1c27fc31a041`; no tag, release or version bump was created. Product-owner visual acceptance remains pending.
 
 ### Deferred v0.8.1 scope
 
