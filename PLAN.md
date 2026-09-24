@@ -158,9 +158,9 @@ Final validation (2026-09-23, finalizer session): locked restore PASS; Release b
 
 Product owner reviewed the Skia music ribbon physically and confirmed: “me gusta como quedó”. The wave is FROZEN — no SKGLElement migration, no SkSL, no trace-count/motion/glow/size/renderer changes.
 
-## Phase 2 — About high-fidelity implementation (2026-09-23)
+## Phase 2 — About initial implementation (2026-09-23; superseded after owner review)
 
-Status: implementation, native implementation-side visual QA, full validation, commit and push are complete; product-owner physical review remains. Starting state matched the required branch and SHA (`codex/v0.8.0`, `d932a0df653bd58e9ca97c4662e37e01a9b5aac6`); `origin/codex/v0.8.0` matched, the worktree was clean, and `main`/`origin/main` remained `b663555fa604ec86062a6348876f1c27fc31a041`.
+Status: the initial Phase 2 implementation, validation and delivery were completed, then product-owner visual review returned FAIL and requested Phase 2.1. The initial two-band section layout and scrollable minimum-size page below are historical evidence; Phase 2.1 supersedes them. Its baseline was `codex/v0.8.0` at `9e63dbae96f28801ad0df5783c992903c9083df0`; `main`/`origin/main` remained `b663555fa604ec86062a6348876f1c27fc31a041`.
 
 Production files changed:
 - `src/LyricsChatbox/MainWindow.xaml` — replaced the About card stack with a continuous hero and two-column Grid: Overview / Community & Contact, then Project & Tools / Privacy & Data, followed by full-width Updates. Added a few semantic About styles, thin theme-brush separators, keyboard-focusable action rows, accessible names/live statuses and static, non-interactive, accent-tinted hero curves. Discord remains copy-only; diagnostics keeps copy and export actions; packaged third-party notices remain the existing workflow.
@@ -168,11 +168,11 @@ Production files changed:
 - `src/LyricsChatbox/MainWindow.About.cs` and `src/LyricsChatbox/MainWindow.xaml.cs` — retain existing safe link, clipboard, notices, data-folder actions and route feedback to the relevant section status.
 - `src/LyricsChatbox/MainWindow.Updates.cs` — keeps the existing stable update checker/download/verification/skip/cancel/launch flow and controls; initializes the presentation as “Not checked yet” and displays the local time after a completed check. The check timestamp is session-only; no updater state or service was added.
 
-No tests or package dependencies were changed. Existing focused About/updater/runtime/lifecycle coverage passed 88/88 after implementation; full validation is recorded below. No `SPEC.md` change was needed. Product version remains `0.7.0`; no release, tag, installer or `main` change is in scope.
+No tests or package dependencies were changed in the initial Phase 2 delivery. Existing focused About/updater/runtime/lifecycle coverage passed 88/88 then; the original full validation is recorded below. Product version remained `0.7.0`; no release, tag, installer or `main` change was in scope.
 
-Native QA used a temporary copy of the required starting tree and a Release build with an isolated `UserData` root and playback polling disabled in the temporary copy. The normal product data and running playback were not used. Captures are local temporary artifacts, not repository files: `C:\Users\jhvan\AppData\Local\Temp\LyricsChatbox-AboutQA-1790203623086\captures\about-reference-size.png`, `about-lower-updates.png`, `about-minimum-top.png`, `about-minimum-bottom.png`, and `about-blue-graphite.png`. UI Automation expanded Update preferences and confirmed its startup checkbox and the stable update action are exposed by name and visible; no external update request was triggered.
+Original Phase 2 native QA used a temporary copy of the required starting tree and a Release build with an isolated `UserData` root and playback polling disabled in the temporary copy. The normal product data and running playback were not used. Captures are local temporary artifacts, not repository files: `C:\Users\jhvan\AppData\Local\Temp\LyricsChatbox-AboutQA-1790203623086\captures\about-reference-size.png`, `about-lower-updates.png`, `about-minimum-top.png`, `about-minimum-bottom.png`, and `about-blue-graphite.png`. UI Automation expanded Update preferences and confirmed its startup checkbox and the stable update action are exposed by name and visible; no external update request was triggered.
 
-At the available 1448×1080 native window size, the eyebrow, hero mark/title/copy, section starts, paired columns, central divider, row rules and full-width Updates summary follow the reference's hierarchy and rhythm. A second viewport shows the lower rows and Updates controls. At 820×650, the page collapses to Overview → Community → Project → Privacy → Updates, remains vertically scrollable, and does not introduce horizontal page scrolling. A Blue/Graphite theme retained the same geometry with blue semantic accents. The implementation intentionally uses the actual installed display version (`0.7.0` at this starting point), accurate supported-source/privacy copy, and “Not checked yet” rather than the mock reference's static `0.8.0` / latest-release claim. Static curves stand in for the reference's more elaborate star field; they are theme-aware and do not animate. Product-owner physical comparison remains pending.
+Original Phase 2 result (superseded): at 820×650, the page remained vertically scrollable. The product owner rejected that visual result and requested the no-scroll, higher-fidelity Phase 2.1 correction. The initial implementation used the actual installed display version (`0.7.0`), accurate supported-source/privacy copy, and “Not checked yet” rather than the mock reference's static `0.8.0` / latest-release claim.
 
 Full validation:
 - `dotnet restore LyricsChatbox.slnx --locked-mode` — PASS; all projects up to date.
@@ -184,6 +184,28 @@ Full validation:
 
 Delivery: Phase 2 implementation commit `a7eea90` was pushed to `origin/codex/v0.8.0`; `main` was not modified. The delivery-state documentation update is committed and pushed separately after implementation validation.
 
+## Phase 2.1 — About high-fidelity correction (2026-09-23)
+
+Status: implementation and implementation-side validation are complete; product-owner physical comparison remains the next gate. No Phase 3 or v0.8.1 feature was started. Product version stays `0.7.0`.
+
+Changes: the hero now uses the requested factual description and first-person origin copy, a custom WPF vector note, and static theme-aware star/nebula/wave art. Sections flow independently in two columns, with a width/height-responsive layout and no About page scroll container. The compact 820×650 layout retains all content and controls. The Updates band contains the themed Check for updates action and update-preferences flyout; updater behavior remains on the existing handlers. The official VRChat outline logo and Discord Clyde mark are bundled with source/trademark provenance in `THIRD_PARTY_NOTICES.md`. That notice is copied to build and publish outputs; a focused regression test asserts its normal output location and marker. `SPEC.md` now makes the no-scroll minimum-viewport requirement normative.
+
+Native QA (isolated temp user data and QA executable; product data/playback untouched): About was visually checked at 1448×1016 reference-like, 1280×940 and 820×650. All primary rows, Diagnostics, OSC output, Updates status/version/time and its actions fit without clipping. A wheel gesture at 1280×940 did not move the page. Blue/Graphite preserved the geometry and theme accents. The update preferences flyout opened and displayed its startup option. Clicking Third-party Notices from the portable build opened `THIRD_PARTY_NOTICES.md` visibly from the portable output directory. The normal Release output contains the notice file, but its first launch raised a Windows Defender Firewall prompt before the About action could be clicked. No Allow/Cancel choice was made; closing the isolated QA process dismissed the prompt without a firewall setting change, so a physical normal-Release click remains unverified.
+
+Automated validation:
+- `dotnet restore LyricsChatbox.slnx --locked-mode` — PASS.
+- Focused About tests (`FullyQualifiedName~AboutTests`) — PASS; 28/28.
+- `dotnet build LyricsChatbox.slnx -c Release --no-restore` using a temp output root — PASS; 0 warnings, 0 errors.
+- `dotnet test LyricsChatbox.slnx -c Release --no-restore` using the same temp output root — PASS; 521/521.
+- `pwsh -NoProfile -File scripts/Test-PackagePolicy.ps1` — PASS.
+- `git diff --check` — PASS after documentation edits; no whitespace errors.
+
+### Deferred v0.8.1 scope
+
+- Update Available dialog for eligible startup checks, with explicit Download now, Later and Skip this version actions; never auto-install.
+- Guided Bug Report and diagnostics helper, with user-controlled copying/sharing and no automatic upload.
+- Evaluate a structured GitHub bug issue form.
+
 ## Next action
 
-Product owner compares About with the canonical reference and accepts or requests visual corrections. Do not start Phase 3 until that review is complete.
+Product owner physically compares Phase 2.1 About with the canonical reference and accepts or requests corrections. Do not start Phase 3 or implement the deferred v0.8.1 scope before that review is complete.

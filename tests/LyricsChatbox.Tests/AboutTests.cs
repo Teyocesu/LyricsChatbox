@@ -51,6 +51,14 @@ public sealed class AboutTests : IDisposable
     }
 
     [Fact]
+    public void ApplicationOutputContainsThirdPartyNotices()
+    {
+        var applicationDirectory = Path.GetDirectoryName(typeof(ProductIdentity).Assembly.Location)!;
+        Assert.True(ExternalLinks.TryResolveExistingNotice(applicationDirectory, out var path));
+        Assert.Contains("# Third-party components", File.ReadAllText(path));
+    }
+
+    [Fact]
     public void ActiveOutputShowsPauseWithoutResume()
     {
         var state = OutputSidebarPresentation.Describe(true, false, "Active");

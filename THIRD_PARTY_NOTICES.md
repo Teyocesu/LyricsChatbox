@@ -26,3 +26,7 @@ Development/test-only dependencies are not included in the runnable distribution
 LRCLIB and NetEase are external HTTPS services, not bundled implementation code. NetEase uses an independently written community REST adapter; this does not assert an official developer agreement, availability guarantee or lyric redistribution license. Current full service terms could not be verified during RC evaluation. Cached/imported lyrics remain in the user's local application-data directory; no provider lyric corpus is part of this repository or distribution. No MagicChatBox code was copied.
 
 The optional Windows installer is built with Inno Setup, copyright Jordan Russell and Martijn Laan. The unmodified installer engine retains its upstream notices. Inno Setup is a build tool, not an application runtime or update service. Upstream license: https://github.com/jrsoftware/issrc/blob/is-7_1_0/license.txt . Windows Forms NotifyIcon uses the existing Microsoft Windows desktop runtime; no third-party tray/UI package was added.
+
+## Brand assets
+
+The About page includes the white outline VRChat logo from the [official VRChat Press Kit](https://hello.vrchat.com/press) and the Discord Clyde symbol from [Discord's official brand assets](https://discord.com/branding). The Discord symbol keeps Discord Blurple (`#5865F2`) and appears beside a Discord label. These marks identify the linked services; their owners retain all rights. Their use does not imply sponsorship, affiliation or endorsement, and they are not open-source components of LyricsChatbox.

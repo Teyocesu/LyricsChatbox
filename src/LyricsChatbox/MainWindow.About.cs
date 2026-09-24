@@ -40,7 +40,7 @@ public partial class MainWindow
     {
         if (!ExternalLinks.TryResolveExistingNotice(AppContext.BaseDirectory, out var path))
         {
-            ProjectStatus.Text = "Third-party notices are included with packaged builds.";
+            ProjectStatus.Text = "Third-party notices are not available beside this build.";
             return;
         }
         try

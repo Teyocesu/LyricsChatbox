@@ -19,7 +19,11 @@
     <Using Remove="System.Drawing" />
     <Resource Include="Assets/AppIcon.ico" />
     <Resource Include="Assets/AppIcon.png" />
+    <Resource Include="Assets/Brand/VRChat-Logo-Outline-White.png" />
     <EmbeddedResource Include="Assets/Decorations.json" LogicalName="LyricsChatbox.Assets.Decorations.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="SkiaSharp.Views.WPF" Version="4.151.2" />

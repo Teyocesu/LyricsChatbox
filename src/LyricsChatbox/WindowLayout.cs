@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Shapes;
 
 namespace LyricsChatbox;
 
@@ -22,9 +24,9 @@ internal static class WindowLayout
         Find<Grid>("ContentPanel").Margin = shortWindow ? new(16, 38, 16, 10) : new(28, 48, 28, 16);
         Find<StackPanel>("HeadingPanel").Margin = new(0, 0, 0, shortWindow ? 8 : 16);
         var home = Find<ScrollViewer>("HomePage").Visibility == Visibility.Visible;
-        var about = Find<ScrollViewer>("AboutPage").Visibility == Visibility.Visible;
+        var about = Find<Grid>("AboutPage").Visibility == Visibility.Visible;
         Find<ContentControl>("PersistentPreviewHost").Visibility = about ? Visibility.Collapsed : Visibility.Visible;
-        ApplyAboutLayout(scope, Find<Grid>("ContentPanel").ActualWidth);
+        ApplyAboutLayout(scope, Find<Grid>("ContentPanel").ActualWidth, contentHeight);
         var preview = Find<Border>("PreviewCard");
         var destination = Find<ContentControl>(home ? "HomePreviewHost" : "PersistentPreviewHost");
         if (preview.Parent != destination)
@@ -135,81 +137,153 @@ internal static class WindowLayout
         }
     }
 
-    private static void ApplyAboutLayout(FrameworkElement scope, double contentWidth)
+    private static void ApplyAboutLayout(FrameworkElement scope, double contentWidth, double contentHeight)
     {
         T Find<T>(string name) => (T)scope.FindName(name);
-        var wide = contentWidth >= 900;
+        var wide = contentWidth >= 1040;
+        var compact = contentWidth < 900 || contentHeight < 820;
+        var micro = contentWidth < 660 && contentHeight < 700;
+        var shortWide = wide && contentHeight < 1060;
+        var shortMedium = !wide && contentWidth >= 900 && contentHeight < 960;
+        if (micro) Find<Grid>("ContentPanel").Margin = new(16, 48, 16, 4);
+        var eyebrow = Find<Grid>("AboutEyebrow");
+        eyebrow.Height = micro ? 18 : 22;
+        eyebrow.Margin = new(0, 0, 0, micro ? 4 : 8);
         var sections = Find<Grid>("AboutSections");
         sections.ColumnDefinitions[0].Width = new(1, GridUnitType.Star);
-        sections.ColumnDefinitions[1].Width = new(wide ? 48 : 0);
-        sections.ColumnDefinitions[2].Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
-        void Place(string name, int row, int column, int span = 1)
+        sections.ColumnDefinitions[1].Width = new(micro ? 8 : wide ? 48 : 12);
+        sections.ColumnDefinitions[2].Width = new(1, GridUnitType.Star);
+        Find<StackPanel>("AboutProject").Margin = new(0, micro ? 4 : compact ? 8 : shortMedium ? 10 : shortWide ? 14 : 22, 0, 0);
+        Find<StackPanel>("AboutPrivacy").Margin = new(0, micro ? 4 : compact ? 8 : shortMedium ? 10 : shortWide ? 14 : 22, 0, 0);
+        Find<StackPanel>("AboutUpdates").Margin = new(0, micro ? 0 : compact ? 4 : shortMedium ? 6 : shortWide ? 4 : 16, 0, 0);
+
+        var hero = Find<Grid>("AboutHero");
+        hero.MinHeight = !compact && contentHeight >= 820 && wide ? shortWide ? 230 : 250 : 0;
+        hero.Margin = new(0, 0, 0, micro ? 2 : compact ? 4 : shortMedium ? 6 : shortWide ? 4 : 14);
+        Find<Grid>("AboutHeroContent").ColumnDefinitions[0].Width = new(micro ? 72 : 112);
+        var note = Find<Viewbox>("AboutNoteMark");
+        note.Width = micro ? 52 : 96;
+        note.Height = micro ? 60 : 110;
+        Find<StackPanel>("AboutHeroCopy").Margin = new(0, micro || compact ? 0 : shortMedium ? 4 : shortWide ? 6 : wide ? 18 : 8, micro ? 2 : compact ? 4 : shortMedium ? 12 : 18, 0);
+        Find<TextBlock>("AboutHeroTitle").FontSize = micro ? 24 : compact ? 30 : shortMedium ? 42 : wide ? 66 : 44;
+        Find<TextBlock>("AboutHeroDescription").FontSize = micro ? 11.5 : compact ? 12.5 : shortMedium ? 14 : wide ? 18 : 15;
+        Find<TextBlock>("AboutHeroDescription").MaxWidth = wide ? 660 : micro ? 510 : 560;
+        Find<TextBlock>("AboutHeroDescription").Margin = new(0, micro ? 1 : compact ? 4 : shortMedium ? 4 : shortWide ? 4 : wide ? 10 : 6, 0, 0);
+        Find<TextBlock>("AboutOriginText").FontSize = micro ? 10.5 : compact ? 11.5 : shortMedium ? 12 : wide ? 15 : 13;
+        Find<TextBlock>("AboutOriginText").MaxWidth = wide ? 720 : micro ? 510 : 560;
+        Find<TextBlock>("AboutOriginText").Margin = new(0, micro ? 1 : compact ? 5 : shortMedium ? 6 : shortWide ? 6 : wide ? 20 : 10, 0, 0);
+
+        var sectionWidth = Math.Max(0, (contentWidth - sections.ColumnDefinitions[1].Width.Value) / 2);
+        var iconWidth = micro ? 22 : sectionWidth < 350 ? 30 : sectionWidth < 460 ? 40 : 48;
+        var labelWidth = micro ? 88 : sectionWidth < 350 ? 94 : sectionWidth < 460 ? 130 : 172;
+        foreach (var sectionName in new[] { "AboutOverview", "AboutProject", "AboutCommunity", "AboutPrivacy" })
         {
-            var section = Find<FrameworkElement>(name);
-            Grid.SetRow(section, row);
-            Grid.SetColumn(section, column);
-            Grid.SetColumnSpan(section, span);
+            var section = Find<StackPanel>(sectionName);
+            foreach (var row in section.Children.OfType<Grid>().Where(row => row.ColumnDefinitions.Count >= 3))
+            {
+                row.MinHeight = micro ? 18 : compact ? 24 : shortMedium ? 30 : wide ? shortWide ? 36 : 42 : 34;
+                row.ColumnDefinitions[0].Width = new(iconWidth);
+                row.ColumnDefinitions[1].Width = new(labelWidth);
+                if (row.ColumnDefinitions.Count == 4) row.ColumnDefinitions[3].Width = new(micro ? 16 : compact ? 20 : 24);
+                foreach (var label in row.Children.OfType<TextBlock>().Where(text => Grid.GetColumn(text) == 1))
+                {
+                    label.Margin = new(micro ? 2 : compact ? 4 : 8, 0, micro ? 2 : 4, 0);
+                    label.FontSize = micro ? 10.5 : compact ? 11.5 : shortMedium ? 12 : 13;
+                }
+                foreach (var value in row.Children.OfType<TextBlock>().Where(text => Grid.GetColumn(text) == 2))
+                {
+                    value.FontSize = micro ? 11 : compact ? 12 : shortMedium ? 13 : 14;
+                    value.Margin = micro ? new(0, 1, 0, 1) : compact ? new(0, 2, 0, 2) : new(0);
+                }
+                foreach (var textIcon in row.Children.OfType<TextBlock>().Where(text => Grid.GetColumn(text) == 0))
+                    textIcon.FontSize = micro ? 15 : compact ? 17 : shortMedium ? 19 : 20;
+                foreach (var button in row.Children.OfType<Button>())
+                {
+                    button.MinHeight = micro ? 20 : compact ? 24 : shortMedium ? 30 : 34;
+                    button.Padding = micro ? new(0) : compact ? new(1, 1, 1, 1) : new(4, 4, 4, 4);
+                }
+            }
         }
+
+        var diagnosticsCopyButton = Find<Button>("DiagnosticsCopyButton");
+        diagnosticsCopyButton.MinHeight = micro ? 20 : compact ? 24 : shortMedium ? 30 : 34;
+        diagnosticsCopyButton.Padding = micro ? new(0) : compact ? new(1, 1, 1, 1) : new(4, 4, 4, 4);
+        if (diagnosticsCopyButton.Content is Grid diagnosticsActionGrid)
+        {
+            var actionText = diagnosticsActionGrid.Children.OfType<TextBlock>().FirstOrDefault();
+            if (actionText is not null) actionText.Text = micro ? "Copy info" : "Generate diagnostic info";
+        }
+
+        var headingSize = micro ? 11 : compact ? 11.5 : shortMedium ? 12 : 13;
+        foreach (var label in new[] { "Overview", "Community and Contact", "Project and Tools", "Privacy and Data", "Updates" })
+        {
+            if (scope.FindName(label) is TextBlock sectionLabel) sectionLabel.FontSize = headingSize;
+        }
+        foreach (var ruleName in new[] { "AboutOverviewRule", "AboutProjectRule", "AboutCommunityRule", "AboutPrivacyRule", "AboutUpdatesRule" })
+        {
+            var rule = Find<Border>(ruleName);
+            rule.Height = micro ? 1 : 2;
+            rule.Margin = micro ? new(0, 1, 0, 1) : shortMedium || shortWide ? new(0, 2, 0, 2) : new(0, 4, 0, 4);
+        }
+        Find<Image>("VrChatLogoMark").Width = micro ? 24 : compact ? 30 : 44;
+        Find<Image>("VrChatLogoMark").Height = micro ? 15 : compact ? 18 : 24;
+        Find<Path>("DiscordClydeMark").Width = micro ? 22 : compact ? 26 : 32;
+        Find<Path>("DiscordClydeMark").Height = micro ? 17 : compact ? 20 : 24;
+
+        var summary = Find<Grid>("UpdateSummary");
+        var columns = summary.ColumnDefinitions;
+        var icon = Find<TextBlock>("UpdateSummaryIcon");
+        var status = Find<StackPanel>("UpdateStatusGroup");
+        var current = Find<StackPanel>("UpdateCurrentGroup");
+        var checkedGroup = Find<StackPanel>("UpdateLastCheckedGroup");
+        var action = Find<StackPanel>("UpdateActionGroup");
+        var check = Find<Button>("CheckUpdatesButton");
         if (wide)
         {
-            Place("AboutOverview", 0, 0);
-            Place("AboutCommunity", 0, 2);
-            Place("AboutProject", 1, 0);
-            Place("AboutPrivacy", 1, 2);
-            Place("AboutUpdates", 2, 0, 3);
-            Find<Border>("AboutCenterDivider").Visibility = Visibility.Visible;
-            Find<StackPanel>("AboutCommunity").Margin = new(0);
-            Find<StackPanel>("AboutProject").Margin = new(0, 22, 0, 0);
-            Find<StackPanel>("AboutPrivacy").Margin = new(0, 22, 0, 0);
-            Find<StackPanel>("AboutUpdates").Margin = new(0, 28, 0, 0);
-            Find<TextBlock>("AboutHeroTitle").FontSize = 68;
-            Find<TextBlock>("AboutHeroNote").FontSize = 96;
-            Find<StackPanel>("AboutHeroCopy").Margin = new(0, 18, 18, 0);
-            Find<TextBlock>("AboutHeroDescription").MaxWidth = 520;
-            Find<TextBlock>("AboutHeroDescription").Margin = new(0, 14, 0, 0);
-            Find<TextBlock>("AboutOriginText").Margin = new(0, 28, 0, 0);
+            columns[0].Width = new(42);
+            columns[1].Width = new(2, GridUnitType.Star);
+            columns[2].Width = GridLength.Auto;
+            columns[3].Width = new(116);
+            columns[4].Width = GridLength.Auto;
+            columns[5].Width = new(1.5, GridUnitType.Star);
+            columns[6].Width = GridLength.Auto;
+            Grid.SetColumn(icon, 0); Grid.SetRow(icon, 0); Grid.SetRowSpan(icon, 3);
+            Grid.SetColumn(status, 1); Grid.SetRow(status, 0); Grid.SetColumnSpan(status, 1);
+            Grid.SetColumn(current, 3); Grid.SetRow(current, 0); Grid.SetColumnSpan(current, 1);
+            Grid.SetColumn(checkedGroup, 5); Grid.SetRow(checkedGroup, 0); Grid.SetColumnSpan(checkedGroup, 1);
+            Grid.SetColumn(action, 6); Grid.SetRow(action, 0); Grid.SetRowSpan(action, 3);
+            Find<Border>("UpdateCurrentDivider").Visibility = Visibility.Visible;
+            Find<Border>("UpdateLastCheckedDivider").Visibility = Visibility.Visible;
+            summary.MinHeight = shortWide ? 58 : 62;
+            summary.Margin = new(0, shortWide ? 0 : 4, 0, 0);
+            status.Margin = new(6, 0, 14, 0);
+            current.Margin = new(10, 0, 10, 0);
+            checkedGroup.Margin = new(10, 0, 10, 0);
+            action.Margin = new(12, 0, 0, 0);
         }
         else
         {
-            Place("AboutOverview", 0, 0);
-            Place("AboutCommunity", 1, 0);
-            Place("AboutProject", 2, 0);
-            Place("AboutPrivacy", 3, 0);
-            Place("AboutUpdates", 4, 0);
-            Find<Border>("AboutCenterDivider").Visibility = Visibility.Collapsed;
-            Find<StackPanel>("AboutCommunity").Margin = new(0, 28, 0, 0);
-            Find<StackPanel>("AboutProject").Margin = new(0, 28, 0, 0);
-            Find<StackPanel>("AboutPrivacy").Margin = new(0, 28, 0, 0);
-            Find<StackPanel>("AboutUpdates").Margin = new(0, 28, 0, 0);
-            Find<TextBlock>("AboutHeroTitle").FontSize = 42;
-            Find<TextBlock>("AboutHeroNote").FontSize = 68;
-            Find<StackPanel>("AboutHeroCopy").Margin = new(0, 40, 18, 0);
-            Find<TextBlock>("AboutHeroDescription").MaxWidth = 620;
-            Find<TextBlock>("AboutHeroDescription").Margin = new(0, 2, 0, 0);
-            Find<TextBlock>("AboutOriginText").Margin = new(0, 12, 0, 0);
+            columns[0].Width = new(32);
+            columns[1].Width = new(1, GridUnitType.Star);
+            columns[2].Width = GridLength.Auto;
+            for (var i = 3; i < columns.Count; i++) columns[i].Width = new(0);
+            Grid.SetColumn(icon, 0); Grid.SetRow(icon, 0); Grid.SetRowSpan(icon, 3);
+            Grid.SetColumn(status, 1); Grid.SetRow(status, 0); Grid.SetColumnSpan(status, 2);
+            Grid.SetColumn(current, 2); Grid.SetRow(current, 0); Grid.SetColumnSpan(current, 1);
+            Grid.SetColumn(checkedGroup, 1); Grid.SetRow(checkedGroup, 1); Grid.SetColumnSpan(checkedGroup, 1);
+            Grid.SetColumn(action, 2); Grid.SetRow(action, 1); Grid.SetRowSpan(action, 1);
+            Find<Border>("UpdateCurrentDivider").Visibility = Visibility.Collapsed;
+            Find<Border>("UpdateLastCheckedDivider").Visibility = Visibility.Collapsed;
+            summary.MinHeight = micro ? 54 : shortMedium ? 70 : 78;
+            summary.Margin = new(0, micro ? 0 : shortMedium ? 2 : 4, 0, 0);
+            status.Margin = new(2, 0, 4, 0);
+            current.Margin = new(2, 0, 0, 0);
+            checkedGroup.Margin = new(2, 2, 4, 0);
+            action.Margin = new(0, 0, 0, 0);
         }
-        var summary = Find<Grid>("UpdateSummary");
-        summary.ColumnDefinitions[0].Width = new(wide ? 48 : 32);
-        summary.ColumnDefinitions[1].Width = new(1, GridUnitType.Star);
-        summary.ColumnDefinitions[2].Width = GridLength.Auto;
-        summary.ColumnDefinitions[3].Width = wide ? new(130) : new(0);
-        summary.ColumnDefinitions[4].Width = wide ? GridLength.Auto : new GridLength(0);
-        summary.ColumnDefinitions[5].Width = wide ? new(190) : new(0);
-        summary.ColumnDefinitions[6].Width = wide ? GridLength.Auto : new GridLength(0);
-        var icon = Find<TextBlock>("UpdateSummaryIcon");
-        Grid.SetColumn(icon, 0); Grid.SetRow(icon, 0); Grid.SetRowSpan(icon, wide ? 3 : 1);
-        var status = Find<StackPanel>("UpdateStatusGroup");
-        Grid.SetColumn(status, 1); Grid.SetRow(status, 0); Grid.SetColumnSpan(status, 1);
-        var current = Find<StackPanel>("UpdateCurrentGroup");
-        Grid.SetColumn(current, wide ? 3 : 1); Grid.SetRow(current, wide ? 0 : 1); Grid.SetColumnSpan(current, wide ? 1 : 2);
-        var checkedGroup = Find<StackPanel>("UpdateLastCheckedGroup");
-        Grid.SetColumn(checkedGroup, wide ? 5 : 1); Grid.SetRow(checkedGroup, wide ? 0 : 2); Grid.SetColumnSpan(checkedGroup, wide ? 1 : 2);
-        var check = Find<Button>("CheckUpdatesButton");
-        Grid.SetColumn(check, wide ? 6 : 2); Grid.SetRow(check, 0);
-        Find<Border>("UpdateCurrentDivider").Visibility = wide ? Visibility.Visible : Visibility.Collapsed;
-        Find<Border>("UpdateLastCheckedDivider").Visibility = wide ? Visibility.Visible : Visibility.Collapsed;
-        status.Margin = wide ? new(6, 0, 16, 0) : new(4, 0, 8, 0);
-        current.Margin = wide ? new(12, 0, 12, 0) : new(4, 4, 0, 0);
-        checkedGroup.Margin = wide ? new(12, 0, 12, 0) : new(4, 4, 0, 0);
+        check.MinWidth = micro ? 146 : compact ? 164 : shortMedium ? 172 : 184;
+        check.Height = micro ? 28 : double.NaN;
+        Find<ToggleButton>("UpdatePreferencesButton").Width = micro ? 26 : compact ? 30 : 34;
+        Find<ToggleButton>("UpdatePreferencesButton").Height = micro ? 27 : compact ? 32 : 36;
     }
 }
