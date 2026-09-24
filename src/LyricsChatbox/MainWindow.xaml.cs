@@ -253,6 +253,7 @@ public partial class MainWindow : Window
         DisplayPage.Visibility = page == "Display" ? Visibility.Visible : Visibility.Collapsed;
         ManualPage.Visibility = page == "Manual" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        AboutScrollViewer.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
         AboutPage.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
         PageTitle.Text = page;
         WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);

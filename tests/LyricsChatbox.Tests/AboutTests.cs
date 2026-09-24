@@ -59,6 +59,36 @@ public sealed class AboutTests : IDisposable
     }
 
     [Fact]
+    public void AboutArtworkAndBrandMarksAreBundledAsWpfResources()
+    {
+        var assembly = typeof(ProductIdentity).Assembly;
+        var resourceName = assembly.GetManifestResourceNames().Single(name => name.EndsWith(".g.resources", StringComparison.Ordinal));
+        using var stream = assembly.GetManifestResourceStream(resourceName)!;
+        using var resources = new System.Resources.ResourceReader(stream);
+        var keys = resources.Cast<System.Collections.DictionaryEntry>()
+            .Select(entry => (string)entry.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Assert.Contains("assets/about/aboutheronote.png", keys);
+        Assert.Contains("assets/about/aboutherobackdrop.png", keys);
+        Assert.Contains("assets/about/aboutoscnetwork.png", keys);
+        Assert.Contains("assets/brand/discord-symbol-blurple.png", keys);
+    }
+
+    [Theory]
+    [InlineData(999.9, true)]
+    [InlineData(1000, false)]
+    [InlineData(1200, false)]
+    public void AboutLayoutSwitchesAtUsableContentWidth(double width, bool expectedCompact) =>
+        Assert.Equal(expectedCompact, WindowLayout.IsAboutCompact(width));
+
+    [Fact]
+    public void CompactAboutSectionsFollowTheSpecifiedCascadeOrder() =>
+        Assert.Equal(
+            new[] { "AboutOverview", "AboutCommunity", "AboutProject", "AboutPrivacy" },
+            WindowLayout.CompactAboutSectionOrder);
+
+    [Fact]
     public void ActiveOutputShowsPauseWithoutResume()
     {
         var state = OutputSidebarPresentation.Describe(true, false, "Active");

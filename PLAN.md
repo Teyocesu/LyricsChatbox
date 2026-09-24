@@ -202,6 +202,26 @@ Automated validation:
 - `pwsh -NoProfile -File scripts/Test-PackagePolicy.ps1` — PASS.
 - `git diff --check` — PASS after documentation edits; no whitespace errors.
 
+## Phase 2.2 — About final fidelity and responsive cascade (2026-09-24)
+
+Status: implementation and automated/package validation are complete on `codex/v0.8.0`. Product-owner physical comparison remains the final acceptance gate. Phase 1, updater behavior, app version `0.7.0`, and the deferred v0.8.1 entries remain unchanged.
+
+Changes:
+- Replaced the runtime vector hero mark/art with bundled raster resources: `AboutHeroNote.png` (1024 × 1536, 1,251,624 bytes) and `AboutHeroBackdrop.png` (2172 × 724, 2,067,097 bytes). Both use high-quality WPF bitmap scaling. The hero copy now separates a 66-DIP wordmark, 18-DIP description and 15-DIP origin paragraph with fixed 10/14-DIP spacing and 680/760-DIP maximum widths. A horizontal opacity ramp keeps the art subdued behind the copy and more visible at the right. Both PNGs are WPF `Resource` items.
+- Set the centered About canvas maximum to 1400 DIP. Wide mode begins at 1000 DIP of usable content width and keeps the two independent columns. Removed the star-sized spacer that pushed Updates down; Updates now follows the taller column stack with a 28-DIP gap. Ordinary rows use 42-DIP wide / 40-DIP compact minimums, 13/14-DIP labels and values, and neutral separators at 0.52 opacity.
+- Below 1000 DIP, the existing section panels move into one vertical cascade: Overview, Community & Contact, Project & Tools, Privacy & Data. Hero remains first and Updates last. The About `ScrollViewer` uses vertical `Auto` and horizontal `Disabled`; changing layout mode resets scroll to the top and reuses the same sections and update controls while restoring keyboard focus after a reparent.
+- Compact Updates uses four semantic rows: status, current version, last checked, and the existing check/preferences controls. The former fixed 116-DIP spacer is now content-sized; no control or updater handler is duplicated.
+- Privacy copy now states the local processing, sign-in, analytics, lyrics metadata, GitHub update-check, and configured OSC destination facts without implying that the app never uses the network. The Diagnostics primary action uses a copy icon; Export remains a separate secondary control because it is an existing independent action.
+- Increased the official VRChat horizontal-logo slot to 48 × 24 DIP wide / 42 × 21 compact. Bundled the Discord official Symbol SVG as a 520 × 384 transparent PNG in official Blurple, with provenance in `THIRD_PARTY_NOTICES.md`. Replaced the OSC branch drawing with the bundled 256 × 256 PNG raster of Microsoft's Segoe Fluent `Network` U+E968 glyph; no font dependency is added at runtime. Generic About row icons and third-party link handlers were otherwise retained.
+- Updated the normative About width/scroll rules in `SPEC.md`. README and updater implementation were not changed.
+
+Validation:
+- Focused About tests — PASS, 33/33; Release restore with `--locked-mode` — PASS.
+- Isolated Release solution build — PASS, 0 warnings / 0 errors. Full Release test suite — PASS, 526/526.
+- `scripts/Test-PackagePolicy.ps1` — PASS. Portable self-contained publish — PASS, 506 files / 12 license files; ZIP/staging parity and checksum verification passed. Reflection-based inspection of the published WPF resource bundle found all four new PNG resources.
+- `git diff --check` — PASS.
+- The CUA desktop inventory exposed no native app surfaces (`apps=[]`), so a live screenshot/resize pass and 100/125/150/200% physical DPI matrix were unavailable. The bundled note is substantially higher resolution than its maximum 100 × 116 DIP rendering and uses `HighQuality` scaling; this is resource/configuration evidence, not a physical DPI pass. Product-owner visual review at wide and compact sizes remains pending.
+
 ### Deferred v0.8.1 scope
 
 - Update Available dialog for eligible startup checks, with explicit Download now, Later and Skip this version actions; never auto-install.
