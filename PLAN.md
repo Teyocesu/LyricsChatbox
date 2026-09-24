@@ -192,6 +192,8 @@ Changes: the hero now uses the requested factual description and first-person or
 
 Native QA (isolated temp user data and QA executable; product data/playback untouched): About was visually checked at 1448×1016 reference-like, 1280×940 and 820×650. All primary rows, Diagnostics, OSC output, Updates status/version/time and its actions fit without clipping. A wheel gesture at 1280×940 did not move the page. Blue/Graphite preserved the geometry and theme accents. The update preferences flyout opened and displayed its startup option. Clicking Third-party Notices from the portable build opened `THIRD_PARTY_NOTICES.md` visibly from the portable output directory. The normal Release output contains the notice file, but its first launch raised a Windows Defender Firewall prompt before the About action could be clicked. No Allow/Cancel choice was made; closing the isolated QA process dismissed the prompt without a firewall setting change, so a physical normal-Release click remains unverified.
 
+Evidence update (2026-09-24): after the final privacy-copy-only wording refinement, the isolated app was rebuilt and visually recaptured at 1448×1016. The earlier 1280×940 and 820×650 captures predate that text edit; no layout code changed in the edit, but the current CUA session exposed no native-app controls to repeat compact captures. Product-owner physical comparison remains the acceptance gate.
+
 Automated validation:
 - `dotnet restore LyricsChatbox.slnx --locked-mode` — PASS.
 - Focused About tests (`FullyQualifiedName~AboutTests`) — PASS; 28/28.
