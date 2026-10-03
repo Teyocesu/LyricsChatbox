@@ -71,7 +71,7 @@ public sealed class AboutTests : IDisposable
 
         Assert.Contains("assets/about/aboutheronote.png", keys);
         Assert.Contains("assets/about/aboutherobackdrop.png", keys);
-        Assert.Contains("assets/about/aboutoscnetwork.png", keys);
+        Assert.Contains("assets/about/aboutoscrouting.png", keys);
         Assert.Contains("assets/brand/discord-symbol-blurple.png", keys);
     }
 
@@ -82,11 +82,119 @@ public sealed class AboutTests : IDisposable
     public void AboutLayoutSwitchesAtUsableContentWidth(double width, bool expectedCompact) =>
         Assert.Equal(expectedCompact, WindowLayout.IsAboutCompact(width));
 
+    [Theory]
+    [InlineData(1060, true)]
+    [InlineData(1080, false)]
+    [InlineData(1448 - 240, false)]
+    public void AboutViewportSwitchesAtUsableWidth(double viewport, bool expectedCompact) =>
+        Assert.Equal(expectedCompact, WindowLayout.IsAboutCompact(WindowLayout.AboutUsableWidth(viewport)));
+
     [Fact]
-    public void CompactAboutSectionsFollowTheSpecifiedCascadeOrder() =>
-        Assert.Equal(
-            new[] { "AboutOverview", "AboutCommunity", "AboutProject", "AboutPrivacy" },
-            WindowLayout.CompactAboutSectionOrder);
+    public void UpdatesReflowsBeforeTheAboutCascade()
+    {
+        Assert.Equal(WindowLayout.AboutUpdatesMode.Compact, WindowLayout.SelectAboutUpdatesMode(559.9));
+        Assert.Equal(WindowLayout.AboutUpdatesMode.CompactColumns, WindowLayout.SelectAboutUpdatesMode(560));
+        Assert.Equal(WindowLayout.AboutUpdatesMode.CompactColumns, WindowLayout.SelectAboutUpdatesMode(999.9));
+        Assert.Equal(WindowLayout.AboutUpdatesMode.Medium, WindowLayout.SelectAboutUpdatesMode(1000));
+        Assert.Equal(WindowLayout.AboutUpdatesMode.Medium, WindowLayout.SelectAboutUpdatesMode(1119.9));
+        Assert.Equal(WindowLayout.AboutUpdatesMode.Wide, WindowLayout.SelectAboutUpdatesMode(1120));
+    }
+
+    [Fact]
+    public void UpdatesUsesTwoColumnsFromCascadeThroughMediumWidths()
+    {
+        Assert.False(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(559.9)));
+        Assert.True(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(560)));
+        Assert.True(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(999.9)));
+        Assert.True(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(1000)));
+        Assert.True(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(1119.9)));
+        Assert.False(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(1120)));
+    }
+
+    [Fact]
+    public void AboutScrollReachesOverflowWithoutHorizontalMovement() => RunOnSta(() =>
+    {
+        var scroll = new System.Windows.Controls.ScrollViewer
+        {
+            Content = new System.Windows.Controls.Border { Width = 600, Height = 800 },
+            CanContentScroll = false
+        };
+        WindowLayout.ConfigureAboutScroll(scroll);
+        scroll.Measure(new System.Windows.Size(300, 200));
+        scroll.Arrange(new System.Windows.Rect(0, 0, 300, 200));
+        scroll.UpdateLayout();
+
+        Assert.Equal(System.Windows.Controls.ScrollBarVisibility.Auto, scroll.VerticalScrollBarVisibility);
+        Assert.Equal(System.Windows.Controls.ScrollBarVisibility.Disabled, scroll.HorizontalScrollBarVisibility);
+        Assert.True(scroll.ScrollableHeight > 0);
+        Assert.Equal(System.Windows.Visibility.Visible, scroll.ComputedVerticalScrollBarVisibility);
+        scroll.ScrollToVerticalOffset(scroll.ScrollableHeight);
+        scroll.ScrollToHorizontalOffset(100);
+        scroll.UpdateLayout();
+        Assert.Equal(scroll.ScrollableHeight, scroll.VerticalOffset);
+        Assert.Equal(0, scroll.HorizontalOffset);
+    });
+
+    [Fact]
+    public void AboutAutoScrollHidesBarWhenContentFits() => RunOnSta(() =>
+    {
+        var scroll = new System.Windows.Controls.ScrollViewer
+        {
+            Content = new System.Windows.Controls.Border { Width = 200, Height = 100 },
+            CanContentScroll = false
+        };
+        WindowLayout.ConfigureAboutScroll(scroll);
+        scroll.Measure(new System.Windows.Size(300, 200));
+        scroll.Arrange(new System.Windows.Rect(0, 0, 300, 200));
+        scroll.UpdateLayout();
+
+        Assert.Equal(0, scroll.ScrollableHeight);
+        Assert.Equal(System.Windows.Visibility.Collapsed, scroll.ComputedVerticalScrollBarVisibility);
+        Assert.Equal(System.Windows.Controls.ScrollBarVisibility.Disabled, scroll.HorizontalScrollBarVisibility);
+    });
+
+    [Fact]
+    public void AboutSectionsReuseControlsAcrossRepeatedWidthChanges() => RunOnSta(() =>
+    {
+        var overview = new System.Windows.Controls.StackPanel();
+        var community = new System.Windows.Controls.StackPanel();
+        var project = new System.Windows.Controls.StackPanel();
+        var privacy = new System.Windows.Controls.StackPanel();
+        var left = new System.Windows.Controls.StackPanel();
+        var right = new System.Windows.Controls.StackPanel();
+        var cascade = new System.Windows.Controls.StackPanel();
+        left.Children.Add(overview);
+        left.Children.Add(project);
+        right.Children.Add(community);
+        right.Children.Add(privacy);
+
+        for (var i = 0; i < 2; i++)
+        {
+            Assert.True(WindowLayout.ReparentAboutSections(true, overview, community, project, privacy, left, right, cascade));
+            Assert.Equal(new[] { overview, community, project, privacy }, cascade.Children.Cast<System.Windows.Controls.StackPanel>());
+            Assert.Equal(4, left.Children.Count + right.Children.Count + cascade.Children.Count);
+            Assert.False(WindowLayout.ReparentAboutSections(true, overview, community, project, privacy, left, right, cascade));
+
+            Assert.True(WindowLayout.ReparentAboutSections(false, overview, community, project, privacy, left, right, cascade));
+            Assert.Equal(new[] { overview, project }, left.Children.Cast<System.Windows.Controls.StackPanel>());
+            Assert.Equal(new[] { community, privacy }, right.Children.Cast<System.Windows.Controls.StackPanel>());
+            Assert.Equal(4, left.Children.Count + right.Children.Count + cascade.Children.Count);
+        }
+    });
+
+    private static void RunOnSta(Action action)
+    {
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try { action(); }
+            catch (Exception ex) { failure = ex; }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(5)));
+        if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+    }
 
     [Fact]
     public void ActiveOutputShowsPauseWithoutResume()

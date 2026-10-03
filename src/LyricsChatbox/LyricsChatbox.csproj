@@ -23,7 +23,7 @@
     <Resource Include="Assets/Brand/Discord-Symbol-Blurple.png" />
     <Resource Include="Assets/About/AboutHeroNote.png" />
     <Resource Include="Assets/About/AboutHeroBackdrop.png" />
-    <Resource Include="Assets/About/AboutOscNetwork.png" />
+    <Resource Include="Assets/About/AboutOscRouting.png" />
     <EmbeddedResource Include="Assets/Decorations.json" LogicalName="LyricsChatbox.Assets.Decorations.json" />
   </ItemGroup>
   <ItemGroup>

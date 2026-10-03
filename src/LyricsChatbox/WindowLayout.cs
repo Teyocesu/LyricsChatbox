@@ -8,10 +8,45 @@ namespace LyricsChatbox;
 internal static class WindowLayout
 {
     internal const double AboutCompactBreakpoint = 1000;
-    internal static readonly string[] CompactAboutSectionOrder =
-        ["AboutOverview", "AboutCommunity", "AboutProject", "AboutPrivacy"];
-
+    internal const double AboutUpdatesCompactColumnsBreakpoint = 560;
+    internal const double AboutUpdatesWideBreakpoint = 1120;
+    internal const double AboutContentGutters = 60;
+    internal enum AboutUpdatesMode { Wide, Medium, CompactColumns, Compact }
     internal static bool IsAboutCompact(double contentWidth) => contentWidth < AboutCompactBreakpoint;
+    internal static AboutUpdatesMode SelectAboutUpdatesMode(double contentWidth) =>
+        contentWidth < AboutUpdatesCompactColumnsBreakpoint ? AboutUpdatesMode.Compact :
+        contentWidth < AboutCompactBreakpoint ? AboutUpdatesMode.CompactColumns :
+        contentWidth < AboutUpdatesWideBreakpoint ? AboutUpdatesMode.Medium : AboutUpdatesMode.Wide;
+    internal static bool UsesAboutUpdatesTwoColumnLayout(AboutUpdatesMode mode) =>
+        mode is AboutUpdatesMode.CompactColumns or AboutUpdatesMode.Medium;
+
+    // Reserve the scrollbar width even before Auto decides it is needed, so a short
+    // viewport cannot squeeze the wide columns after the first layout pass.
+    internal static double AboutUsableWidth(double aboutViewportWidth) =>
+        Math.Max(0, aboutViewportWidth - AboutContentGutters - SystemParameters.VerticalScrollBarWidth);
+
+    internal static void ConfigureAboutScroll(ScrollViewer scrollViewer)
+    {
+        scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+        scrollViewer.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+    }
+
+    internal static bool ReparentAboutSections(bool compact, StackPanel overview, StackPanel community,
+        StackPanel project, StackPanel privacy, StackPanel left, StackPanel right, StackPanel cascade)
+    {
+        var placements = compact
+            ? new[] { (overview, cascade), (community, cascade), (project, cascade), (privacy, cascade) }
+            : new[] { (overview, left), (project, left), (community, right), (privacy, right) };
+        var moved = false;
+        foreach (var (section, target) in placements)
+        {
+            if (section.Parent == target) continue;
+            if (section.Parent is Panel oldParent) oldParent.Children.Remove(section);
+            target.Children.Add(section);
+            moved = true;
+        }
+        return moved;
+    }
 
     // Keep a useful page viewport when high scaling leaves little vertical work area.
     // An ambiguous source selection keeps its status row so the guidance stays visible.
@@ -27,12 +62,20 @@ internal static class WindowLayout
             item.Padding = shortWindow ? new(12, 8, 12, 8) : new(16, 11, 16, 11);
         // Decoration hides first at cramped heights; Output text and controls stay accessible.
         Find<Grid>("OutputVisualizer").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
-        Find<Grid>("ContentPanel").Margin = shortWindow ? new(16, 38, 16, 10) : new(28, 48, 28, 16);
-        Find<StackPanel>("HeadingPanel").Margin = new(0, 0, 0, shortWindow ? 8 : 16);
         var home = Find<ScrollViewer>("HomePage").Visibility == Visibility.Visible;
         var about = Find<Grid>("AboutPage").Visibility == Visibility.Visible;
+        // About is full-bleed: it fills the entire post-sidebar cell, so the shared
+        // ContentPanel margin is removed while About is active. Other pages keep it.
+        Find<Grid>("ContentPanel").Margin = about ? new(0) : shortWindow ? new(16, 38, 16, 10) : new(28, 48, 28, 16);
+        Find<TextBlock>("ErrorText").Margin = about ? new(30, 8, 30, 8) : new(0, 8, 0, 0);
+        Find<StackPanel>("HeadingPanel").Margin = new(0, 0, 0, shortWindow ? 8 : 16);
         Find<ContentControl>("PersistentPreviewHost").Visibility = about ? Visibility.Collapsed : Visibility.Visible;
-        ApplyAboutLayout(scope, Find<Grid>("ContentPanel").ActualWidth);
+        // The About breakpoint uses usable content width. Derive it synchronously from the
+        // post-sidebar cell (stable across navigation) rather than the About viewport,
+        // whose ActualWidth is stale on the navigating pass before WPF runs layout.
+        var cellWidth = Find<Grid>("ContentRoot").ActualWidth - Find<Border>("Sidebar").ActualWidth;
+        if (cellWidth <= 0) cellWidth = Find<Grid>("ContentPanel").ActualWidth;
+        ApplyAboutLayout(scope, AboutUsableWidth(cellWidth));
         var preview = Find<Border>("PreviewCard");
         var destination = Find<ContentControl>(home ? "HomePreviewHost" : "PersistentPreviewHost");
         if (preview.Parent != destination)
@@ -147,41 +190,51 @@ internal static class WindowLayout
     {
         T Find<T>(string name) => (T)scope.FindName(name);
         var compact = IsAboutCompact(contentWidth);
+        var updatesMode = SelectAboutUpdatesMode(contentWidth);
         var scrollViewer = Find<ScrollViewer>("AboutScrollViewer");
-        var previousScrollMode = scrollViewer.VerticalScrollBarVisibility;
-        scrollViewer.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
-        scrollViewer.VerticalScrollBarVisibility = compact ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
-        if ((previousScrollMode == ScrollBarVisibility.Auto) != compact)
+        ConfigureAboutScroll(scrollViewer);
+        var wasCompact = scrollViewer.Tag is bool previous && previous;
+        var modeChanged = scrollViewer.Tag is null || wasCompact != compact;
+        scrollViewer.Tag = compact;
+        if (modeChanged)
             scrollViewer.ScrollToTop();
 
         var eyebrow = Find<Grid>("AboutEyebrow");
         eyebrow.Height = 22;
-        eyebrow.Margin = new(0, 0, 0, compact ? 8 : 20);
+        eyebrow.Margin = new(0, 0, 0, compact ? 8 : 12);
+
+        Find<Grid>("AboutPage").Margin = compact ? new(30, 40, 42, 24) : new(30, 40, 30, 24);
 
         var hero = Find<Grid>("AboutHero");
-        hero.MinHeight = compact ? 0 : 288;
-        hero.Margin = new(0, 0, 0, compact ? 20 : 16);
+        hero.MinHeight = compact ? 0 : 248;
+        hero.Margin = new(0, 0, 0, compact ? 20 : 14);
         var heroContent = Find<Grid>("AboutHeroContent");
-        var note = Find<Image>("AboutNoteMark");
-        heroContent.ColumnDefinitions[0].Width = new(compact ? 80 : 112);
+        var note = Find<Border>("AboutNoteMark");
+        heroContent.ColumnDefinitions[0].Width = new(compact ? 72 : 108);
         Grid.SetRow(note, 0);
         Grid.SetRowSpan(note, compact ? 1 : 3);
-        note.Width = compact ? 40 : 100;
-        note.Height = compact ? 48 : 116;
+        note.Width = compact ? 54 : 108;
+        note.Height = compact ? 60 : 124;
+        note.VerticalAlignment = compact ? VerticalAlignment.Center : VerticalAlignment.Top;
+        note.Margin = compact ? new(0) : new(0, 4, 0, 0);
+        note.Opacity = compact ? .80 : .82;
         var title = Find<TextBlock>("AboutHeroTitle");
         var description = Find<TextBlock>("AboutHeroDescription");
         var origin = Find<TextBlock>("AboutOriginText");
         Grid.SetRow(title, 0); Grid.SetColumn(title, 1);
         Grid.SetRow(description, 1); Grid.SetColumn(description, compact ? 0 : 1); Grid.SetColumnSpan(description, compact ? 2 : 1);
         Grid.SetRow(origin, 2); Grid.SetColumn(origin, compact ? 0 : 1); Grid.SetColumnSpan(origin, compact ? 2 : 1);
-        title.Margin = new(0, compact ? 0 : 20, 12, 10);
-        description.Margin = new(0, compact ? 10 : 0, 0, 14);
-        Find<Image>("AboutHeroBackdrop").Opacity = compact ? 0.48 : 0.82;
+        title.Margin = new(0, compact ? 0 : 16, 12, 10);
+        description.Margin = new(0, compact ? 10 : 0, 0, 12);
+        Find<Grid>("AboutHeroArtLayer").Height = compact ? 320 : 420;
+        Find<Border>("AboutHeroBackdrop").Opacity = compact ? 0.38 : 0.82;
         title.FontSize = compact ? 34 : 66;
-        description.FontSize = compact ? 15 : 18;
-        description.MaxWidth = 680;
-        origin.FontSize = compact ? 14 : 15;
-        origin.MaxWidth = 760;
+        description.FontSize = 18;
+        description.LineHeight = 24;
+        description.MaxWidth = 620;
+        origin.FontSize = 14;
+        origin.LineHeight = 20;
+        origin.MaxWidth = 700;
 
         var wideColumns = Find<Grid>("AboutWideColumns");
         wideColumns.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
@@ -189,33 +242,19 @@ internal static class WindowLayout
         wideColumns.ColumnDefinitions[0].Width = new(1, GridUnitType.Star);
         wideColumns.ColumnDefinitions[1].Width = new(48);
         wideColumns.ColumnDefinitions[2].Width = new(1, GridUnitType.Star);
-        var leftColumn = Find<StackPanel>("AboutLeftColumn");
-        var rightColumn = Find<StackPanel>("AboutRightColumn");
         var focusedElement = Keyboard.FocusedElement;
-        var sectionsReparented = false;
-        var sectionOrder = compact
-            ? CompactAboutSectionOrder
-            : ["AboutOverview", "AboutProject", "AboutCommunity", "AboutPrivacy"];
-        foreach (var sectionName in sectionOrder)
-        {
-            var section = Find<StackPanel>(sectionName);
-            var target = compact
-                ? Find<StackPanel>("AboutCompactCascade")
-                : sectionName is "AboutOverview" or "AboutProject" ? leftColumn : rightColumn;
-            if (section.Parent == target) continue;
-            if (section.Parent is Panel oldParent) oldParent.Children.Remove(section);
-            target.Children.Add(section);
-            sectionsReparented = true;
-        }
+        var sectionsReparented = ReparentAboutSections(compact,
+            Find<StackPanel>("AboutOverview"), Find<StackPanel>("AboutCommunity"),
+            Find<StackPanel>("AboutProject"), Find<StackPanel>("AboutPrivacy"),
+            Find<StackPanel>("AboutLeftColumn"), Find<StackPanel>("AboutRightColumn"),
+            Find<StackPanel>("AboutCompactCascade"));
         if (sectionsReparented && focusedElement is UIElement focusElement && focusElement.IsVisible)
             Keyboard.Focus(focusElement);
 
         Find<StackPanel>("AboutProject").Margin = new(0, compact ? 26 : 22, 0, 0);
         Find<StackPanel>("AboutCommunity").Margin = new(0, compact ? 26 : 0, 0, 0);
         Find<StackPanel>("AboutPrivacy").Margin = new(0, compact ? 26 : 22, 0, 0);
-        Find<StackPanel>("AboutUpdates").Margin = new(0, 28, 0, 20);
-        var sections = Find<Grid>("AboutSections");
-        sections.MaxWidth = 1400;
+        Find<StackPanel>("AboutUpdates").Margin = new(0, compact ? 26 : 20, 0, 0);
 
         var iconWidth = compact ? 44 : 48;
         var labelWidth = compact ? 156 : 172;
@@ -231,7 +270,7 @@ internal static class WindowLayout
                 foreach (var label in row.Children.OfType<TextBlock>().Where(text => Grid.GetColumn(text) == 1))
                 {
                     label.Margin = new(compact ? 6 : 8, 0, 4, 0);
-                    label.FontSize = 13;
+                    label.FontSize = 14;
                     label.LineHeight = 19;
                 }
                 foreach (var value in row.Children.OfType<TextBlock>().Where(text => Grid.GetColumn(text) == 2))
@@ -249,10 +288,11 @@ internal static class WindowLayout
                 }
             }
         }
+        Find<Grid>("AboutDiagnosticsRow").ColumnDefinitions[3].Width = GridLength.Auto;
+        var diagnosticsDescription = Find<TextBlock>("DiagnosticsDescription");
+        diagnosticsDescription.Visibility = updatesMode == AboutUpdatesMode.Wide ? Visibility.Visible : Visibility.Collapsed;
+        diagnosticsDescription.Margin = new(0, 2, 8, 2);
 
-        var diagnosticsCopyButton = Find<Button>("DiagnosticsCopyButton");
-        diagnosticsCopyButton.MinHeight = compact ? 34 : 36;
-        diagnosticsCopyButton.Padding = new(4);
         foreach (var name in new[] { "AboutOverviewTitle", "AboutCommunityTitle", "AboutProjectTitle", "AboutPrivacyTitle", "AboutUpdatesTitle" })
             Find<TextBlock>(name).FontSize = 13;
         foreach (var ruleName in new[] { "AboutOverviewRule", "AboutProjectRule", "AboutCommunityRule", "AboutPrivacyRule", "AboutUpdatesRule" })
@@ -274,28 +314,53 @@ internal static class WindowLayout
         var checkedGroup = Find<StackPanel>("UpdateLastCheckedGroup");
         var action = Find<StackPanel>("UpdateActionGroup");
         var check = Find<Button>("CheckUpdatesButton");
-        if (!compact)
+        if (updatesMode == AboutUpdatesMode.Wide)
         {
             columns[0].Width = new(42);
-            columns[1].Width = new(2, GridUnitType.Star);
+            columns[1].Width = new(1.6, GridUnitType.Star);
             columns[2].Width = GridLength.Auto;
-            columns[3].Width = GridLength.Auto;
+            columns[3].Width = new(0.8, GridUnitType.Star);
             columns[4].Width = GridLength.Auto;
-            columns[5].Width = new(1.5, GridUnitType.Star);
+            columns[5].Width = new(1, GridUnitType.Star);
             columns[6].Width = GridLength.Auto;
-            Grid.SetColumn(icon, 0); Grid.SetRow(icon, 0); Grid.SetRowSpan(icon, 4);
-            Grid.SetColumn(status, 1); Grid.SetRow(status, 0); Grid.SetColumnSpan(status, 1); Grid.SetRowSpan(status, 4);
-            Grid.SetColumn(current, 3); Grid.SetRow(current, 0); Grid.SetColumnSpan(current, 1); Grid.SetRowSpan(current, 4);
-            Grid.SetColumn(checkedGroup, 5); Grid.SetRow(checkedGroup, 0); Grid.SetColumnSpan(checkedGroup, 1); Grid.SetRowSpan(checkedGroup, 4);
-            Grid.SetColumn(action, 6); Grid.SetRow(action, 0); Grid.SetRowSpan(action, 4);
+            Grid.SetColumn(icon, 0); Grid.SetRow(icon, 0); Grid.SetRowSpan(icon, 1);
+            Grid.SetColumn(status, 1); Grid.SetRow(status, 0); Grid.SetColumnSpan(status, 1); Grid.SetRowSpan(status, 1);
+            Grid.SetColumn(current, 3); Grid.SetRow(current, 0); Grid.SetColumnSpan(current, 1); Grid.SetRowSpan(current, 1);
+            Grid.SetColumn(checkedGroup, 5); Grid.SetRow(checkedGroup, 0); Grid.SetColumnSpan(checkedGroup, 1); Grid.SetRowSpan(checkedGroup, 1);
+            Grid.SetColumn(action, 6); Grid.SetRow(action, 0); Grid.SetColumnSpan(action, 1); Grid.SetRowSpan(action, 1);
             Find<Border>("UpdateCurrentDivider").Visibility = Visibility.Visible;
             Find<Border>("UpdateLastCheckedDivider").Visibility = Visibility.Visible;
             summary.MinHeight = 62;
             summary.Margin = new(0, 4, 0, 0);
-            status.Margin = new(6, 0, 14, 0);
-            current.Margin = new(10, 0, 10, 0);
-            checkedGroup.Margin = new(10, 0, 10, 0);
-            action.Margin = new(12, 0, 0, 0);
+            status.Margin = new(6, 0, 12, 0);
+            current.Margin = new(8, 0, 8, 0);
+            checkedGroup.Margin = new(8, 0, 8, 0);
+            action.Margin = new(8, 0, 0, 0);
+        }
+        else if (UsesAboutUpdatesTwoColumnLayout(updatesMode))
+        {
+            columns[0].Width = new(40);
+            columns[1].Width = new(1, GridUnitType.Star);
+            columns[2].Width = new(36);
+            columns[3].Width = new(1, GridUnitType.Star);
+            for (var i = 4; i < columns.Count; i++) columns[i].Width = new(0);
+            Grid.SetColumn(icon, 0); Grid.SetRow(icon, 0); Grid.SetRowSpan(icon, 1);
+            Grid.SetColumn(status, 1); Grid.SetRow(status, 0); Grid.SetColumnSpan(status, 1); Grid.SetRowSpan(status, 1);
+            Grid.SetColumn(checkedGroup, 3); Grid.SetRow(checkedGroup, 0); Grid.SetColumnSpan(checkedGroup, 1); Grid.SetRowSpan(checkedGroup, 1);
+            Grid.SetColumn(current, 3); Grid.SetRow(current, 1); Grid.SetColumnSpan(current, 1); Grid.SetRowSpan(current, 1);
+            Grid.SetColumn(action, 1); Grid.SetRow(action, 1); Grid.SetColumnSpan(action, 1); Grid.SetRowSpan(action, 1);
+            Find<Border>("UpdateCurrentDivider").Visibility = Visibility.Collapsed;
+            Find<Border>("UpdateLastCheckedDivider").Visibility = Visibility.Collapsed;
+            summary.MinHeight = 0;
+            summary.Margin = new(0, 4, 0, 0);
+            status.VerticalAlignment = VerticalAlignment.Top;
+            status.Margin = new(8, 0, 8, 0);
+            checkedGroup.VerticalAlignment = VerticalAlignment.Top;
+            checkedGroup.Margin = new(0, 0, 4, 0);
+            current.VerticalAlignment = VerticalAlignment.Top;
+            current.Margin = new(0, 12, 4, 0);
+            action.VerticalAlignment = VerticalAlignment.Top;
+            action.Margin = new(8, 16, 0, 0);
         }
         else
         {
@@ -306,19 +371,19 @@ internal static class WindowLayout
             Grid.SetColumn(status, 1); Grid.SetRow(status, 0); Grid.SetColumnSpan(status, 1); Grid.SetRowSpan(status, 1);
             Grid.SetColumn(current, 1); Grid.SetRow(current, 1); Grid.SetColumnSpan(current, 1); Grid.SetRowSpan(current, 1);
             Grid.SetColumn(checkedGroup, 1); Grid.SetRow(checkedGroup, 2); Grid.SetColumnSpan(checkedGroup, 1); Grid.SetRowSpan(checkedGroup, 1);
-            Grid.SetColumn(action, 1); Grid.SetRow(action, 3); Grid.SetRowSpan(action, 1);
+            Grid.SetColumn(action, 1); Grid.SetRow(action, 3); Grid.SetColumnSpan(action, 1); Grid.SetRowSpan(action, 1);
             Find<Border>("UpdateCurrentDivider").Visibility = Visibility.Collapsed;
             Find<Border>("UpdateLastCheckedDivider").Visibility = Visibility.Collapsed;
             summary.MinHeight = 0;
             summary.Margin = new(0, 4, 0, 0);
             status.Margin = new(2, 0, 4, 0);
-            current.Margin = new(2, 6, 0, 0);
-            checkedGroup.Margin = new(2, 6, 0, 0);
-            action.Margin = new(2, 8, 0, 0);
+            current.Margin = new(2, 16, 0, 0);
+            checkedGroup.Margin = new(2, 8, 0, 0);
+            action.Margin = new(2, 18, 0, 0);
         }
-        check.MinWidth = compact ? 164 : 184;
+        check.MinWidth = updatesMode is AboutUpdatesMode.CompactColumns or AboutUpdatesMode.Compact ? 164 : 184;
         check.Height = double.NaN;
-        Find<ToggleButton>("UpdatePreferencesButton").Width = compact ? 30 : 34;
-        Find<ToggleButton>("UpdatePreferencesButton").Height = compact ? 32 : 36;
+        Find<ToggleButton>("UpdatePreferencesButton").Width = 38;
+        Find<ToggleButton>("UpdatePreferencesButton").Height = 38;
     }
 }

@@ -31,4 +31,26 @@ The optional Windows installer is built with Inno Setup, copyright Jordan Russel
 
 The About page includes the white outline VRChat logo from the [official VRChat Press Kit](https://hello.vrchat.com/press) and the Discord Clyde symbol from [Discord's official brand assets](https://discord.com/branding). The bundled Discord PNG is a transparent rasterization of Discord's [official Symbol SVG](https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/66e3d80db9971f10a9757c99_Symbol.svg); it preserves the source aspect ratio and official Blurple (`#5865F2`) color without redrawing or recoloring the mark. These marks identify the linked services; their owners retain all rights. Their use does not imply sponsorship, affiliation or endorsement, and they are not open-source components of LyricsChatbox.
 
-The About OSC row uses a bundled raster of the Microsoft Segoe Fluent Icons `Network` glyph (U+E968), documented in [Microsoft's Segoe Fluent Icons reference](https://learn.microsoft.com/en-us/windows/apps/design/iconography/segoe-fluent-icons-font). Only the resulting PNG is bundled, so the installed font is not a runtime dependency. The hero note and atmospheric backdrop are original generated artwork for LyricsChatbox.
+The About OSC row uses a locally rasterized copy of Microsoft's [Fluent UI System Icons `Branch Fork` 24 Regular SVG](https://github.com/microsoft/fluentui-system-icons/blob/a563cf9166f4f91aa617557ed272612b7f0a2f72/assets/Branch%20Fork/SVG/ic_fluent_branch_fork_24_regular.svg). Only the resulting monochrome PNG is bundled. The icon is licensed under the [MIT License](https://github.com/microsoft/fluentui-system-icons/blob/a563cf9166f4f91aa617557ed272612b7f0a2f72/LICENSE):
+
+> Copyright (c) 2020 Microsoft Corporation
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
+
+The hero note and atmospheric backdrop are original generated artwork for LyricsChatbox.

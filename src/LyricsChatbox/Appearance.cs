@@ -93,6 +93,22 @@ public static class ThemeColors
         var settings = AppearanceSettings.Normalize(appearance);
         var tokens = Create(settings);
         foreach (var (key, color) in tokens) { var brush = new SolidColorBrush(color); brush.Freeze(); resources[key] = brush; }
+        var accent = tokens["AccentBrush"];
+        var text = tokens["TextBrush"];
+        static LinearGradientBrush HorizontalGradient(params (Color Color, double Offset)[] stops)
+        {
+            var brush = new LinearGradientBrush { StartPoint = new(0, .5), EndPoint = new(1, .5) };
+            foreach (var (color, offset) in stops) brush.GradientStops.Add(new(color, offset));
+            brush.Freeze();
+            return brush;
+        }
+        resources["AboutLyricsBrush"] = HorizontalGradient(
+            (text, 0), (Blend(text, accent, .08), 1));
+        var chatboxDepth = settings.AccentPreset == "Rose"
+            ? Readable(Blend(accent, Parse("#A570B5"), .24), tokens["RaisedBrush"], tokens["SelectedBrush"])
+            : Readable(Blend(accent, Colors.Black, .10), tokens["RaisedBrush"], tokens["SelectedBrush"]);
+        resources["AboutChatboxBrush"] = HorizontalGradient(
+            (Blend(accent, Colors.White, .16), 0), (accent, .48), (chatboxDepth, 1));
         var surface = tokens["SurfaceBrush"];
         var tint = settings.ArtworkTintEnabled && artworkColor.HasValue ? artworkColor.Value : tokens["AccentBrush"];
         var strength = settings.ArtworkTintEnabled && artworkColor.HasValue ? .13 : .025;

@@ -67,6 +67,18 @@ public sealed class AppearanceTests : IDisposable
                 ThemeColors.Apply(label.Resources, new("Blue", BackgroundStyle:"Graphite"));
                 Assert.NotEqual(rose, ((SolidColorBrush)label.Foreground).Color);
                 Assert.Equal(ThemeColors.Create(new("Blue", BackgroundStyle:"Graphite"))["AccentBrush"], ((SolidColorBrush)label.Foreground).Color);
+
+                foreach (var key in new[] { "AboutLyricsBrush", "AboutChatboxBrush" })
+                {
+                    var wordmark = new TextBlock();
+                    ThemeColors.Apply(wordmark.Resources, new("Rose"));
+                    wordmark.SetResourceReference(TextBlock.ForegroundProperty, key);
+                    var roseBrush = wordmark.Foreground;
+                    Assert.IsAssignableFrom<Brush>(roseBrush);
+                    ThemeColors.Apply(wordmark.Resources, new("Blue", BackgroundStyle:"Graphite"));
+                    Assert.IsAssignableFrom<Brush>(wordmark.Foreground);
+                    Assert.NotSame(roseBrush, wordmark.Foreground);
+                }
             }
             catch (Exception ex) { failure = ex; }
         });
