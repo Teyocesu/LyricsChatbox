@@ -1,4 +1,4 @@
-# v0.8.0 execution plan — Phase 1 COMPLETE; Phase 2 About implemented and delivered, owner QA pending
+# v0.8.0 execution plan — Phase 2.4 closed; Phase 3 (Home) next
 
 ## State and baseline
 
@@ -259,7 +259,90 @@ Status: the Phase 2.3 physical correction and hero-note refinement are implement
 
 ## Next action
 
-Phase 2.3 is closed after authoritative product-owner physical QA PASS. Next: Phase 2.4 — review and reconcile the preserved Floating investigation before implementing a compatibility policy. Do not implement Phase 2.4 in this closure; do not start Phase 3 or deferred v0.8.1 scope.
+Phases 2.3 and 2.4 are closed. Next is Phase 3, the Home visual redesign, which needs explicit approval to start. Deferred v0.8.1 work remains out of scope.
+
+## Phase 2.4 — Floating investigation reconciliation and contract (2026-10-03)
+
+Contract-phase status before implementation: READY FOR IMPLEMENTATION REVIEW. This recorded the research-only state at contract freeze; runtime then remained v0.7.0. Normative behavior is in `SPEC.md` § v0.8.0 normative Floating compatibility contract. The implementation and current status are recorded below.
+
+### Preserved empirical findings
+
+The findings below are **CONFIRMED** prior direct observations supplied by the owner/preserved investigation. This session did not repeat physical QA, OSC probes, installed-app hashing or restoration. It independently reviewed workspace code and current primary sources. The confirmed client regression and its internal cause are separate claims.
+
+- User confirmed Floating preview is correct but the in-game background remains wide even with VRChat Chatbox Size at 100%. The selected installed profile's Floating flag is true, and v0.7.0 already appends the compact suffix to nonempty OSC text.
+- The initial LF-to-VT transport hypothesis was insufficient: the user's updated in-game screenshot shows a single long line still fills the available Chatbox width. The regression after VRChat 2026.3.3 Build 1919 is confirmed by the direct isolation below. Timing alone does not establish its internal cause.
+- The earlier claim that long unbroken lyric lines caused the Floating failure was incorrect. A clean v0.7.0 build with automatic wrapping was installed, but the user reproduced the same opaque background with short text and explicit breaks. Automatic 20-column wrapping changes layout and is not a Floating fix. Both the wrapping and LF-to-VT experiments have now been removed from workspace source; original line layout and transport are restored.
+- An isolated temporary .NET probe loaded the installed DLL and used its real `ChatboxOutput.Send` against an ephemeral loopback UDP receiver. Synthetic short, two-line and 142-unit inputs retained the `03 1F` suffix, correct `/chatbox/input` address, `,sTF` tags, strict UTF-8 and aligned OSC padding. No lyrics or personal message bodies were collected. This verifies the installed formatter/transport, not arbitrary live app state.
+- With explicit user authorization in a private VRChat instance and LyricsChatbox paused, independent raw OSC sends compared equal-length `Floating A` (normal) and `Floating B` (suffix `03 1F`). The user confirmed both had the same ordinary background. `Floating C` (suffix `03 1F 200B`, to distinguish trailing-control stripping) also had the same background. The failure is reproducible without LyricsChatbox's compositor, profiles, scheduler or encoder. This client currently does not honor the known minimal-background trick.
+- A final sentinel probe sent `Floating D` + `03 1F` + ` TAIL`. The user saw only `Floating D`; end-text behavior still occurs, so simply stripping the entire suffix is an insufficient explanation. It does not prove which internal renderer/layout path VRChat uses.
+- The original installed v0.7.0 DLL was restored after user Exit, SHA256 `D94A040AD9DAF3757426074EDE268B50E2C5190BCE1D340825B740251A94F2FE`, hash-matched to the pre-experiment backup. Its isolated real-send probe preserves the suffix and original LF layout without injected wraps. `ChatboxOutput.cs` matches original workspace HEAD again. Synthetic test text was cleared and the original installed executable relaunched. Profiles and unrelated About work remain intact. Floating compatibility is still unresolved on this client; physical acceptance is failed. Any replacement must be proved in-game before changing the sender again; the supported Chatbox OSC API provides no background-width/style control.
+
+### Independently checked primary sources and inference boundary
+
+Fetched/read on 2026-10-03; source facts are distinguished from claims about the private VRChat implementation.
+
+| Finding | Classification and source |
+|---|---|
+| Live 2026.3.3 is October 2, Build 1919, with Unity 6 migration and keyboard refresh. Its notes do not announce a compact-background regression, cause or fix. | **CONFIRMED:** [official live notes](https://docs.vrchat.com/docs/vrchat-202633). Their silence proves nothing about developer intent. |
+| Chatbox documents 144 characters, nine displayed lines including wrapping, text/send/notification arguments and typing. That documented interface has no background-width/style command or client-build signal. | **CONFIRMED:** [official Chatbox reference](https://docs.vrchat.com/docs/osc-as-input-controller#chatbox). Precise UTF-16 counting is the app's conservative policy, not a guarantee in those docs. |
+| TMP 3.0.9 `CalculatePreferredValues` enters its line/end branch at ETX (L4621); when ETX is not last it updates `maxXAdvance` and zeros local `renderedWidth` (L4639–4645), terminates (L4686–4688), and returns `renderedWidth` after margins/rounding (L4791–4804). | **CONFIRMED source behavior:** [official package](https://download.packages.unity.com/com.unity.textmeshpro/-/com.unity.textmeshpro-3.0.9.tgz), `package/Scripts/Runtime/TMP_Text.cs`. Download via official CDN redirect; SHA1 `5a427a571275febcf7e63e8b6f1bcd30f67fe77d` matches 3.0.9 dist shasum in [Unity registry](https://packages.unity.com/com.unity.textmeshpro). Metadata confirms 3.0.9. No package installed/executed. |
+| Unity's uGUI 2.0.0 mirror for 6000.0.64f1 accumulates maximum preferred visible width before ETX termination; the inspected ETX path does not reset it. | **CONFIRMED source behavior:** [pinned mirror commit](https://github.com/Unity-Technologies/uGUI/commit/02b15c632efaabe526a05df739bb0d3566203cce), [`TMP_Text.cs` L4595 and L4709–4711](https://github.com/Unity-Technologies/uGUI/blob/02b15c632efaabe526a05df739bb0d3566203cce/com.unity.ugui/Runtime/TMP/TMP_Text.cs#L4595). Commit metadata confirms 6000.0.64f1; package.json confirms uGUI 2.0.0. Raw file SHA256 `85fb0f0e4f6854200e33d366762b673688a4e8ead95cddb1c63eb226a37a45cd`. This is a Unity 6 generation comparison, not the exact library in VRChat. |
+| These paths explain how ETX followed by another character could previously produce near-zero preferred width while now retaining visible width, with end-text behavior surviving. | **INFERENCE:** strongest technical explanation consistent with sources and observations. VRChat's exact layout call, TMP version/customizations and instrumented before/after path remain **UNVERIFIED**. The earlier exact-client 6000.0.67f1 / later 6000.0.69f1 extension is not retained as independently verified client-source evidence. |
+| VRCOSC documents a character trick and its public source appends the same suffix. | **CONFIRMED for that tool's docs/code only:** [maintainer docs](https://vrcosc.com/docs/v2/chatbox), [pinned `ChatBoxManager.cs`](https://github.com/VolcanicArts/VRCOSC/blob/d4eff6c451be16564596699245a60a4a6d6128bd/VRCOSC.App/ChatBox/ChatBoxManager.cs#L350), suffix at L286/L353. No contemporary in-game fix or reproduction for that tool verified; no universal community impact claim. No MagicChatBox implementation inspected/copied. |
+| Existing OSCQuery validates destination and writable Chatbox capability, not a trustworthy running-client build. | **CONFIRMED local boundary:** `OscDiscovery.cs` uses NAME, OSC_IP/PORT/TRANSPORT and TYPE/ACCESS. [Official OSCQuery](https://docs.vrchat.com/docs/oscquery) and [VRChat community reference](https://github.com/vrchat-community/osc/wiki/OSCQuery) describe discovery, not a version/compatibility guarantee. **UNVERIFIED:** any trustworthy build signal suitable for this app; do not treat the service-name suffix as a build or assume a LAN destination equals the local client. |
+
+Python TLS rejected the package CDN certificate; normal Windows `Invoke-WebRequest` retrieved the public archive without disabling certificate verification and its registry hash matched. Archive/source inspection used memory and temporary files outside the repository; no production dependency/network call was added.
+
+The regression is confirmed; Unity/TMP attribution remains inference. No workaround has yet been verified. Do not assert definitive Unity causation, this exact VRChat internal path, impossibility of a workaround, developer rejection as a bug, or that all OSC tools are affected.
+
+### Existing dependencies, alternatives and chosen policy
+
+- `ChatboxFormatter.Analyze` strips input controls, budgets 142/144 and appends the suffix only after nonempty compact formatting. `Visible` hides it; `Packet` only encodes. Input text cannot intentionally use ETX to suppress content because `CleanText` removes it. No other content or transport function depends on the marker.
+- `ChatboxScheduler.Set` receives a compact bool and dedupes the full formatted payload, so adding/removing the suffix is observable at normal cadence. Its epoch, retry, force-send, pacing and clear semantics do not depend on ETX. Policy-induced changes still go through this one scheduler.
+- `ManualChat` owns raw draft/desired/hold/typing state and has no Floating dependency. `MainWindow.Tick` currently passes saved `settings.Compact` separately to context composition, visible Preview (including unsent draft), Manual formatting and scheduler; all require the same effective value.
+- `LyricContextComposer.Fits` uses 142/144 before selecting neighbors: changing only the final formatter would still drop context. `MainWindow.Decorations` passes the saved flag to prospective composition and `TextInsertion.Preview`/formatter analysis, including rotating-message and failed-insertion paths. Those fit/filter/counter inputs must also be effective.
+- `ApplyPreviewView` currently labels Floating, budgets 142, and uses transparent compact padding from the saved flag; this implies an active effect. README's prior counter claim was also inaccurate: Live Preview counts visible units; Manual counts full payload. No other textual pixel-perfect promise found; Center/Right already says approximate.
+- `DisplayProfile.Summary`, initialization/profile selection, `DisplayChanged`, `RememberProfileChanges` and tray actions need saved/effective distinction. Never write effective=false to `settings.Compact`, `UpdatePresentation`, migration or saves. A checked disabled control must retain true through unrelated edits; the tray must not bypass unavailable UI.
+- **Decision:** adopt SPEC's release-wide unavailable policy, preserve stored preference, omit `03 1F` while unavailable and use normal 144-unit behavior everywhere. No observed feature depends on the suffix beyond the lost visual effect, two-unit reservation, preview extraction and payload dedupe. The invisible end-text effect has no needed role in current sanitized app output. Avoiding future renderer quirks is a precaution, not a newly observed defect. Retain legacy compatibility behind capability for future verified restoration; no user override.
+- Alternatives: retaining the suffix loses capacity with no verified visual benefit; erasing preference/removing Floating is destructive; wrapping/LF-to-VT/`03 1F 200B` failed to restore the effect; another trick is unverified. Build scraping/process/files/logs/service names have no trusted signal and mishandle custom destinations. Remote flags/backend/telemetry add prohibited network/privacy scope. A future verified technique remains possible.
+- Proposed authority: one small `FloatingCompatibility` policy exposes availability and pure saved-preference AND capability derivation. Existing formatter/context/scheduler/insertion bool arguments represent effective state. Make both availability states testable without mutable production-global test state. UI derives from the same authority; no scattered literal false gates, persisted capability or service hierarchy. Exact helper shape remains an implementation choice.
+
+### Every surviving dirty hunk reviewed
+
+| File | Reconciliation |
+|---|---|
+| README.md | Retained rendering dependency/Preview caution; replaced hypothetical failure with the confirmed Build 1919 limitation, explicitly kept current v0.7.0 suffix/142 behavior, corrected visible-versus-payload counters. No future disabled/144 mitigation advertised as current; unrelated content retained. |
+| MainWindow.xaml | Corrected only the preserved tooltip to describe the failed current visual effect. Same enabled checkbox, layout and handlers; no implemented capability claim or TMP/control bytes/Unity speculation. Proportional WPF build required. |
+| PLAN.md | Preserved all empirical/rollback evidence and its provenance; removed the regression-versus-causation conflation, separated source facts/inference, removed overconfident exact-client/.69 wording, and recorded decision/alternatives/implementation-test design. Prior Phase 2.3 history retained. |
+| HANDOFF.md | Replaced the appended causal synopsis with concise continuation state and gates; detailed research lives here. Preserved About closure/QA and frozen hero/wave context. |
+| SPEC.md | Removed the investigation sentence from historical v0.2 and made line-layout preservation normative in the new v0.8.0 contract. Explicit precedence freezes preference, capability, budgets/suffix, UI, Preview, restoration and acceptance; no research narrative. |
+
+### Implementation and minimum meaningful tests — design only
+
+Production areas expected to change after independent review:
+
+1. Add the small capability authority; `MainWindow.xaml.cs` Tick supplies its effective value to `LyricContextComposer.ComposeProfile`, both formatter calls and `scheduler.Set`. Existing low-level algorithms, CompactSuffix and OSC encoder can stay intact behind that effective bool.
+2. `MainWindow.PresentationState.cs`: effective Preview budget/label/bubble and matching Manual count. `MainWindow.Decorations.cs`: effective context/prospective formatter analysis. No second formatter or fit budget.
+3. `MainWindow.xaml`, initialization/`MainWindow.Presentation.cs`/`DisplayChanged`: disabled saved-state checkbox, accessible explanation and safe save paths. `MainWindow.Lifecycle.cs`: unavailable tray action with saved state. `DisplayProfiles.cs`: honest summary presentation without altering profile data. Verify LocalData, do not change its schema/migration.
+4. Update relevant README only once behavior exists and record implementation/QA in PLAN/HANDOFF. No unrelated About/provider/playback/privacy/version changes.
+
+Minimum regression boundaries (extend existing suites; no tests written now):
+
+- `PresentationTests`/`LifecycleTests`: actual temporary-directory LocalData profile/settings round trips with saved true and built-in Minimal, select/duplicate, unrelated presentation edit/save and restart preserve true/schema. Exercise UI initialization/profile-switch/save paths, not just serializer equality.
+- `DisplayTests`/`BoundaryTests`: saved true + unavailable yields normal 142/143/144/145-unit boundary behavior with no suffix, intact grapheme truncation/empty clears; saved false is byte-equivalent to current normal behavior in both states. Testable available + saved true restores legacy 142-plus-suffix without migration; retain valid legacy tests under that path.
+- Shared production-path regression: automatic, Manual Send/Live Edit and unsent Manual Preview use the same effective policy; loopback emitted text matches formatted Preview-visible text and 144 counters/normal bubble. Preserve hold, Off/Pause, current-epoch/no-backlog invariants using existing coverage rather than duplicating the scheduler suite.
+- `DecorationPickerTests`/`PresentationTests`: unavailable saved true allows 143/144-unit prospective insertion and rejects truncating 145/tenth explicit line. Adaptive context includes a neighbor whose real aligned composition fits at 143/144 but not legacy 142. Include fixed template/indentation/grapheme boundaries to expose composition-versus-formatting disagreement.
+- Focused WPF/tray regression: unavailable action cannot change preference; stored checked true survives unrelated saves, profile switches refresh derived UI, summaries/explanation do not claim active Floating, and policy restoration is testable without a product override. Test behavior, not helper/class trivia.
+
+Implementation physical QA: isolated data first, then authorized real VRChat Build 1919/current-client automatic and Manual/live-edit output with saved true/false, short/multiline/Unicode boundary text, normal capacity and empty clearing; Preview/counters; disabled Display/tray checked/unchecked states, keyboard/screen-reader explanation, profile switch/unrelated edits/restart, Decorations fit and context. Do not call the visual effect restored. A future compatible technique requires separate in-game proof before release. This research session sent no OSC and touched no installed binaries/live settings/playback.
+
+Future validation order: focused compatibility/persistence/UI checks, affected composition/Manual/Decorations subsystem checks, then full release restore/build/test/package and physical gates. Contract phase uses only diff validation and proportional tooltip build; no ceremonial test run.
+
+### Contract-phase validation
+
+- Contract-phase repository gate PASS: branch/HEAD matched the request; exactly the original five dirty paths and no staged changes before/after reconciliation. Every initial diff hunk was reviewed. No production C# changes, tests added, installed-app changes or OSC sends in that phase.
+- Contract-phase proportional validation PASS: `dotnet build src/LyricsChatbox/LyricsChatbox.csproj -c Release --no-restore` with `OutputPath` redirected to a temporary directory compiled the corrected tooltip in WPF; 0 warnings, 0 errors. Normal Release output was not overwritten. No full build/test/package run was necessary at that point.
+- Contract-phase `git diff --check` PASS; Git reported only LF-to-CRLF conversion notices, no whitespace errors. At that handoff the sole production-file delta was the tooltip and the five-file worktree remained unstaged at HEAD `71636a3e7bfe202567865ae0733d5c99358a85c1`. Implementation followed in the later section below.
 
 ## Phase 2.3 final two-column Updates refinement (2026-10-03)
 
@@ -280,3 +363,67 @@ Phase 2.3 is closed after authoritative product-owner physical QA PASS. Next: Ph
 - Final validation: locked restore PASS; Release build PASS (0 warnings/0 errors); focused About/Appearance tests PASS (47/47); full Release suite PASS (533/533); package policy PASS; `git diff --cached --check` and `git diff --check` PASS.
 - Validation ran with the intentionally preserved unstaged Floating-only README wording, MainWindow tooltip text, and Floating investigation notes present. Those residual changes are docs/presentation only; no Floating runtime behavior was committed or changed by this closure.
 - Phase 2.3 is committed and pushed only to `codex/v0.8.0` as `Complete v0.8.0 About Phase 2.3`. Floating investigation remains dirty and uncommitted for Phase 2.4. No merge, tag, release, version bump, or Phase 2.4 implementation was made.
+
+## Phase 2.4 — Floating compatibility implementation (2026-10-03)
+
+Status: implementation and automated validation complete; product-owner UI and physical VRChat QA remain outstanding. The product version stays `0.7.0`. The normative contract remains in `SPEC.md`; investigation provenance and alternatives remain above.
+
+- Added one pure `FloatingCompatibility` authority: the shipped release-wide `Available = false`, `Effective(saved, available = Available)` and one `SummaryLabel`, with no mutable test state or runtime/build detection. Budgets stay owned by `ChatboxFormatter`.
+- `MainWindow.Tick` now resolves once and sends the same effective value to Lyric Context, visible/Manual formatting and `ChatboxScheduler`. Preview takes its budget from the formatter's analysis and uses the normal raised bubble and padding while unavailable. Manual budget now uses `ChatboxFormatter.Analyze` visible units and its limit, excluding any legacy suffix. Decorations composition, fit preview and filtering use effective Floating.
+- Display continues to load and show the stored `Compact` value, disables the control while unavailable and presents a visible explanation; `DisplayChanged` writes the existing stored value while unavailable. Profile summaries and Preview share one saved-but-unavailable label. Tray keeps the item checked from saved state, labels it unavailable and disables it. Diagnostics retains `Compact` as the stored field and adds `FloatingEffective`.
+- README now describes the shipped behavior without asserting Unity/TMP causation. No settings/profile schema or updater changes; no new network behavior. `ChatboxFormatter` retains its legacy 142-plus-suffix implementation and grapheme-safe truncation for an explicitly available test policy.
+- New focused regressions cover all four policy combinations; 143/144/145 boundaries; legacy 142-plus-suffix restoration; saved `true` through unrelated edits, profile duplicate/switch/save and restart; diagnostics; automatic/Manual/Preview/scheduler agreement; adaptive context and Decorations fitting; empty clear and grapheme safety.
+
+### Phase 2.4 validation and QA state
+
+- Focused compatibility/formatter/boundary/profile/Display/Decorations/Manual tests: PASS, 138/138.
+- `dotnet restore LyricsChatbox.slnx --locked-mode`: PASS. Release solution build: PASS, 0 warnings / 0 errors. Full Release suite: PASS, 543/543. `scripts/Test-PackagePolicy.ps1`: PASS. Final `git diff --check`: PASS.
+- First implementation pass (2026-10-03): native inspection could not run, because Computer Use reported `apps=[]` and the live LocalData Output preference is enabled. No live settings were changed and no OSC was sent then. The audit below supersedes this gap.
+- Outstanding before any in-game test: tray checked/disabled states on the real tray menu; Decorations 143/144/145 fit in the picker; visual review of Display and Preview.
+- Then in the owner's private VRChat session, on the installed client: (1) send a short normal lyric/message; (2) confirm the normal background is expected; (3) confirm text transmits; (4) test a payload above 142 and at most 144 visible units; (5) clear output; (6) Manual send; (7) switch to a profile with saved Floating=true; (8) restart and confirm the preference remains saved. This does not claim the Floating visual effect is restored.
+- Branch remains `codex/v0.8.0` at committed HEAD `71636a3e7bfe202567865ae0733d5c99358a85c1`. Implementation is uncommitted for independent review; no commit, push, merge, tag, release or version bump.
+
+### Phase 2.4 audit, reduction and native QA (2026-10-31)
+
+Status: implementation repaired and reduced; automated gates and native loopback QA pass; owner tray, Decorations and in-VRChat QA remain. Still uncommitted on `codex/v0.8.0` at `71636a3e7bfe202567865ae0733d5c99358a85c1`; product version stays `0.7.0`.
+
+- Compatibility recheck: live VRChat is now 2026.4.1 Build 1936 (October 28), open beta last listed Build 1935. [Live](https://docs.vrchat.com/docs/vrchat-202641) and [open-beta](https://docs.vrchat.com/docs/vrchat-202641-open-beta) notes mention chatbox only for the typing indicator and nameplate height; nothing covers background width or control-character handling. The [Chatbox reference](https://docs.vrchat.com/docs/osc-as-input-controller) still has no width/style control. Web searches found no verified restored technique. **UNVERIFIED:** whether the suffix behaves differently on Build 1936, because the failure was physically proven on Build 1919 and this session did not test in-game. The owner's probe below decides that; do not infer a fix from note silence.
+- Copy repairs against SPEC: checkbox label `Floating` (was `Floating text`), exact visible explanation, one stale README two-unit claim removed. UI Automation confirms the disabled checkbox exposes the supporting copy as HelpText through its tooltip, so no extra attribute was added.
+- Reduction: removed `FloatingCompatibilityResult` (it restated inputs), the duplicated 142/144 constants and `VisibleLimit` (Preview now uses the formatter's `Limit`), `PreservePreference` (its available branch was untestable behind a constant; one inline guard in `DisplayChanged` replaces it), the unreachable tray-click guard on a disabled item, the two differing "unavailable" labels, and the `EffectiveFloating` rename. Pre-existing `LyricContextComposer.Fits` literals were left alone.
+- Isolated native QA: a scratch clone patched only for data root, mutex name and no playback polling, with Output on, discovery off and destination `127.0.0.1:19777`, driven by UI Automation with a local UDP capture. Real app results with saved `Compact=true`: checkbox on and disabled, `Toggle()` rejected with `ElementNotEnabledException`; budget `n / 144`; Preview normal bubble, `Floating unavailable`; automatic packets, Manual Send of a 145-unit draft (144 sent, `144 / 144 · trimmed`) and Clear (empty) all carried no U+0003/U+001F. Unrelated alignment edit, Minimal → Lyrics → Minimal switching (checkbox followed the saved value), exit and relaunch all kept `Compact=true` in `settings.json` and `profiles.json`, schema version 1. Live `settings.json` was untouched. Captures at 100% DPI only.
+- Not exercised natively: real tray menu, Decorations picker UI, automatic lyric output and Lyric Context with live playback (unit-covered), Available=true build, non-100% DPI. No VRChat client received anything.
+- Gates after the final code change: locked restore PASS; Release build 0 warnings/0 errors; focused 117/117; full 543/543; package policy PASS under Windows PowerShell (`pwsh` is not installed); `git diff --check` PASS.
+
+### Phase 2.4 physical QA, performed by the agent at owner direction (2026-10-31)
+
+Status: PASS for every item below. Product behavior unchanged and no code changed. Still uncommitted at `71636a3e7bfe202567865ae0733d5c99358a85c1`; the owner retains final acceptance.
+
+- Client evidence from the VRChat log: `2026.4.1p1-1937-299983b13b-Release`, `--no-vr` desktop, `~private` instance. The log's startup `OSC enabled: False` line did not prevent receipt: all packets below displayed.
+- The original probe no longer existed (its temp folders were empty), so it was rebuilt from the Floating A/B definition above. Dry-run bytes verified before sending; LyricsChatbox was not running during the probe.
+- Floating A/B on Build 1937: `Floating A` (normal) and `Floating B` + `03 1F` had the same opaque rounded background and width in zoomed captures, and the suffix produced no visible glyph. Legacy Floating is **not restored** on this client, so the unavailable policy stays. This is a short-text desktop observation through captures, not a headset check.
+- Isolated build of the current tree (separate data/mutex, no playback polling, discovery off; installed v0.7.0 untouched and not running). Saved `Compact=true` on Minimal, destination `127.0.0.1:9000`.
+- Real VRChat Manual: a 144-unit draft (`144 / 144` on both counters) displayed in full through its final `ENDQ`, on the normal background, with no stray glyph. Clear emptied the Chatbox. Output was turned off afterwards.
+- Tray (real notification-area menu): `Compact / Floating (unavailable)` disabled and checked; clicking it left `Compact=true`. Only the saved-true state was opened; saved-false tray state was not captured.
+- Decorations in the real picker on saved-true Custom: QA 143 `143 / 144 · Fits`, QA 144 `144 / 144 · Fits`, QA 145 `145 / 144 · Will be truncated`; `Only show items that fit` hid only QA 145.
+- Display and profiles: checkbox on/off follows Minimal/Lyrics and stays disabled, explanation visible, Preview `Floating unavailable` only on saved-true. `Compact=true` held in `settings.json` and `profiles.json` after switching, forced process exit and relaunch.
+- Not covered: VR headset view, other viewers' clients, automatic lyric output with live playback, Lyric Context with live lyrics, non-100% DPI.
+
+### Phase 2.4 final verification (2026-10-31)
+
+Verdict: PASS for implementation and the physical checks recorded above; awaiting owner acceptance. No commit, push, merge, tag or release.
+
+- Manual Send/Clear was already complete; no further VRChat traffic was sent. The Build 1937 capture shows all 144 characters (five rows of 27 plus nine), ending in `ENDQ`, on the normal background. The later capture shows an empty Chatbox.
+- Packet evidence, added on loopback because VRChat holds port 9000: on the final tree with saved `Compact=true`, Output on, port `127.0.0.1:19777`, one `/chatbox/input` of 144 units ending `38 39 45 4E 44 51` with zero `03`/`1F` bytes, one empty Clear, and no further packet in a 12-second watch past the 8-second hold. This proves payload bytes, not VRChat rendering; the capture above covers rendering.
+- Audit of A–I: stored `Compact` stays true; effective Floating is false on every path; production passes only the effective value to composition, formatting and scheduling; `settings.Compact` now reaches only persistence, summaries, tray state, Diagnostics and the policy input; legacy 142+suffix stays testable through the `available` argument with no mutable state; the disabled checkbox and tray item cannot write, and `DisplayChanged` keeps the stored value; `ManualChat` and `ChatboxScheduler` are unchanged. No unrelated files changed.
+- Simplification: `FloatingCompatibilityTests.cs` reduced from 183 to 114 lines, same 10 cases. Removed checks that re-tested formatter behavior already covered by `BoundaryTests`, `DecorationPickerTests` and `DisplayTests`, and the "agreement" test that never exercised `Tick`. Removed the `FloatingAvailable` diagnostics field, a build constant. Corrected the README tray sentence.
+- Known limitation: no automated test can detect a future `Tick` or Decorations call site passing `settings.Compact`, because `MainWindow` is not unit-constructed. A source-text test would assert structure, so none was added. Native QA and review cover this boundary.
+- Other limitations: the disabled checkbox tooltip is fixed unavailable copy, so any future restoration must change it with `Available`; a future technique needs its own proof.
+- Gates on the final tree: locked restore PASS; Release build 0 warnings/0 errors; Floating tests 10/10; full 543/543; package policy PASS; `git diff --check` PASS.
+- Evidence stays outside the repository in the session scratchpad `qa24` folder: `vr-1-A.png`, `vr-2-B.png`, `vr-compare.png`, `vr-4-manual-send.png`, `vr-5-manual-clear.png`, `packet-evidence.txt`, `tray-true.png`, `decorations-fit.png`.
+
+### Phase 2.4 closure (2026-10-31)
+
+- The product owner accepted functional QA after the final verification report. Commit-readiness audit: PASS, with no code change since the gates above.
+- Moved to the v0.8.0 final release gate unless a specific regression appears: VR headset presentation, how other players see output, automatic lyric playback with Lyric Context, tray menu with a saved-false profile, and 100/125/150/200% DPI.
+- Retained deliberately: the legacy 142-plus-suffix path, required by SPEC; the `available` argument that keeps it testable without global state; the inline `DisplayChanged` guard; and the pre-existing 142/144 literals in `ChatboxFormatter` and `LyricContextComposer`, where merging them would be a speculative refactor.
+- Raw VRChat logs, screenshots and QA clones stay local and out of Git.

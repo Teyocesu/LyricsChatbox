@@ -48,8 +48,9 @@ public partial class MainWindow
 
     private DecorationInsertionPreview PreviewDecorationInsertion(TextBox target, string content)
     {
+        var floating = FloatingCompatibility.Effective(settings.Compact);
         var insertion = TextInsertion.Insert(target.Text, target.SelectionStart, target.SelectionLength, target.MaxLength, content);
-        if (!insertion.CanInsert) return TextInsertion.Preview(insertion, "", settings.Compact);
+        if (!insertion.CanInsert) return TextInsertion.Preview(insertion, "", floating);
 
         var monotonicNow = MonotonicClock.Now;
         var wallNow = DateTimeOffset.Now;
@@ -59,10 +60,10 @@ public partial class MainWindow
             var template = target == TemplateBox ? text : settings.CustomTemplate;
             var message = target == RotationMessageBox ? text : activeRotationMessage.Text ?? profiles.Selected.Message;
             var raw = LyricContextComposer.ComposeProfile(engine.Context(monotonicNow), engine.Track, settings.Preset, template,
-                message, contextMode, settings.Compact, wallNow, engine.Position(monotonicNow), settings.CustomAlignment);
+                message, contextMode, floating, wallNow, engine.Position(monotonicNow), settings.CustomAlignment);
             return MessageLayout.Align(raw, settings.CustomAlignment);
         }
-        return TextInsertion.Preview(insertion, Compose(insertion.Text), settings.Compact, currentRawOutput: Compose(target.Text));
+        return TextInsertion.Preview(insertion, Compose(insertion.Text), floating, currentRawOutput: Compose(target.Text));
     }
 
     private void ApplyDecorationInsertion(TextBox target, string content)

@@ -67,7 +67,8 @@ public sealed class Diagnostics
             Output = new { settings.Enabled, State = !settings.Enabled ? "Disabled" : outputPaused ? "Paused" : "Enabled",
                 Paused = outputPaused, PauseMode = outputPaused ? Clean(pauseMode) : null,
                 PauseStatus = outputPaused ? Clean(pauseStatus) : null, Mode = manualMode ? "Manual" : "Automatic",
-                settings.Compact, settings.Host, settings.Port, settings.Preset, Status = Clean(oscStatus) },
+                settings.Compact, FloatingEffective = FloatingCompatibility.Effective(settings.Compact),
+                settings.Host, settings.Port, settings.Preset, Status = Clean(oscStatus) },
             ApplicationBehavior = new { settings.StartWithWindows, settings.StartMinimized, settings.MinimizeToTray, settings.CloseToTray, settings.AutomaticUpdateChecks },
             RecentEvents = recent,
             Privacy = "Generated on demand. No lyric bodies, custom messages, drafts, credentials or persistent listening history."

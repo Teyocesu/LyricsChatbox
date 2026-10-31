@@ -499,7 +499,8 @@
           <Border Style="{StaticResource Card}" Margin="0,0,8,16">
             <StackPanel>
               <TextBlock Text="Presentation" Style="{StaticResource SectionTitle}"/>
-              <CheckBox x:Name="CompactBox" Content="Floating text" Checked="DisplayChanged" Unchecked="DisplayChanged" Margin="0,0,0,10" ToolTip="Uses VRChat's compact floating style."/>
+              <CheckBox x:Name="CompactBox" Content="Floating" Checked="DisplayChanged" Unchecked="DisplayChanged" Margin="0,0,0,4" ToolTipService.ShowOnDisabled="True" ToolTip="A recent VRChat client change prevents LyricsChatbox's previous compact Chatbox method from working. Your profile preference is preserved."/>
+              <TextBlock x:Name="FloatingUnavailableText" Text="Temporarily unavailable in the current VRChat client." Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,0,0,10"/>
               <StackPanel x:Name="AlignmentPanel"><TextBlock Text="Alignment" Style="{StaticResource Caption}" Margin="0,0,0,6"/><ComboBox x:Name="CustomAlignmentBox" Width="120" HorizontalAlignment="Left" SelectionChanged="DisplayChanged" AutomationProperties.Name="Custom and status alignment"/><TextBlock Text="Center and Right use ordinary spaces and are approximate in VRChat." Style="{StaticResource Caption}" Margin="0,6,0,0"/></StackPanel>
             </StackPanel>
           </Border>

@@ -204,21 +204,22 @@ public partial class MainWindow : Window
         var profile = profiles.Selected;
         var currentMessage = messageRotator.Current(profile.Id, SelectedRotation(), profile.Message, now, rotationEligible);
         ApplyRotationRuntimeView(currentMessage, rotationEligible);
+        var floating = FloatingCompatibility.Effective(settings.Compact);
         var automatic = LyricContextComposer.ComposeProfile(engine.Context(now), engine.Track, settings.Preset,
-            settings.CustomTemplate, currentMessage.Text, contextMode, settings.Compact, DateTimeOffset.Now, position,
+            settings.CustomTemplate, currentMessage.Text, contextMode, floating, DateTimeOffset.Now, position,
             settings.CustomAlignment);
         var desired = manual.Desired(automatic, now);
         var preserveLayout = manual.IsManual || settings.Preset is "Custom" or "Status / Time";
         var alignment = manual.IsManual ? settings.ManualAlignment : settings.CustomAlignment;
         if (desired is not null && preserveLayout) desired = MessageLayout.Align(desired, alignment);
-        var payload = ChatboxFormatter.Format(desired ?? MessageLayout.Align(manual.Draft, settings.ManualAlignment), settings.Compact, preserveLayout);
-        var visible = ChatboxFormatter.Visible(payload);
-        ApplyPreviewView(visible, preserveLayout, showContext, desired);
+        var previewAnalysis = ChatboxFormatter.Analyze(desired ?? MessageLayout.Align(manual.Draft, settings.ManualAlignment), floating, preserveLayout);
+        var visible = ChatboxFormatter.Visible(previewAnalysis.Payload);
+        ApplyPreviewView(visible, preserveLayout, showContext, desired, previewAnalysis.Limit, floating);
         var manualLayout = MessageLayout.Align(manual.Draft, settings.ManualAlignment);
-        var manualPayload = ChatboxFormatter.Format(manualLayout, settings.Compact, true);
-        ApplyManualView(manualLayout, manualPayload, desired, now);
+        var manualAnalysis = ChatboxFormatter.Analyze(manualLayout, floating, true);
+        ApplyManualView(manualAnalysis, desired, now);
         var outputEligible = OutputEligibility.CanSend(engine.Enabled, outputPaused);
-        scheduler.Set(engine.Epoch, desired ?? "", outputEligible && desired is not null, settings.Compact, manual.PendingSend, preserveLayout);
+        scheduler.Set(engine.Epoch, desired ?? "", outputEligible && desired is not null, floating, manual.PendingSend, preserveLayout);
         if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && outputEligible)
         {
             var sent = output.Send(packet.Text);
@@ -307,7 +308,7 @@ public partial class MainWindow : Window
     {
         if (!ready || changingProfiles) return;
         settings = settings with { Preset = PresetBox.SelectedItem as string ?? "Lyrics Only", CustomTemplate = TemplateBox.Text,
-            Compact = CompactBox.IsChecked == true, TypingIndicator = TypingBox.IsChecked == true,
+            Compact = FloatingCompatibility.Available ? CompactBox.IsChecked == true : settings.Compact, TypingIndicator = TypingBox.IsChecked == true,
             LiveEdit = LiveBox.IsChecked == true, CustomAlignment = CustomAlignmentBox.SelectedItem as string ?? "Left",
             ManualAlignment = ManualAlignmentBox.SelectedItem as string ?? "Left" };
         RememberProfileChanges();

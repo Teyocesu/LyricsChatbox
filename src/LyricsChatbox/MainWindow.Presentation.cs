@@ -64,6 +64,8 @@ public partial class MainWindow
 
     private void RefreshDisplayDerivedState()
     {
+        CompactBox.IsEnabled = FloatingCompatibility.Available;
+        FloatingUnavailableText.Visibility = FloatingCompatibility.Available ? Visibility.Collapsed : Visibility.Visible;
         var state = DisplayDerivedState.From(settings.Preset, settings.CustomTemplate);
         CustomPanel.Visibility = state.ShowCustomEditor ? Visibility.Visible : Visibility.Collapsed;
         TemplateBox.IsEnabled = state.ShowCustomEditor;

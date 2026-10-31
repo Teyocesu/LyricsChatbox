@@ -1,7 +1,8 @@
-# Handoff — LyricsChatbox v0.8.0 Phase 2.3
+# Handoff — LyricsChatbox v0.8.0
 
-- Branch `codex/v0.8.0`, based on `e7efed683b1b5294487ee630c42c0cfa26d21bcf`; `main` remains `b663555fa604ec86062a6348876f1c27fc31a041`. Phase 2.3 is closed after product-owner physical QA PASS. Product version stays `0.7.0`; only Phase 2.3 is committed and pushed on this branch. Floating compatibility investigation remains preserved as uncommitted Phase 2.4 work. Phase 3 and v0.8.1 remain deferred.
-- The final hero uses the wave, note, and real-text wordmark as one visual system. The transparent eighth-note asset is 1254×1254 (705,910 bytes), shown at 108×108 wide and 54×54 compact. Lyrics has a restrained 8%-accent sheen; Chatbox uses the selected accent gradient. Both respond to appearance changes.
-- Product-owner PHYSICAL QA: PASS for the hero, note, wordmark, wave, all About sections, Diagnostics, wide Updates, final cascade Updates, responsive behavior, and scrolling. Prior native WPF checks at 100% DPI covered 1920×1032, 1406×650, 1380×940, and 820×650 with no horizontal scrolling; Output is Off. The current session relies on the supplied owner result and did not repeat native visual inspection.
-- Final Updates cascade: from 560–1119 DIP, Stable channel and actions are grouped on the left, with Last checked and Current version stacked on the right; below 560 DIP stays stacked and wide layout is unchanged.
-- Locked restore, Release build (0 warnings/0 errors), About/Appearance tests (47/47), full suite (533/533), package policy, and diff checks pass. Validation ran with the preserved unstaged Floating-only README, tooltip, and investigation changes present. See `PLAN.md` for Phase 2.3 evidence; next is Phase 2.4 review/reconciliation of the preserved Floating investigation before implementation.
+- Branch `codex/v0.8.0`; product version remains `0.7.0`. Phases 2.3 and 2.4 are closed; `main`, tags and releases are untouched.
+- Floating is release-wide unavailable (`FloatingCompatibility.Available = false`). Saved `Compact` stays intact; effective output is normal 144-unit formatting with no suffix. Do not claim Floating appearance restoration. `SPEC.md` is normative; evidence is in `PLAN.md`.
+- On VRChat 2026.4.1p1 Build 1937 (desktop, private instance) the suffix keeps the normal background. Manual Send showed all 144 characters through `ENDQ`, and Clear emptied the Chatbox. Loopback packets show no suffix, one Clear and no replay in 12 seconds.
+- Last gates: locked restore, Release build (0/0), full 543-test suite, package policy and diff check pass.
+- Release gate, unless a regression appears sooner: VR headset view, automatic lyrics with live playback, saved-false tray menu and non-100% DPI.
+- Next: Phase 3 (Home visual redesign), on explicit approval. Preserve the accepted hero, note, wordmark, music ribbon and About.

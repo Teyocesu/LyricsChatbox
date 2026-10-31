@@ -10,7 +10,7 @@ public record DisplayProfile(string Id, string Name, string Preset = "Lyrics Onl
         CustomTemplate is {Length: <= 512} && Message is {Length: <= 512} && (Rotation is null or {IsValid:true});
     [System.Text.Json.Serialization.JsonIgnore]
     public bool SupportsLyricContext => LyricContextComposer.SupportsContext(Preset, CustomTemplate);
-    public string Summary => Preset + (SupportsLyricContext ? " · " + ContextMode : "") + (Compact ? " · Floating" : "");
+    public string Summary => Preset + (SupportsLyricContext ? " · " + ContextMode : "") + FloatingCompatibility.SummaryLabel(Compact);
     public override string ToString() => Name;
     public AppSettings Apply(AppSettings settings) => settings with
     { Preset = Preset, CustomTemplate = CustomTemplate, Message = Message, Compact = Compact, CustomAlignment = Alignment };

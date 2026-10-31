@@ -198,7 +198,9 @@ public partial class MainWindow
         }
         trayOutput!.Checked = settings.Enabled;
         trayOutput.Text = !settings.Enabled ? "Output (off)" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output (paused)" : "Output";
-        trayCompact!.Checked = settings.Compact;
+        trayCompact!.Text = FloatingCompatibility.Available ? "Compact / Floating" : "Compact / Floating (unavailable)";
+        trayCompact.Checked = settings.Compact;
+        trayCompact.Enabled = FloatingCompatibility.Available;
     }
 
     private void BehaviorChanged(object sender, RoutedEventArgs e)

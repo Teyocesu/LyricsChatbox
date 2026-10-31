@@ -57,15 +57,15 @@ public partial class MainWindow
         PositionProgress.Value = view.Value; PositionText.Text = view.Text;
     }
 
-    private void ApplyPreviewView(string visible, bool preserveLayout, bool showContext, string? desired)
+    private void ApplyPreviewView(string visible, bool preserveLayout, bool showContext, string? desired, int limit, bool floating)
     {
         var preview = PresentationText.Preview(visible);
         var profile = (manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
-            : profiles.Selected.Name + " · " + (showContext ? contextMode : settings.Preset)) + (settings.Compact ? " · Floating" : "");
+            : profiles.Selected.Name + " · " + (showContext ? contextMode : settings.Preset)) + FloatingCompatibility.SummaryLabel(settings.Compact);
         var owner = !engine.Enabled ? "Output off · preview" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output paused · preview" : manual.IsManual
             ? desired is null ? "Manual · unsent draft" : "Manual · preview" : "Automatic · preview";
         var view = new PreviewView(preview.Text, preview.IsPlaceholder, preserveLayout, visible.Length,
-            settings.Compact ? 142 : 144, profile, settings.Compact, owner);
+            limit, profile, floating, owner);
         if (!previewView.ShouldApply(view)) return;
         PreviewText.Text = view.Text;
         PreviewText.SetResourceReference(TextBlock.ForegroundProperty, view.Placeholder ? "MutedBrush" : "TextBrush");
@@ -79,10 +79,9 @@ public partial class MainWindow
         OwnerText.Text = view.Owner;
     }
 
-    private void ApplyManualView(string manualLayout, string manualPayload, string? desired, double now)
+    private void ApplyManualView(ChatboxFormatAnalysis analysis, string? desired, double now)
     {
-        var budget = manualPayload.Length + " / 144" +
-            (ChatboxFormatter.Visible(manualPayload).Length < manualLayout.Trim('\r', '\n').Length ? " · trimmed" : "");
+        var budget = analysis.VisibleUnits + " / " + analysis.Limit + (analysis.WouldTruncate ? " · trimmed" : "");
         var paused = IsOutputPaused(DateTimeOffset.UtcNow);
         var state = paused ? "Output paused · your draft stays here" : manual.RemainingHold(now) is double remaining
             ? $"Sent · automatic resumes in {Math.Ceiling(remaining):0} s"
