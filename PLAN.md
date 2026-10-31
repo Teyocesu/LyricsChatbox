@@ -1,4 +1,4 @@
-# v0.8.0 execution plan — Phase 2.4 closed; Phase 3 (Home) next
+# v0.8.0 execution plan — Phase 3 closed; Phase 4 (Display) next
 
 ## State and baseline
 
@@ -259,7 +259,7 @@ Status: the Phase 2.3 physical correction and hero-note refinement are implement
 
 ## Next action
 
-Phases 2.3 and 2.4 are closed. Next is Phase 3, the Home visual redesign, which needs explicit approval to start. Deferred v0.8.1 work remains out of scope.
+Phases 2.3, 2.4 and 3 are closed. Next is Phase 4, the Display redesign, on explicit approval. Manual and Settings remain unstarted, and deferred v0.8.1 work remains out of scope.
 
 ## Phase 2.4 — Floating investigation reconciliation and contract (2026-10-03)
 
@@ -427,3 +427,55 @@ Verdict: PASS for implementation and the physical checks recorded above; awaitin
 - Moved to the v0.8.0 final release gate unless a specific regression appears: VR headset presentation, how other players see output, automatic lyric playback with Lyric Context, tray menu with a saved-false profile, and 100/125/150/200% DPI.
 - Retained deliberately: the legacy 142-plus-suffix path, required by SPEC; the `available` argument that keeps it testable without global state; the inline `DisplayChanged` guard; and the pre-existing 142/144 literals in `ChatboxFormatter` and `LyricContextComposer`, where merging them would be a speculative refactor.
 - Raw VRChat logs, screenshots and QA clones stay local and out of Git.
+
+## Phase 3 — Home visual revamp (2026-10-31)
+
+Normative contract: `SPEC.md` § v0.8.0 normative Home contract. Starting HEAD `7b41cbabcef13904e00857ca5679100da5a2e579`, clean worktree.
+
+Impact map before editing:
+
+| Existing structure | Finding | Decision |
+|---|---|---|
+| `HomeFit`, `HomeDashboard`, `HomeCompact`, `CompactHeroHost`, `CompactSectionHost`, `CompactToolsHost` | Two visual trees joined by reparenting in `WindowLayout.Apply`. | Replace with one tree; mode changes placement and visibility only. |
+| `NowPlayingCard`, `HeroGrid` | Lyric competes with metadata and is hidden at compact sizes. | Full-bleed hero; lyric becomes the focal element and stays visible in every mode. |
+| Six Home cards, `HomeDetailsScroller`, `InspectorScroller`, quick-message scroller | Nested scrolling and card grid. | Sections in two columns inside one scroller. |
+| `HomeSectionBox` ComboBox | Hides section names behind a popup. | Same `SelectedIndex` contract as visible tabs. |
+| `showSourceStatus` argument | Existed only to keep ambiguity guidance when compact hid the status row. | Remove; the status row is always visible. |
+| `MatchCard`, `HeroSurfaceSizeChanged`, `DashboardTitle`, `StatusPill`, `DashboardQuickTemplate` | Serve only the old cards. | Remove. |
+| `PreviewCard` | Shared by every page; other pages keep cards until their phases. | Keep the existing host move; strip the card only while on Home. |
+
+### Phase 3 implementation and validation (2026-10-31)
+
+Status: first implementation complete and uncommitted, awaiting product-owner visual approval. Product version stays `0.7.0`.
+
+- Composition: full-bleed Home with no page heading. Hero with artwork, track metadata, the lyric as the largest text, and a player bar. Sections flow in two independent columns using About's labels, rules and divider: left Chatbox preview and Lyrics details; right Profiles, Lyric context, Quick messages and Lyrics tools.
+- Modes: Full, Split (hero beside one section) and Stacked (hero above one section), chosen by `WindowLayout.SelectHomeMode`. Split and Stacked share section tabs. One visual tree: a mode changes grid placement and visibility only.
+- Removed: `HomeFit`, `HomeDashboard`, `HomeCompact`, three compact hosts, six Home cards, `MatchCard`, `HeroLyricPanel`, `HeroProviderBadge`, nested detail and quick-message scrollers, `HeroSurfaceSizeChanged`, `DashboardTitle`, `StatusPill`, `DashboardQuickTemplate`, the `showSourceStatus` parameter and the section-reparenting code.
+- Retained: all Home controls, names, handlers and accessible names; the Preview move between Home and other pages, because those pages keep their cards until their phases; the `RecoveryCard` and `ContextCard` names, now plain sections.
+- New: `HomeMode` policy, Home styles for rule, separator, status, detail rows, header action, choice item and section tab, and `HomeQuickTemplate`. `HomeSectionBox` is now a tab list with the same `SelectedIndex` contract.
+- Correctness findings fixed: star-row span inflated the hero; the atmosphere mask ended on a hard edge because blur overflow stretched it; Ctrl+click could deselect the active tab and collapse every section, now guarded and verified; a dangling status divider when source text is empty; `ContextCard` visibility could fight section selection.
+- Gates on the final tree: locked restore PASS; Release build 0 warnings/0 errors; focused 144/144; full 549/549 (six new mode-boundary cases, none removed or weakened); package policy PASS; `git diff --check` PASS.
+- Native QA used an isolated Release clone with separate data and mutex, Output off, discovery off and a loopback-only destination. Nothing was sent to VRChat. The clone adds a QA-only fixture that writes simulated values into the real controls; that fixture is not in the repository. Sizes: 1448x990, 1920x1032 maximized, 1600x650, 1280x800, 820x650, and boundaries 1139/1141x900, 1299/1301x700 and 1448x759/761. Themes: Rose/Midnight and Blue/Graphite, plus artwork tint off. States: no track (real), simulated playing, long names, missing artwork, unavailable lyric with recovery, context enabled and disabled, expanded details, match panel, and all six sections at minimum. Three resize and navigation cycles left each control exactly once and the selected profile unchanged. Focus inside a section selected its tab on entering Stacked. No horizontal scrolling. About, Manual, Settings and Preview on Display show no regression.
+- Gaps: live playback could not be observed, because Apple Music was open with no active media session, so real artwork, lyric timing, transport commands and real ambiguity were not exercised on the new layout. Candidate search results were not populated. Non-100% DPI, screen readers and physical keyboard tab order were not exercised.
+- Simplification: production diff +317/-277, about 1.1:1. The XAML grows by 44 lines, mostly the new styles; `WindowLayout.cs` is net zero despite adding the mode policy.
+
+### Phase 3 final visual corrections (2026-10-31)
+
+The owner accepted the overall Home direction and requested two corrections. This supersedes the Split mode and lyric line limits recorded above; the earlier section stays as history. `SPEC.md` holds the current behavior.
+
+- Wide-short: Split left most of 1600x650 empty. Investigation showed the two columns need only 840 DIP of usable width and already have an internal scroller, so Split protected no usability requirement and was removed. Columns now depend on width alone (`UsesHomeColumns`), and height only scales the hero. At 1600x650 all sections are in two columns, with the lower ones reached by inner scrolling. Tabs appear only below 840 DIP.
+- Long lyric: the artwork no longer takes part in hero row sizing. It sets a minimum hero height through a negative margin and `HeroGrid.MinHeight`, so ordinary lyrics leave the page still and longer lines use more rows. Line allowance: 5 at 900+ DIP height, 4 at 760+, 3 below, in columns; 4 and 2 when stacked. Measured progress bar position: unchanged for one and two lines at 1448x990 and 1280x800, and through three lines at 1600x650. The 214-character fixture shows in full at 1448x990 in four lines and truncates by ellipsis at 820x650. An unusually long line moves the sections down while it shows; the transport stays visible.
+- Correctness review: selection survives width round trips; three resize and navigation cycles left each control once with the profile unchanged; no horizontal scrolling at any size. The deselection guard and focus-to-tab logic are unchanged except for a variable rename, and were not re-exercised because that requires taking window focus while the owner was playing VRChat.
+- Simplification: removed `HomeMode`, `SelectHomeMode`, the Split branches, the height condition on columns and the canvas column grid. The mode test became a two-case width boundary test.
+- Gates on the final tree: locked restore PASS; Release build 0 warnings/0 errors; focused 140/140; full 545/545 (six mode cases replaced by two); package policy PASS; `git diff --check` PASS.
+- Native QA ran in the isolated clone at below-normal priority while the owner played, with Output off, no OSC and no taskbar button. Measured foreground stayed unchanged. The clone window opened at the left monitor edge for about two seconds at each launch before moving off-screen, because Windows repositions it at startup. Off-screen windows are not repainted, so `PrintWindow` frames were stale and were discarded; final captures render the clone's visual tree to a file. Playback in captures is simulated.
+- Gaps carried forward: live playback with real artwork, lyric timing and transport; non-100% DPI; screen readers and physical keyboard order.
+
+### Phase 3 closure (2026-10-31)
+
+- CLOSED: the product owner accepted the final Home design after independent screenshot review of the wide-short, long-lyric and compact layouts and of About and Manual.
+- Functionality audit against the starting commit: all 20 removed `x:Name`s are layout containers, and every removed name's function moved to a kept control; no accessible name or tooltip was removed; every XAML handler exists in code; the only handler removed is `HeroSurfaceSizeChanged`, which clipped the deleted card.
+- Test review: the starting commit has 543 tests and the Phase 3 test diff is additive, so the suite gains 2 cases at 545. The 549 figure counted six uncommitted Split-era mode cases, which covered only the removed policy and were replaced by the `UsesHomeColumns` boundary. No committed test was removed or weakened.
+- Correctness and simplification passes found no blocking issue and no further reduction worth a rebuild. `HomeCanvas`, `HomeAtmosphere`, `HomeColumns` and `HomeSectionsPanel` keep unreferenced structural names, matching About's convention.
+- Validation evidence is the 545/545 run recorded above; the application binary it loaded matches the final source, and only documentation changed afterward.
+- Moved to the v0.8.0 final release gate: live playback with real artwork, lyric timing and transport commands on the new layout; candidate search results; tab deselection and focus-to-tab behavior retest; non-100% DPI; screen readers and physical keyboard order; VR headset view and how other players see output; automatic lyrics with Lyric Context; tray menu with a saved-false profile.

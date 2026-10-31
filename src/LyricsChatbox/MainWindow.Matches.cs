@@ -30,7 +30,7 @@ public partial class MainWindow
         HomeSectionBox.SelectedIndex = 5;
         MatchPanel.Visibility = Visibility.Visible; MatchQuery.Text = track.Title + " " + track.Artist;
         MatchStatus.Text = "Compare the recording, artist and duration. Your choice applies only to this song.";
-        _ = Dispatcher.InvokeAsync(() => { MatchCard.BringIntoView(); MatchQuery.Focus(); });
+        _ = Dispatcher.InvokeAsync(() => { MatchPanel.BringIntoView(); MatchQuery.Focus(); });
     }
     private void CloseMatches(object sender, RoutedEventArgs e) => CancelManualMatch();
     private async void SearchMatches(object sender, RoutedEventArgs e)

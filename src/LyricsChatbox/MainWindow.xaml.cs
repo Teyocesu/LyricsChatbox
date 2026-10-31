@@ -233,7 +233,11 @@ public partial class MainWindow : Window
 
     private void HomeSectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ready) WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
+        if (!ready) return;
+        // A list allows Ctrl+click deselection, which would otherwise leave no section visible.
+        if (HomeSectionBox.SelectedIndex < 0 && e.RemovedItems.Count > 0) { HomeSectionBox.SelectedItem = e.RemovedItems[0]; return; }
+        WindowLayout.Apply(this, ContentRoot.ActualHeight);
+        HomeSectionsScroller.ScrollToTop();
     }
 
     private void MinimizeWindow(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -242,12 +246,6 @@ public partial class MainWindow : Window
     private void CloseWindow(object sender, RoutedEventArgs e) => Close();
     private void AboutScrollChanged(object sender, ScrollChangedEventArgs e) =>
         AboutHeroArtScrollTransform.Y = -e.VerticalOffset;
-
-    private void HeroSurfaceSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        ((FrameworkElement)sender).Clip = new System.Windows.Media.RectangleGeometry(
-            new Rect(new Point(), e.NewSize), 11, 11);
-    }
 
     private void Navigate(object sender, RoutedEventArgs e)
     {
@@ -259,7 +257,7 @@ public partial class MainWindow : Window
         AboutRoot.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
         AboutPage.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
         PageTitle.Text = page;
-        WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
+        WindowLayout.Apply(this, ContentRoot.ActualHeight);
         activeSection = page;
         SaveRuntimeStateNow();
     }

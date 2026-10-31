@@ -143,6 +143,12 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(giant,giantResult);
         Assert.Equal("",ChatboxFormatter.Format(giantResult,true));
     }
+    [Theory]
+    [InlineData(840, true)]
+    [InlineData(839.9, false)]
+    public void HomeColumnsNeedTheirMinimumUsableWidth(double width, bool expected) =>
+        Assert.Equal(expected, WindowLayout.UsesHomeColumns(width));
+
     private static string ProfileCompose(LyricContext context, string preset, string custom, string mode, bool compact = false, string message = "")
     {
         return LyricContextComposer.ComposeProfile(context, CoreTests.Track, preset, custom, message, mode, compact,

@@ -42,7 +42,6 @@ public partial class MainWindow
         if (!sourceView.ShouldApply(view)) return;
         SourceText.Text = view.Text;
         ChoosePlaybackSourceButton.Visibility = view.ChooseVisible ? Visibility.Visible : Visibility.Collapsed;
-        WindowLayout.Apply(this, ContentRoot.ActualHeight, playback.Ambiguous);
     }
 
     private void ApplyProgressView(double now, double? position)

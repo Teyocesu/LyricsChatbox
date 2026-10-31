@@ -72,8 +72,7 @@ public partial class MainWindow
         StatusPanel.Visibility = state.ShowStatusMessages ? Visibility.Visible : Visibility.Collapsed;
         CustomMessageHint.Visibility = state.ShowCustomEditor && !state.ShowStatusMessages
             ? Visibility.Visible : Visibility.Collapsed;
-        LyricContextPanel.Visibility = ContextCard.Visibility = state.ShowLyricContextCard
-            ? Visibility.Visible : Visibility.Collapsed;
+        LyricContextPanel.Visibility = state.ShowLyricContextCard ? Visibility.Visible : Visibility.Collapsed;
         ContextBox.IsEnabled = ProfileContextBox.IsEnabled = state.LyricContextSupported;
         ContextHint.Text = state.LyricContextSupported ? ContextModeHint() : state.LyricContextUnavailableText;
         ContextHint.Visibility = state.LyricContextSupported ? Visibility.Collapsed : Visibility.Visible;
