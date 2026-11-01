@@ -1,7 +1,8 @@
-# v0.8.0 execution plan — Phase 4 closed; Phase 5 (Manual) next
+# v1.0.0 execution plan — Phase 5A closed; typing issue, then Phase 5B next
 
 ## State and baseline
 
+- Retargeted 2026-11-01: the release planned as v0.8.0 is now v1.0.0, and `codex/v0.8.0` was renamed to `dev/v1.0.0` with history intact. Dated entries below keep the names they were recorded with. No v0.8.0 was ever released.
 - Planning date: 2026-09-22. Branch `codex/v0.8.0` was created from exact released `main` commit `b663555fa604ec86062a6348876f1c27fc31a041`. `git fetch --prune` completed; local `main`, `origin/main` and branch base matched; initial worktree was clean and the `v0.7.0` tag existed.
 - At initial planning (2026-09-22), work was documentation and reference preservation only. Product project version remains `0.7.0`; no package or release work has begun.
 - Canonical visual reference: `docs/visual/v0.8.0-about-reference.png`. Requirements and adaptation policy are in `SPEC.md` § v0.8.0; the screenshot's inaccurate copy and mock data must not be shipped.
@@ -424,7 +425,7 @@ Verdict: PASS for implementation and the physical checks recorded above; awaitin
 ### Phase 2.4 closure (2026-10-31)
 
 - The product owner accepted functional QA after the final verification report. Commit-readiness audit: PASS, with no code change since the gates above.
-- Moved to the v0.8.0 final release gate unless a specific regression appears: VR headset presentation, how other players see output, automatic lyric playback with Lyric Context, tray menu with a saved-false profile, and 100/125/150/200% DPI.
+- Moved to the v1.0.0 final release gate unless a specific regression appears: VR headset presentation, how other players see output, automatic lyric playback with Lyric Context, tray menu with a saved-false profile, and 100/125/150/200% DPI.
 - Retained deliberately: the legacy 142-plus-suffix path, required by SPEC; the `available` argument that keeps it testable without global state; the inline `DisplayChanged` guard; and the pre-existing 142/144 literals in `ChatboxFormatter` and `LyricContextComposer`, where merging them would be a speculative refactor.
 - Raw VRChat logs, screenshots and QA clones stay local and out of Git.
 
@@ -478,7 +479,7 @@ The owner accepted the overall Home direction and requested two corrections. Thi
 - Test review: the starting commit has 543 tests and the Phase 3 test diff is additive, so the suite gains 2 cases at 545. The 549 figure counted six uncommitted Split-era mode cases, which covered only the removed policy and were replaced by the `UsesHomeColumns` boundary. No committed test was removed or weakened.
 - Correctness and simplification passes found no blocking issue and no further reduction worth a rebuild. `HomeCanvas`, `HomeAtmosphere`, `HomeColumns` and `HomeSectionsPanel` keep unreferenced structural names, matching About's convention.
 - Validation evidence is the 545/545 run recorded above; the application binary it loaded matches the final source, and only documentation changed afterward.
-- Moved to the v0.8.0 final release gate: live playback with real artwork, lyric timing and transport commands on the new layout; candidate search results; tab deselection and focus-to-tab behavior retest; non-100% DPI; screen readers and physical keyboard order; VR headset view and how other players see output; automatic lyrics with Lyric Context; tray menu with a saved-false profile.
+- Moved to the v1.0.0 final release gate: live playback with real artwork, lyric timing and transport commands on the new layout; candidate search results; tab deselection and focus-to-tab behavior retest; non-100% DPI; screen readers and physical keyboard order; VR headset view and how other players see output; automatic lyrics with Lyric Context; tray menu with a saved-false profile.
 
 ## Phase 4 — Display visual revamp (2026-10-31)
 
@@ -540,3 +541,113 @@ Release gate additions, all physical on the interactive desktop:
 - Tab order, including the `TokenChips` empty tab stop.
 - Caption-button overlap at 820x650. When scrolled, content passes under the caption buttons and can cover `Rename`. If `Rename` is physically inaccessible, the release is BLOCKED until fixed.
 - Non-100% DPI and screen-reader behavior.
+
+## Phase 5A — Native Chatbox Protection (2026-11-01)
+
+Replaces the planned Manual visual revamp. Manual is not removed here and will be evaluated after this feature passes review and physical QA. `SPEC.md` holds the contract.
+
+### PoC evidence (temporary observer outside the repository)
+
+- Desktop, client running in `--no-vr`: 7/7 intentional opens and closes detected, 47 to ~213 ms from synthesized input to observer, across Y, Action Menu, Esc and the X. One close/open pair at 23:15:20–23 stays unexplained. Quick Menu, Action Menu, main menu and the search field produced no Chatbox events. Sending with Enter or the arrow keeps the popup open.
+- PCVR through SteamVR and Virtual Desktop, three runs on one client session: 7 pairs against 6 scripted, then 5 pairs against 4 scripted, with the extra pair in a block where the owner reported extra actions but not a Chatbox action. All scripted transitions were present. Search field: no Chatbox event. Idle: 0 events in 4 min 5 s. Action-to-detection latency in PCVR is unmeasured. Log-to-observer upper bounds were 0.09–1.06 s with one-second timestamps.
+- Privacy: one synthetic phrase, typed and sent from PCVR, was absent from the session log while a positive control was found. This is limited evidence, not a general guarantee.
+- Log format is undocumented. Client build for the PCVR runs was not read.
+
+### Impact map
+
+- **Settings:** two appended `AppSettings` values; a new Settings card only. `IsValid` is unchanged so a bad cooldown cannot reset the file; the cooldown is clamped on use.
+- **Output eligibility:** `Tick` computes one blocked value from Pause and the hold and passes it to the unchanged `OutputEligibility.CanSend`; it is the only caller that sends.
+- **Scheduler:** new `Rearm()`, which clears `last` and `retry` without forcing, so an empty desired text stays unsent. `ReceiverChanged` is unchanged and is not used on release.
+- **Manual:** the hold reuses `PauseOutput`/`ResumeOutput`, which already suppress `desired` and `pendingSend` and freeze the 8 s hold. Send, Clear and Live Edit checks use one blocked test. `ResumeOutput` runs only when neither block remains.
+- **Typing:** the routine `typing.Take` is skipped while held. Lifecycle and destination `SendTyping(false)` calls go through a held check. Output Pause keeps its own explicit Clear.
+- **Rotation:** eligibility receives the blocked value, so the rotator freezes.
+- **Preview, Manual view, OSC text, sidebar, tray:** one extra branch after Paused. The sidebar reuses the Resume button.
+- **Diagnostics:** state name only. Fixed-text events, never log content.
+- **Lifecycle:** process changes come from the existing 2 s receiver check. No second process query.
+- **Runtime persistence:** none. `RuntimeState` is unchanged.
+- **Outbound audit:** `output.Send` is called from `Tick` and from Output Pause entry only. `--osc-test` is a separate process mode.
+
+### Implementation plan
+
+1. `NativeChatbox.cs`: strict line matcher, bounded background-safe log reader, and one pure policy.
+2. `MainWindow.NativeChatbox.cs`: direct wiring in `Tick`, one poll in flight every 200 ms.
+3. Scheduler `Rearm`, eligibility input, Manual and typing guards.
+4. Settings card and status text.
+5. Focused tests with synthetic logs and a fake clock, then loopback and isolated native QA.
+
+### Phase 5A validation (2026-11-01, uncommitted, awaiting independent review)
+
+- Automated: locked restore, Release build 0/0, focused 46/46, full suite 591/591, package policy PASS, `git diff --check` clean. No existing test changed; no suppressions.
+- Loopback and native, simulated: 41/41 checks in an isolated clone with its own data, a synthetic log folder, a synthetic VRChat process id and a private UDP listener, on a hidden desktop. Foreground unchanged. Rotation in the running window was not exercised; it is covered by a unit test and the shared blocked value.
+- Decisions: `Finish` never closes, because all 21 PoC closings carried a removal line. The hold reuses Manual's Pause path. `Rearm` was added instead of reusing `ReceiverChanged`.
+- Not performed: physical testing and any run against real VRChat or its log. No Desktop or PCVR pass exists for this feature.
+
+### Phase 5A independent finding validation (2026-11-01, uncommitted)
+
+External review findings were treated as hypotheses and validated against the code, SPEC and evidence.
+
+- **R1, continuity loss during the cooldown: rejected as a defect.** SPEC scopes Uncertain to the open state, and the popup was confirmed closed. A transient read failure keeps the offset, so no event is lost. Only external deletion, truncation or replacement loses data, and the same loss in Normal has the same hazard. Holding on that signal would strand output after a harmless read failure. Pinned by tests.
+- **R2, status wording: confirmed, alternative fix.** The sidebar and Settings stated an inference as fact, without the experimental caption beside it in the sidebar. The status now reads `Chatbox detected open`.
+- **R3, matcher stricter than the PoC: needs evidence.** Not loosened. The strict form matches the one directly inspected real session, for example `2026.10.31 02:38:33 Warning    -  VP Popups_Chat OnPageAddedToStack()`, but the 21 live detections ran through the permissive observer, which recorded neither level nor suffix. Physical QA gate: confirm the status changes to `Chatbox events seen this session` on the first real open. Inspect the matcher first if it does not.
+- **R4, same-size replacement: rejected as a defect.** VRChat writes a new timestamped file for each boot. A static replaced file has nothing to read, and the fingerprint catches it on the next growth.
+- **R5, tests:** removed two duplicates of `OutputPauseTests` and `RotationTests` and two redundant rows. Kept the rest, each with a distinct failure mode.
+- Deferred: missed removal line stays held until Resume now; a stalled read leaves the last label until a session or toggle change; forged log lines; PCVR latency.
+- Simplified: private hold enum, unreachable availability branch, repeated blocked values, redundant clamp.
+
+Validation: locked restore, Release build 0/0, focused 44/44, full suite 589/589, package policy PASS. Isolated native and loopback QA 43/43, now including rotation in the running window. No physical test or real VRChat run. The earlier external review bundle predates these edits.
+
+### Phase 5A Gate A, real client parser check (2026-11-01)
+
+PASS for one Desktop cycle. Unmodified production `NativeChatbox.cs` in an isolated build with its own data, on a hidden desktop, reading the real log path from its end. Owner confirmed Desktop mode. Output off, destination 127.0.0.1:19779, discovery off.
+
+- Real lines recognized: Y to `ChatboxOpen` in 231 ms, Esc to `WaitingAfterClose` in 260 ms, `Normal` 15.03 s later. Times use one host clock with 25 ms state sampling, and input was synthesized.
+- Resolves R3 for this client on Desktop only. Client build not read. PCVR not run through the production parser.
+- Isolation: no `/chatbox/input` reached the private listener. Its only recorded packet was the startup typing clear below. The owner's settings and runtime state hashes are unchanged.
+- Separate finding, not fixed: with Output Off, `TypingSignal` sends one `/chatbox/typing` false on the first tick, because `last` starts null. `Reset` reopens the same path after a receiver change. Present at the base commit. It conflicts with the Off no-transmission contract, while disable and shutdown clears are specified. Low severity. Decide separately, after reviewing typing tests.
+
+### Phase 5A Desktop Gate B (2026-11-01)
+
+PASS. Owner decision: Desktop integrated QA decides acceptance for v1.0.0 and PCVR integrated QA is waived. PoC PCVR evidence stays valid in its own scope and does not cover this implementation.
+
+Setup: production code unchanged from Gate A, isolated data, hidden desktop, Desktop client confirmed by the owner and the HUD, invite instance owned by the owner with 1 of 32 people. The application sent to a private relay on 19779, which recorded every packet and forwarded it to 127.0.0.1:9000 only after Output was enabled. Text was the harmless `LC-QA-###`, changed every 2 s. No music playback. Input was synthesized.
+
+| Scenario | Result | Evidence type |
+|---|---|---|
+| A normal output | Text reached the real bubble | Packet capture, visual |
+| B open and type | Held; `pocdraft` kept intact for 7 s with the ticker running | Packet capture, visual |
+| C send with Enter | Popup stayed open, hold stayed, sent text stayed visible | Packet capture, visual |
+| D close and resume | Text still protected 13 s after close; current text returned | Packet capture, visual |
+| E reopen in cooldown | Cooldown cancelled; a new full cooldown followed the next close | Packet capture, state |
+| F negative controls | Quick Menu, main menu, search field: no hold, packets continued. Action Menu opening not visually confirmed in this run | Packet capture, state, visual |
+| G Off and Pause | Off: no packet, hold end did not enable output. Pause: its one Clear and typing clear, then silence until resumed | Packet capture, state |
+| H recovery | Resume now sends current text when eligible, and never overrides Off or Pause. Held Manual draft never sent | Packet capture, state |
+
+Measurements: 9 opens detected in 218 to 366 ms and 9 closes in 126 to 355 ms from synthesized input, with 25 ms state sampling. 8 complete cooldowns of 15.01 to 15.08 s. 105 packets: 102 input, of which 2 empty from explicit Pause, and 3 typing. Minimum input spacing 1.065 s. Across 172.3 s held in 11 windows, no packet fell inside an active hold. An audit by window listed 4, all first resume packets within 31 ms of the sampled window end, an artifact of sampling. In 2 of 9 opens a packet left 204 and 268 ms after the key press and before detection: the known detection window, not a hold violation.
+
+Separate finding, not fixed: the startup `/chatbox/typing` false with Output Off conflicts with the SPEC Off boundary and the master switch rule for typing. Classification: confirmed, low severity, non-blocking. Smallest fix: `TypingSignal.Take` sends false only after true was sent, with its own tests, as a separate change in the v1.0.0 correctness gate.
+
+No client modification, memory access or injection. Screenshots were deleted. Owner settings and runtime state hashes unchanged.
+
+### Phase 5A closure (2026-11-01)
+
+CLOSED / ACCEPTED by product-owner decision for the v1.0.0 development branch, experimental and off by default. This is not a release approval.
+
+Evidence:
+
+- Automated: 589/589 tests, Release build 0/0, package policy PASS.
+- Isolated WPF and loopback: 43/43 checks.
+- Gate A, real Desktop parser: PASS.
+- Gate B, real Desktop OSC integration: PASS, with no automatic packets during established holds and no stale message or empty automatic Clear on resume.
+- Cooldown and rapid reopening: PASS. Output Off and Pause precedence: PASS.
+
+Limitations:
+
+- Detection is unofficial and best-effort.
+- Packets may escape before an opening is detected.
+- PCVR final integration is unverified, by owner waiver for v1.0.0.
+- Real music playback remains a release-level QA check.
+- Packet evidence came from a private relay in the path, not direct capture on port 9000.
+
+Open: the inherited startup `/chatbox/typing` false with Output Off is confirmed and not fixed here. It must be independently reassessed and, if justified, corrected before the v1.0.0 release. The Output Off contract stays as written.
+
+Earlier release gates stay in force, including the physical checks from Phases 3 and 4 and the `Rename` blocker. Manual remains until Phase 5B.

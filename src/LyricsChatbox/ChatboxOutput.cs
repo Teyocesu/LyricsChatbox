@@ -82,6 +82,8 @@ public sealed class ChatboxScheduler
         force = forceSend;
     }
     public void ReceiverChanged() { last = null; retry = true; }
+    // After a hold: the current nonempty text counts as new. Unlike ReceiverChanged, empty text stays unsent.
+    public void Rearm() { last = null; retry = false; }
     public (long Epoch, string Text)? Take(double now)
     {
         if (!enabled || now < next || !force && !retry && (desired == last || last is null && desired.Length == 0)) return null;

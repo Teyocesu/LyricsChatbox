@@ -22,7 +22,7 @@ public partial class MainWindow
             runtimeState = runtimeState with { OutputPause = outputPause.State };
             _ = data.SaveRuntimeState(runtimeState);
             scheduler.ReceiverChanged();
-            manual.ResumeOutput(MonotonicClock.Now);
+            if (!nativeChatbox.Holding) manual.ResumeOutput(MonotonicClock.Now);
             UpdateTray();
         }
         RefreshOutputPauseView(nowUtc);
@@ -36,7 +36,11 @@ public partial class MainWindow
         menu.IsOpen = true;
     }
 
-    private void ResumeOutputPauseClicked(object sender, RoutedEventArgs e) => ResumeOutputPause();
+    private void ResumeOutputPauseClicked(object sender, RoutedEventArgs e)
+    {
+        if (IsOutputPaused(DateTimeOffset.UtcNow)) ResumeOutputPause();
+        else ResumeNativeChatbox(sender, e);
+    }
 
     private void PauseOutputSelected(object sender, RoutedEventArgs e)
     {
@@ -72,7 +76,7 @@ public partial class MainWindow
         runtimeState = runtimeState with { OutputPause = outputPause.State };
         if (!data.SaveRuntimeState(runtimeState)) ErrorText.Text = "Could not save the resumed output state.";
         scheduler.ReceiverChanged();
-        manual.ResumeOutput(MonotonicClock.Now);
+        if (!nativeChatbox.Holding) manual.ResumeOutput(MonotonicClock.Now);
         RefreshOutputPauseView(DateTimeOffset.UtcNow);
         UpdateTray();
         Tick();
@@ -81,14 +85,15 @@ public partial class MainWindow
     private void RefreshOutputPauseView(DateTimeOffset nowUtc)
     {
         var paused = IsOutputPaused(nowUtc);
-        var state = OutputSidebarPresentation.Describe(engine.Enabled, paused, outputPause.Summary(nowUtc));
-        var active = engine.Enabled && !paused;
-        var sending = OutputSidebarPresentation.IsSending(engine.Enabled, paused,
+        var blocked = IsOutputBlocked(nowUtc);
+        var state = OutputSidebarPresentation.Describe(engine.Enabled, paused, outputPause.Summary(nowUtc), nativeChatbox.HoldSummary(MonotonicClock.Now));
+        var active = engine.Enabled && !blocked;
+        var sending = OutputSidebarPresentation.IsSending(engine.Enabled, blocked,
             engine.Snapshot?.State == PlaybackState.Playing, manual.AutomaticAvailable(MonotonicClock.Now));
         var status = active ? OutputSidebarPresentation.ActiveStatusText : state.Primary;
         if (OutputStateText.Text != status) OutputStateText.Text = status;
         OutputStateText.SetResourceReference(TextBlock.ForegroundProperty,
-            active ? "SuccessBrush" : paused ? "TextBrush" : "MutedBrush");
+            active ? "SuccessBrush" : blocked ? "TextBrush" : "MutedBrush");
         OutputStatusDot.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
         var activity = sending ? OutputSidebarPresentation.SendingText : OutputSidebarPresentation.ReadyText;
         if (OutputActivityText.Text != activity) OutputActivityText.Text = activity;
@@ -112,7 +117,7 @@ public partial class MainWindow
 
     private void RequestManualSend()
     {
-        if (!engine.Enabled || IsOutputPaused(DateTimeOffset.UtcNow)) manual.SuppressOutput();
+        if (!engine.Enabled || IsOutputBlocked(DateTimeOffset.UtcNow)) manual.SuppressOutput();
         else manual.Send();
         Tick();
     }

@@ -83,6 +83,7 @@ public partial class MainWindow : Window
         InitializeDiscovery();
         InitializePresentation();
         InitializeOutputPause();
+        InitializeNativeChatbox();
         LoadCorrection();
         diagnostics.Add(DiagnosticCategory.Lifecycle, "Application started");
         ready = true;
@@ -169,8 +170,9 @@ public partial class MainWindow : Window
         if (closing) return;
         var now = MonotonicClock.Now;
         var nowUtc = DateTimeOffset.UtcNow;
+        TickNativeChatbox(now);
         TickOutputPause(nowUtc);
-        var outputPaused = IsOutputPaused(nowUtc);
+        var outputBlocked = IsOutputBlocked(nowUtc);
         // A native metadata event can arrive before its dispatcher callback; never send the old track in that gap.
         if (acceptedPlaybackRevision != playback.Revision)
         {
@@ -199,7 +201,7 @@ public partial class MainWindow : Window
         UpdateLyricsDetails();
         var showContext = LyricContextComposer.SupportsContext(settings.Preset, settings.CustomTemplate);
         var consumesMessage = ChatboxComposer.ConsumesToken(settings.Preset, settings.CustomTemplate, "{message}");
-        var rotationEligible = MessageRotator.IsEligible(consumesMessage, engine.Enabled, outputPaused,
+        var rotationEligible = MessageRotator.IsEligible(consumesMessage, engine.Enabled, outputBlocked,
             manual.AutomaticAvailable(now));
         var profile = profiles.Selected;
         var currentMessage = messageRotator.Current(profile.Id, SelectedRotation(), profile.Message, now, rotationEligible);
@@ -218,7 +220,7 @@ public partial class MainWindow : Window
         var manualLayout = MessageLayout.Align(manual.Draft, settings.ManualAlignment);
         var manualAnalysis = ChatboxFormatter.Analyze(manualLayout, floating, true);
         ApplyManualView(manualAnalysis, desired, now);
-        var outputEligible = OutputEligibility.CanSend(engine.Enabled, outputPaused);
+        var outputEligible = OutputEligibility.CanSend(engine.Enabled, outputBlocked);
         scheduler.Set(engine.Epoch, desired ?? "", outputEligible && desired is not null, floating, manual.PendingSend, preserveLayout);
         if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && outputEligible)
         {
@@ -226,9 +228,10 @@ public partial class MainWindow : Window
             scheduler.Complete(packet, sent);
             if (sent) manual.Sent(now);
         }
-        if (typing.Take(outputEligible && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
+        if (!nativeChatbox.Holding && typing.Take(outputEligible && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
             output.SendTyping(typingState);
         ApplyOscView();
+        ApplyNativeChatboxView(now);
     }
 
     private void HomeSectionChanged(object sender, SelectionChangedEventArgs e)
@@ -330,19 +333,19 @@ public partial class MainWindow : Window
     {
         if (!ready || loadingQuickDraft) return;
         manual.Focus(DraftBox.IsKeyboardFocusWithin);
-        manual.Edit(DraftBox.Text, engine.Enabled && settings.LiveEdit && !IsOutputPaused(DateTimeOffset.UtcNow), MonotonicClock.Now); Tick();
+        manual.Edit(DraftBox.Text, engine.Enabled && settings.LiveEdit && !IsOutputBlocked(DateTimeOffset.UtcNow), MonotonicClock.Now); Tick();
     }
     private void LiveChanged(object sender, RoutedEventArgs e)
     {
         if (!ready) return;
-        manual.LiveChanged(engine.Enabled && LiveBox.IsChecked == true && !IsOutputPaused(DateTimeOffset.UtcNow)); DisplayChanged(sender, e);
+        manual.LiveChanged(engine.Enabled && LiveBox.IsChecked == true && !IsOutputBlocked(DateTimeOffset.UtcNow)); DisplayChanged(sender, e);
     }
     private void SendManual(object sender, RoutedEventArgs e) => RequestManualSend();
     private void ClearManual(object sender, RoutedEventArgs e)
     {
         DraftBox.Clear();
-        manual.Edit("", engine.Enabled && settings.LiveEdit && !IsOutputPaused(DateTimeOffset.UtcNow), MonotonicClock.Now);
-        if (!engine.Enabled || IsOutputPaused(DateTimeOffset.UtcNow)) manual.SuppressOutput(); else manual.Send();
+        manual.Edit("", engine.Enabled && settings.LiveEdit && !IsOutputBlocked(DateTimeOffset.UtcNow), MonotonicClock.Now);
+        if (!engine.Enabled || IsOutputBlocked(DateTimeOffset.UtcNow)) manual.SuppressOutput(); else manual.Send();
         Tick();
     }
     private void ResumeAutomatic(object sender, RoutedEventArgs e) { manual.Resume(); Tick(); }
@@ -359,7 +362,7 @@ public partial class MainWindow : Window
         if (!next.IsValid) { ErrorText.Text = "Use an IP address or localhost, and a port from 1 to 65535."; return; }
         try
         {
-            output.SendTyping(false); output.Configure(next.Host, next.Port); settings = next;
+            ClearTyping(); output.Configure(next.Host, next.Port); settings = next;
             discoveryCancellation?.Cancel(); destinationSelection.SetMode(false); configuredDestination = new(next.Host, next.Port);
             AutoOscBox.IsChecked = false; DiscoveryStatus.Text = "Manual destination"; ConfigureEffectiveDestination();
             scheduler.ReceiverChanged(); typing.Reset(); ClearError(); Save(); Tick();
@@ -403,7 +406,7 @@ public partial class MainWindow : Window
         playback.ArtworkAvailable -= OnArtwork;
         SystemEvents.PowerModeChanged -= OnPowerModeChanged;
         engine.Enabled = false; lookup?.Cancel(); playback.Observed -= OnObserved;
-        manual.Resume(); output.SendTyping(false);
+        manual.Resume(); ClearTyping();
         await playback.DisposeAsync();
         try { await Task.WhenAll(pending.ToArray()); }
         catch (Exception ex) when (ex is not OutOfMemoryException) { diagnostics.Add(DiagnosticCategory.Lifecycle, "Pending work ended during shutdown"); }

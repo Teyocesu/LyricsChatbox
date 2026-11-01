@@ -11,15 +11,14 @@ public static class OutputSidebarPresentation
     public const string SendingText = "Sending lyrics...";
     public const string ReadyText = "Ready";
 
-    public static OutputSidebarState Describe(bool enabled, bool paused, string summary)
+    public static OutputSidebarState Describe(bool enabled, bool paused, string summary, string held = "")
     {
         if (!enabled)
             return paused
                 ? new("Off", ScheduledHint, false, "Pause", false)
                 : new("Off", "", false, "Pause", false);
-        return paused
-            ? new(summary, "", true, "Change", true)
-            : new("Active", "", true, "Pause", false);
+        if (paused) return new(summary, "", true, "Change", true);
+        return held.Length > 0 ? new("Held", held, true, "Pause", true) : new("Active", "", true, "Pause", false);
     }
 
     // The automatic lyric pipeline is operating (never a delivery claim):

@@ -75,7 +75,7 @@ public partial class MainWindow
         if (destination == configuredDestination) return;
         try
         {
-            output.SendTyping(false); output.Configure(destination.Host, destination.Port);
+            ClearTyping(); output.Configure(destination.Host, destination.Port);
             configuredDestination = destination; scheduler.ReceiverChanged(); typing.Reset();
         }
         catch (Exception ex) when (ex is System.Net.Sockets.SocketException or ArgumentException)

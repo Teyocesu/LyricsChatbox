@@ -672,6 +672,17 @@
               </Expander>
             </StackPanel>
           </Border>
+          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
+            <StackPanel>
+              <TextBlock Text="Native Chatbox Protection (Experimental)" Style="{StaticResource SectionTitle}"/>
+              <CheckBox x:Name="NativeChatboxBox" Content="Hold automatic output while the VRChat Chatbox is open" Checked="NativeChatboxChanged" Unchecked="NativeChatboxChanged" Margin="0,12,0,4"/>
+              <TextBlock Text="Reads local VRChat diagnostic events. Unofficial and best-effort, for Windows Desktop and PCVR only. A VRChat update can stop it working without notice." Style="{StaticResource Caption}" Margin="0,0,0,12"/>
+              <TextBlock x:Name="NativeChatboxStatus" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+              <Button x:Name="NativeChatboxResumeButton" Content="Resume now" Click="ResumeNativeChatbox" HorizontalAlignment="Left" Visibility="Collapsed" Margin="0,0,0,8"/>
+              <TextBlock x:Name="NativeChatboxCooldownText" Style="{StaticResource Caption}" Margin="0,4,0,6"/>
+              <Slider x:Name="NativeChatboxCooldownSlider" Minimum="5" Maximum="60" TickFrequency="5" IsSnapToTickEnabled="True" SmallChange="5" LargeChange="5" Width="360" HorizontalAlignment="Left" ValueChanged="NativeChatboxCooldownChanged" AutomationProperties.Name="Wait after the Chatbox closes, in seconds"/>
+            </StackPanel>
+          </Border>
         </StackPanel>
       </ScrollViewer>
       <Grid x:Name="AboutRoot" Grid.RowSpan="4" Panel.ZIndex="1" Visibility="Collapsed" Background="{DynamicResource CanvasBrush}" ClipToBounds="True">

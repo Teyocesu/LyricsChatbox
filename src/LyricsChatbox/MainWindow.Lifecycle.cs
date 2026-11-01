@@ -197,7 +197,7 @@ public partial class MainWindow
             tray.DoubleClick += (_, _) => RestoreWindow();
         }
         trayOutput!.Checked = settings.Enabled;
-        trayOutput.Text = !settings.Enabled ? "Output (off)" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output (paused)" : "Output";
+        trayOutput.Text = !settings.Enabled ? "Output (off)" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output (paused)" : nativeChatbox.Holding ? "Output (held)" : "Output";
         trayCompact!.Text = FloatingCompatibility.Available ? "Compact / Floating" : "Compact / Floating (unavailable)";
         trayCompact.Checked = settings.Compact;
         trayCompact.Enabled = FloatingCompatibility.Available;

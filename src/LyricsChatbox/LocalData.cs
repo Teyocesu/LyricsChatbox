@@ -41,7 +41,8 @@ public record AppSettings(bool Enabled = false, double Offset = 0, string Host =
     bool StartWithWindows = false, bool StartMinimized = false, bool MinimizeToTray = false,
     bool CloseToTray = false, bool AutomaticUpdateChecks = false, AppearanceSettings? Appearance = null,
     bool? AutoDiscoverOsc = null, string? SkippedUpdateVersion = null,
-    [property: JsonConverter(typeof(PlaybackSourceJsonConverter))] string PlaybackSource = "Automatic")
+    [property: JsonConverter(typeof(PlaybackSourceJsonConverter))] string PlaybackSource = "Automatic",
+    bool NativeChatboxProtection = false, int NativeChatboxCooldownSeconds = NativeChatboxPolicy.DefaultCooldownSeconds)
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => double.IsFinite(Offset) && Offset is >= -5 and <= 5 && Port is >= 1 and <= 65535 &&
