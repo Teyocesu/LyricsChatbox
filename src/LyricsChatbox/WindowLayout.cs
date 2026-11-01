@@ -68,14 +68,18 @@ internal static class WindowLayout
         Find<Grid>("OutputVisualizer").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
         var home = Find<Grid>("HomePage").Visibility == Visibility.Visible;
         var about = Find<Grid>("AboutPage").Visibility == Visibility.Visible;
-        // Home and About are full-bleed: they fill the entire post-sidebar cell, so the shared
-        // ContentPanel margin is removed while either is active. Other pages keep it.
-        var fullBleed = home || about;
+        var display = Find<ScrollViewer>("DisplayPage").Visibility == Visibility.Visible;
+        // Home, About and Display are full-bleed: they fill the entire post-sidebar cell, so the
+        // shared ContentPanel margin is removed while one is active. Other pages keep it.
+        var fullBleed = home || about || display;
         Find<Grid>("ContentPanel").Margin = fullBleed ? new(0) : shortWindow ? new(16, 38, 16, 10) : new(28, 48, 28, 16);
         Find<TextBlock>("ErrorText").Margin = fullBleed ? new(30, 8, 30, 8) : new(0, 8, 0, 0);
         Find<StackPanel>("HeadingPanel").Margin = new(0, 0, 0, shortWindow ? 8 : 16);
         Find<StackPanel>("HeadingPanel").Visibility = fullBleed ? Visibility.Collapsed : Visibility.Visible;
-        Find<ContentControl>("PersistentPreviewHost").Visibility = fullBleed ? Visibility.Collapsed : Visibility.Visible;
+        var previewHost = Find<ContentControl>("PersistentPreviewHost");
+        previewHost.Visibility = home || about ? Visibility.Collapsed : Visibility.Visible;
+        previewHost.Margin = display ? new(30, 0, 30, 0) : new(0);
+        previewHost.MaxWidth = display ? 1400 : double.PositiveInfinity;
         // The About breakpoint uses usable content width. Derive it synchronously from the
         // post-sidebar cell (stable across navigation) rather than the About viewport,
         // whose ActualWidth is stale on the navigating pass before WPF runs layout.
@@ -89,7 +93,9 @@ internal static class WindowLayout
             ((ContentControl)preview.Parent).Content = null;
             destination.Content = preview;
         }
-        if (home)
+        // Preview drops its card on migrated pages; Manual and Settings keep it until their phases.
+        var continuousPreview = home || display;
+        if (continuousPreview)
         {
             preview.Background = Brushes.Transparent;
             preview.BorderThickness = new(0);
@@ -99,12 +105,12 @@ internal static class WindowLayout
             preview.ClearValue(Border.BackgroundProperty);
             preview.ClearValue(Border.BorderThicknessProperty);
         }
-        preview.Padding = home ? new(0) : shortWindow ? new(10, 6, 10, 6) : new(18);
+        preview.Padding = continuousPreview ? new(0) : shortWindow ? new(10, 6, 10, 6) : new(18);
         preview.Margin = home ? new(0, 0, 0, 24) : new(0, shortWindow ? 8 : 16, 0, 0);
         var previewLabel = Find<TextBlock>("PreviewLabel");
-        previewLabel.Text = home ? "C H A T B O X  P R E V I E W" : "Live Preview";
-        previewLabel.Style = home ? (Style)scope.FindResource("AboutSectionLabel") : null;
-        Find<Border>("PreviewRule").Visibility = home ? Visibility.Visible : Visibility.Collapsed;
+        previewLabel.Text = continuousPreview ? "C H A T B O X  P R E V I E W" : "Live Preview";
+        previewLabel.Style = continuousPreview ? (Style)scope.FindResource("AboutSectionLabel") : null;
+        Find<Border>("PreviewRule").Visibility = continuousPreview ? Visibility.Visible : Visibility.Collapsed;
         Find<DockPanel>("PreviewHeading").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
         Find<ScrollViewer>("PreviewScroller").MaxHeight = home ? 130 : shortWindow ? 24 : 72;
         Find<TextBlock>("PreviewProfileText").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
@@ -113,6 +119,22 @@ internal static class WindowLayout
         Find<Border>("PreviewFrame").Padding = home ? new(12, 8, 12, 8) : new(8, 2, 8, 2);
         Find<Border>("PreviewFrame").Margin = new(0, 0, 0, home ? 10 : 6);
         if (home) ApplyHomeLayout(scope, cellWidth - AboutContentGutters, contentHeight, shortWindow);
+        if (display) ApplyDisplayLayout(scope, cellWidth - AboutContentGutters);
+    }
+
+    private static void ApplyDisplayLayout(FrameworkElement scope, double contentWidth)
+    {
+        T Find<T>(string name) => (T)scope.FindName(name);
+        // The scrollbar column is always reserved, so content keeps Preview's right edge and never reflows.
+        Find<StackPanel>("DisplayCanvas").Margin = new(30, 40, 30 - SystemParameters.VerticalScrollBarWidth, 8);
+        var columns = UsesHomeColumns(contentWidth);
+        var support = Find<StackPanel>("DisplaySupportColumn");
+        Grid.SetColumnSpan(Find<StackPanel>("DisplayPrimaryColumn"), columns ? 1 : 3);
+        Grid.SetColumn(support, columns ? 2 : 0);
+        Grid.SetColumnSpan(support, columns ? 1 : 3);
+        Grid.SetRow(support, columns ? 0 : 1);
+        support.Margin = new(0, columns ? 0 : 24, 0, 0);
+        Find<Border>("DisplayColumnDivider").Visibility = columns ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private static void ApplyHomeLayout(FrameworkElement scope, double contentWidth, double contentHeight, bool shortWindow)

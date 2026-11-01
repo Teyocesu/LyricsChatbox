@@ -395,36 +395,4 @@
       </Setter.Value>
     </Setter>
   </Style>
-  <Style x:Key="PresetItem" TargetType="ListBoxItem">
-    <Setter Property="Padding" Value="16"/>
-    <Setter Property="Margin" Value="0,0,8,8"/>
-    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="ListBoxItem">
-          <Border x:Name="Shell" Background="{DynamicResource RaisedBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
-            <ContentPresenter/>
-          </Border>
-          <ControlTemplate.Triggers>
-            <Trigger Property="IsSelected" Value="True">
-              <Setter TargetName="Shell" Property="Background" Value="{DynamicResource SelectedBrush}"/>
-              <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-            </Trigger>
-            <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource MutedBrush}"/>
-            </Trigger>
-            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-              <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource TextBrush}"/>
-            </Trigger>
-            <Trigger Property="IsEnabled" Value="False">
-              <Setter TargetName="Shell" Property="Background" Value="{DynamicResource RaisedBrush}"/>
-              <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource LineBrush}"/>
-              <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
-            </Trigger>
-          </ControlTemplate.Triggers>
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
 </ResourceDictionary>

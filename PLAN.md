@@ -1,4 +1,4 @@
-# v0.8.0 execution plan — Phase 3 closed; Phase 4 (Display) next
+# v0.8.0 execution plan — Phase 4 closed; Phase 5 (Manual) next
 
 ## State and baseline
 
@@ -259,7 +259,7 @@ Status: the Phase 2.3 physical correction and hero-note refinement are implement
 
 ## Next action
 
-Phases 2.3, 2.4 and 3 are closed. Next is Phase 4, the Display redesign, on explicit approval. Manual and Settings remain unstarted, and deferred v0.8.1 work remains out of scope.
+Phases 2.3, 2.4, 3 and 4 are closed. Next is Phase 5, the Manual redesign, on explicit approval. Settings remains unstarted, and deferred v0.8.1 work remains out of scope.
 
 ## Phase 2.4 — Floating investigation reconciliation and contract (2026-10-03)
 
@@ -479,3 +479,64 @@ The owner accepted the overall Home direction and requested two corrections. Thi
 - Correctness and simplification passes found no blocking issue and no further reduction worth a rebuild. `HomeCanvas`, `HomeAtmosphere`, `HomeColumns` and `HomeSectionsPanel` keep unreferenced structural names, matching About's convention.
 - Validation evidence is the 545/545 run recorded above; the application binary it loaded matches the final source, and only documentation changed afterward.
 - Moved to the v0.8.0 final release gate: live playback with real artwork, lyric timing and transport commands on the new layout; candidate search results; tab deselection and focus-to-tab behavior retest; non-100% DPI; screen readers and physical keyboard order; VR headset view and how other players see output; automatic lyrics with Lyric Context; tray menu with a saved-false profile.
+
+## Phase 4 — Display visual revamp (2026-10-31)
+
+Normative contract: `SPEC.md` § v0.8.0 normative Display contract. Starting HEAD `61dc896d99c8172cf96fdae5b111120b70081204`, clean worktree.
+
+Impact map before editing:
+
+| Existing structure | Finding | Decision |
+|---|---|---|
+| Five `Card` borders in one `StackPanel`, including named `StatusPanel` and `LyricContextPanel` | Code uses those names only for `Visibility`. | Replace borders with plain sections; handlers untouched. |
+| `PresetItem` style | Used only by `PresetBox` and `RotationList`. | Move both to `HomeChoiceItem` and delete the style. |
+| `PageTitle` heading and shared `ContentPanel` margin | Display is the only remaining screen in this direction still using them. | Treat Display as full-bleed like Home and About. |
+| `PreviewCard` in `PersistentPreviewHost` | Shared with Manual and Settings. | Keep the host; strip the card only on Display using the existing Home branch. |
+| `WindowLayout` | No Display-specific layout exists. | One small method moves the supporting column at the existing 840-DIP boundary. |
+
+### Phase 4 implementation and validation (2026-10-31)
+
+Status: first implementation complete and uncommitted, awaiting product-owner visual approval. Product version stays `0.7.0`.
+
+- Composition: full-bleed Display with a `DISPLAY` eyebrow, Profile as a full-width band, then a wider primary column for Composition and Status messages beside a supporting column for Lyric Context and Presentation. Preview stays pinned below the scrolling page through the existing `PersistentPreviewHost`.
+- Reflow: the supporting column moves under the primary column below 840 DIP of usable width, reusing the existing boundary. The profile controls and editor actions wrap natively, so no new breakpoint exists. No control is reparented.
+- Removed: five `Card` wrappers, the `PageTitle` heading on Display and the `PresetItem` style. `StatusPanel` and `LyricContextPanel` keep their names as plain sections.
+- New: `ApplyDisplayLayout`, plus a `continuousPreview` flag so Display reuses Home's preview treatment. The scrollbar column is always reserved so content keeps Preview's right edge and does not reflow when scrolling appears. No handler, binding, state or persistence code changed, and no tests changed.
+- Gates on the final tree: locked restore PASS; Release build 0 warnings/0 errors; focused 204/204; full 545/545; package policy PASS; `git diff --check` PASS.
+- QA method: a Release clone patched only for data root, mutex and no playback, with `window.Show()` replaced by an in-process driver. No window was shown: 100 ms sampling across a complete run found only invisible WPF helper windows, and the foreground window never changed. Output stayed off, discovery off, no OSC. This is real rendering of the real visual tree and real handlers, not desktop interaction.
+- Frozen pages: Home, About, Manual and Settings rendered byte-identical to the committed HEAD at 1448x990 and 820x650, 8 of 8, in Rose/Midnight.
+- Display results at all five sizes, in Rose/Midnight and Blue/Graphite: zero clipped controls and no horizontal overflow. Driven through real handlers: Custom editor and conditional panels, token insertion at the caret and over a selection, Decorations insertion and picker content, Lyric Context availability with saved mode kept, rotation add, enable, interval, move, disable, cancel and confirm removal, profile create, rename, duplicate, delete, built-in protection and Home selection sync. `Compact=true` stayed stored through every edit with effective Floating false. Preview moved correctly across eight page changes and regained its card on Manual and Settings.
+- Not exercised: real keyboard focus, caret visuals and physical tab traversal (tab order was read from the visual tree), mouse hover and focus states, open dropdowns, tooltips, the modal Decorations dialog and its focus return, Manual ownership text with Output on, live playback and non-100% DPI.
+- Simplification: production diff +108/-114, net -6 lines. `ApplyHomeLayout` and `ApplyDisplayLayout` share a few column-placement lines; they stay separate to keep Home frozen.
+
+### Phase 4 native interaction QA (2026-10-31)
+
+Status at the time: all targeted interactions passed on a real window on a hidden Windows desktop. Physical visible QA was blocked because the owner was actively playing and visible interaction needs keyboard focus. The closure below records the owner's decision.
+
+- Method: an isolated Release clone with synthetic data, Output off and discovery off ran with a real HWND on a separate hidden desktop at below-normal priority. No OSC was sent, and the foreground window on the owner's desktop was unchanged. This exercised real WPF activation, keyboard focus, popups and the modal dialog. Input was synthesized inside the app: text through the WPF input pipeline, buttons through automation peers, and Tab and Shift+Tab through WPF focus traversal. No physical mouse or keyboard was used, and no person saw the run.
+- Results, 35 of 35 checks passed: profile rename by typing and dropdown selection with Home sync; typing at the caret, token insertion at the caret and focus return; Decorations modal opening, search focus, insertion and focus return to the editor; status message add, edit, save, cancel and confirmed removal; Lyric Context dropdown and disabled explanation; Floating visible, disabled, not focusable and not toggleable, with `Compact=true` stored after unrelated edits; 18 Tab stops with Shift+Tab reversing them exactly; profile switch and return; and at 820x650 Preview visible at both scroll ends with no horizontal scrolling.
+- Finding, not a regression: `TokenChips` is an empty Tab stop between the Custom template and the first token. The control is unchanged from the starting commit.
+- Audit: the six-file scope holds. No `x:Name`, handler, accessible name or tooltip was removed, Display has no `Card` or `SectionTitle` use, `PresetItem` is gone, and both Floating strings are unchanged.
+
+### Phase 4 closure (2026-10-31)
+
+CLOSED by product-owner decision. The independent reviewer approved the visual design. The owner closed the phase on the evidence below and explicitly deferred physical mouse and keyboard QA to the v0.8.0 release gate, adjusting the earlier closure gate.
+
+Evidence by method; these are different kinds of proof:
+
+| Method | Scope | Result |
+|---|---|---|
+| Automated tests | Logic and policy, no rendering or interaction | 545/545. No test changed, and the tested binary matches the final build |
+| Native isolated WPF automation | Real window, focus, popups and modal on a hidden desktop, with input synthesized inside the app | 35/35 checks passed |
+| Visual-tree screenshots | Rendering at five sizes in Rose and Blue, handlers driven in-process, no window shown | Reviewer approved; zero clipped controls; Home, About, Manual and Settings byte-identical to the starting commit, 8 of 8 |
+| Physical user testing | Real mouse, keyboard and eyes on the interactive desktop | NOT PERFORMED for Phase 4; deferred below |
+
+Final audit: six-file scope; no production file changed after the 545/545 run; the QA clone's Display sources match the repository; Floating, profile, rotation, composer and persistence code are not in the diff; no `x:Name`, handler, accessible name or tooltip was removed; no test or quality gate was weakened. No further simplification was warranted.
+
+Release gate additions, all physical on the interactive desktop:
+
+- Real mouse and keyboard interaction and focus on Display.
+- Decorations modal opening, inserting and returning focus.
+- Tab order, including the `TokenChips` empty tab stop.
+- Caption-button overlap at 820x650. When scrolled, content passes under the caption buttons and can cover `Rename`. If `Rename` is physically inaccessible, the release is BLOCKED until fixed.
+- Non-100% DPI and screen-reader behavior.
