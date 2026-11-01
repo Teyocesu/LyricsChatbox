@@ -286,25 +286,22 @@ public sealed class PresentationTests : IDisposable
         Assert.False(data.HasUsableLocalLyrics(track with { Duration = track.Duration + .25 }));
     }
     [Fact]
-    public void QuickMessagesPersistButSelectingOneIsAnUnsentDraftEvenAfterLiveEditing()
+    public void SavedQuickMessagesStayUntouchedAsDormantUserData()
     {
-        var data = new LocalData(root); var library = data.ReadQuickMessages();
-        var message = new QuickMessage("custom","Greeting","こんにちは 🎵");
-        library = library.Save(message)!; Assert.True(data.SaveQuickMessages(library));
-        Assert.Contains(message,data.ReadQuickMessages().Items);
-        library = library.Save(message with {Name="Edited",Text="AFK 日本語"})!; Assert.True(data.SaveQuickMessages(library));
-        Assert.Contains(data.ReadQuickMessages().Items,m=>m.Name=="Edited");
-        var manual = new ManualChat(); manual.Edit("old live",true,0); manual.Send();
-        manual.PrepareDraft(message.Text);
-        Assert.Equal(message.Text,manual.Draft); Assert.True(manual.IsManual); Assert.Null(manual.Desired("automatic",1));
-        Assert.False(manual.PendingSend); Assert.False(manual.Typing(1));
-        manual.Send(); Assert.Equal(message.Text,manual.Desired("automatic",2));
-        var diagnostics = new Diagnostics().Export(null,new(),"none","ready",0);
-        Assert.DoesNotContain(message.Text,diagnostics);
-        Assert.True(data.SaveQuickMessages(library.Delete(message.Id))); Assert.DoesNotContain(data.ReadQuickMessages().Items,m=>m.Id==message.Id);
-        Assert.True(data.SaveQuickMessages(new(1,[]))); Assert.Empty(data.ReadQuickMessages().Items);
-        using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"quick-messages.json")));
-        Assert.Equal(0,json.RootElement.GetProperty("Items").GetArrayLength());
+        Directory.CreateDirectory(root);
+        var path = Path.Combine(root, "quick-messages.json");
+        var bytes = System.Text.Encoding.UTF8.GetBytes("{\"Version\":1,\"Items\":[{\"Id\":\"a\",\"Name\":\"Saved\",\"Text\":\"こんにちは\"}]}\r\n");
+        File.WriteAllBytes(path, bytes);
+        var written = File.GetLastWriteTimeUtc(path);
+        var data = new LocalData(root);
+        var settings = data.ReadSettings();
+        Assert.True(data.SaveSettings(settings with { Enabled = true }));
+        Assert.True(data.SaveProfiles(data.ReadProfiles(settings)));
+        Assert.True(data.SaveRuntimeState(data.ReadRuntimeState()));
+        Assert.True(data.SaveDecorationState(data.ReadDecorationState()));
+        Assert.Equal(bytes, File.ReadAllBytes(path));
+        Assert.Equal(written, File.GetLastWriteTimeUtc(path));
+        Assert.DoesNotContain("こんにちは", new Diagnostics().Export(null, data.ReadSettings(), "none", "ready", 0));
     }
     private sealed class NoNetwork : HttpMessageHandler
     {
@@ -325,12 +322,6 @@ public sealed class PresentationTests : IDisposable
         Assert.Equal(profiles.Select(profile => JsonSerializer.Serialize(profile.PrepareForSave())),
             restored.Items.Select(profile => JsonSerializer.Serialize(profile)));
 
-        var messages = Enumerable.Range(0, QuickMessageLibrary.Maximum).Select(i => new QuickMessage(
-            new string('界', 62) + i.ToString("D2"), new string('名', 32), new string('文', 512))).ToArray();
-        Assert.True(data.SaveQuickMessages(new(1, messages)));
-        var restoredMessages = new LocalData(root).ReadQuickMessages();
-        Assert.Equal(messages.Length, restoredMessages.Items.Count);
-        Assert.Equal(messages, restoredMessages.Items.ToArray());
     }
     private static PlaybackSnapshot PlayingSnapshot(PlaybackSourceKind kind, PlaybackState state = PlaybackState.Playing) =>
         CoreTests.Snapshot(state: state) with { Source = kind };

@@ -78,41 +78,31 @@ public class BoundaryTests
     }
 
     [Fact]
-    public async Task ManualWhileReceiverAbsentReturnsOnlyCurrentDraftThenCurrentAutomatic()
+    public async Task ReceiverAbsentReturnsOnlyCurrentAutomaticText()
     {
         int port;
         using (var reservation = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0)))
             port = ((IPEndPoint)reservation.Client.LocalEndPoint!).Port;
         using var output = new ChatboxOutput();
         output.Configure("127.0.0.1", port);
-        var manual = new ManualChat();
         var scheduler = new ChatboxScheduler();
-        manual.Focus(true);
-        foreach (var (time, draft) in new[] { (0d, "old draft A"), (2d, "old draft B") })
+        foreach (var (time, lyric) in new[] { (0d, "old lyric A"), (2d, "old lyric B") })
         {
-            manual.Edit(draft, true, time);
-            scheduler.Set(1, manual.Desired("old automatic", time)!, true);
+            scheduler.Set(1, lyric, true);
             var absentAttempt = scheduler.Take(time)!.Value;
             scheduler.Complete(absentAttempt, output.Send(absentAttempt.Text)); // UDP accepts sends even when no receiver is bound.
         }
-        manual.Edit("current draft 日本語", true, 3);
-        scheduler.Set(2, manual.Desired("new song", 3)!, false);
+        scheduler.Set(2, "held lyric", false);
         Assert.Null(scheduler.Take(3));
         using var receiver = new UdpClient(new IPEndPoint(IPAddress.Loopback, port));
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         scheduler.ReceiverChanged();
-        scheduler.Set(2, manual.Desired("new song", 4)!, true, compact: true);
+        scheduler.Set(2, "current lyric 日本語", true, compact: true);
         var attempted = scheduler.Take(4)!.Value;
         scheduler.Complete(attempted, output.Send(attempted.Text));
-        Assert.Equal(ChatboxFormatter.Packet(ChatboxFormatter.Format("current draft 日本語", true)),
+        Assert.Equal(ChatboxFormatter.Packet(ChatboxFormatter.Format("current lyric 日本語", true)),
             (await receiver.ReceiveAsync(deadline.Token)).Buffer);
         Assert.Null(scheduler.Take(6));
-        manual.Resume();
-        scheduler.Set(3, manual.Desired("current lyric", 7)!, true);
-        attempted = scheduler.Take(7)!.Value;
-        scheduler.Complete(attempted, output.Send(attempted.Text));
-        Assert.Equal(ChatboxFormatter.Packet("current lyric"), (await receiver.ReceiveAsync(deadline.Token)).Buffer);
-        Assert.Null(scheduler.Take(9));
     }
 
     [Fact]
@@ -178,14 +168,7 @@ public class BoundaryTests
         Assert.Equal(",sTF", ReadString());
         Assert.Equal("日本語 🎵", ReadString());
         Assert.Equal(packet.Length, cursor);
-        foreach (var typing in new[] { true, false })
-        {
-            output.SendTyping(typing);
-            var signal = (await receiver.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(2))).Buffer;
-            Assert.Equal(typing ? "/chatbox/typing\0,T\0\0" : "/chatbox/typing\0,F\0\0", Encoding.UTF8.GetString(signal));
-        }
         receiver.Dispose();
         output.Send("receiver gone");
-        output.SendTyping(false);
     }
 }

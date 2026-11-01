@@ -36,8 +36,7 @@ public sealed class PlaybackSourceJsonConverter : JsonConverter<string>
 
 public record AppSettings(bool Enabled = false, double Offset = 0, string Host = "127.0.0.1", int Port = 9000,
     string Preset = "Lyrics Only", string CustomTemplate = "{lyrics}", string Message = "",
-    bool Compact = false, bool TypingIndicator = false, bool LiveEdit = false,
-    string CustomAlignment = "Left", string ManualAlignment = "Left",
+    bool Compact = false, string CustomAlignment = "Left",
     bool StartWithWindows = false, bool StartMinimized = false, bool MinimizeToTray = false,
     bool CloseToTray = false, bool AutomaticUpdateChecks = false, AppearanceSettings? Appearance = null,
     bool? AutoDiscoverOsc = null, string? SkippedUpdateVersion = null,
@@ -48,7 +47,7 @@ public record AppSettings(bool Enabled = false, double Offset = 0, string Host =
     public bool IsValid => double.IsFinite(Offset) && Offset is >= -5 and <= 5 && Port is >= 1 and <= 65535 &&
         (Host == "localhost" || IPAddress.TryParse(Host, out _)) && ChatboxComposer.Presets.Contains(Preset) &&
         CustomTemplate is { Length: <= 512 } && Message is { Length: <= 512 } &&
-        MessageLayout.Alignments.Contains(CustomAlignment) && MessageLayout.Alignments.Contains(ManualAlignment);
+        MessageLayout.Alignments.Contains(CustomAlignment);
 }
 
 public sealed partial class LocalData(string root)

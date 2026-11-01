@@ -95,18 +95,12 @@ public sealed class OutputPauseTests : IDisposable
     {
         var pause = new OutputPauseController(null, Now);
         var first = pause.BeginTimed(Now, TimeSpan.FromMinutes(15));
-        var firstEffects = OutputPauseEntryEffects.For(first, true);
-        Assert.True(firstEffects.ClearText); Assert.True(firstEffects.ClearTyping);
-        var clears = 0; var typingClears = 0;
-        firstEffects.Apply(() => clears++, () => typingClears++);
+        Assert.True(first.ClearsText(true));
         var replacement = pause.BeginUntilResumed();
-        var replacementEffects = OutputPauseEntryEffects.For(replacement, true);
         Assert.True(replacement.Applied); Assert.False(replacement.BecamePaused);
-        Assert.False(replacementEffects.ClearText); Assert.False(replacementEffects.ClearTyping);
-        replacementEffects.Apply(() => clears++, () => typingClears++);
-        Assert.Equal(1, clears); Assert.Equal(1, typingClears);
+        Assert.False(replacement.ClearsText(true));
         Assert.Equal(OutputPauseKind.UntilResumed, pause.Mode);
-        Assert.False(OutputPauseEntryEffects.For(first, false).ClearText);
+        Assert.False(first.ClearsText(false));
     }
 
     [Fact]
@@ -178,72 +172,7 @@ public sealed class OutputPauseTests : IDisposable
     }
 
     [Fact]
-    public void PauseSuppressesManualAndTypingWithoutDestroyingDraftOrOwnership()
-    {
-        var manual = new ManualChat();
-        manual.Edit("draft kept", true, 1); manual.Send();
-        Assert.Equal("draft kept", manual.Desired("automatic", 1));
-        manual.PauseOutput(1);
-        Assert.True(manual.IsManual); Assert.Equal("draft kept", manual.Draft);
-        Assert.False(manual.PendingSend); Assert.Null(manual.Desired("automatic", 2));
-        var typing = new TypingSignal();
-        Assert.True(typing.Take(true, 1));
-        typing.Suppress(2);
-        Assert.Null(typing.Take(false, 2.1));
-        Assert.Null(typing.Take(false, 10));
-    }
-
-    [Fact]
-    public void PauseFreezesAndResumeContinuesExistingManualHold()
-    {
-        var manual = new ManualChat(); manual.Edit("sent", false, 0); manual.Send(); manual.Sent(0);
-        Assert.InRange(manual.RemainingHold(3)!.Value, 4.9, 5.1);
-        manual.PauseOutput(3);
-        Assert.Null(manual.Desired("automatic", 100)); Assert.True(manual.IsManual);
-        manual.ResumeOutput(100);
-        Assert.True(manual.IsManual); Assert.Null(manual.Desired("automatic", 104.9));
-        Assert.Equal("automatic", manual.Desired("automatic", 105.1));
-        Assert.False(manual.IsManual);
-    }
-
-    [Fact]
-    public void AutomaticAvailabilityOwnsEveryManualStateAndExpiresHoldAtTheBoundary()
-    {
-        var manual = new ManualChat();
-        Assert.True(manual.AutomaticAvailable(0));
-
-        manual.Focus(true);
-        Assert.False(manual.AutomaticAvailable(1));
-        manual.Focus(false);
-        Assert.False(manual.AutomaticAvailable(2));
-        manual.PrepareDraft("prepared");
-        Assert.False(manual.AutomaticAvailable(3));
-
-        manual.Edit("sent", false, 4);
-        manual.Send();
-        Assert.False(manual.AutomaticAvailable(100));
-        manual.Sent(100);
-        Assert.False(manual.AutomaticAvailable(107.999));
-        Assert.True(manual.AutomaticAvailable(108));
-        Assert.False(manual.IsManual);
-
-        manual.Edit("paused hold", false, 200);
-        manual.Send();
-        manual.Sent(200);
-        manual.PauseOutput(203);
-        Assert.False(manual.AutomaticAvailable(500));
-        manual.ResumeOutput(500);
-        Assert.False(manual.AutomaticAvailable(504.999));
-        Assert.True(manual.AutomaticAvailable(505));
-
-        manual.Edit("indefinite", true, 600);
-        Assert.False(manual.AutomaticAvailable(1000));
-        manual.Resume();
-        Assert.True(manual.AutomaticAvailable(1000));
-    }
-
-    [Fact]
-    public void ResumeQueuesOnlyLatestAutomaticStateAndNoManualBacklog()
+    public void ResumeQueuesOnlyLatestAutomaticState()
     {
         var scheduler = new ChatboxScheduler();
         scheduler.Set(1, "before", true);
@@ -253,10 +182,6 @@ public sealed class OutputPauseTests : IDisposable
         Assert.Null(scheduler.Take(2));
         scheduler.Set(1, "latest", true);
         Assert.Equal("latest", scheduler.Take(2)!.Value.Text);
-
-        var manual = new ManualChat(); manual.Edit("manual", true, 0); manual.PauseOutput(0);
-        Assert.Null(manual.Desired("automatic latest", 5));
-        manual.Send(); Assert.Equal("manual", manual.Desired("automatic latest", 6));
     }
 
     [Fact]
@@ -274,16 +199,16 @@ public sealed class OutputPauseTests : IDisposable
     }
 
     [Fact]
-    public void DiagnosticsExposePauseStateWithoutTriggerIdentityOrDraft()
+    public void DiagnosticsExposePauseStateWithoutTriggerIdentityOrMessage()
     {
-        var report = new Diagnostics().Export(null, new(Enabled: true, Message: "private draft"), "idle", "ready", 0,
+        var report = new Diagnostics().Export(null, new(Enabled: true, Message: "private message"), "idle", "ready", 0,
             outputPaused: true, pauseMode: "UntilTrackChanges", pauseStatus: "Paused · Until next track");
         using var json = JsonDocument.Parse(report);
         var output = json.RootElement.GetProperty("Output");
         Assert.Equal("Paused", output.GetProperty("State").GetString());
         Assert.True(output.GetProperty("Paused").GetBoolean());
         Assert.Equal("UntilTrackChanges", output.GetProperty("PauseMode").GetString());
-        Assert.DoesNotContain("private draft", report);
+        Assert.DoesNotContain("private message", report);
         Assert.DoesNotContain(CoreTests.Track.Key, report);
     }
 }

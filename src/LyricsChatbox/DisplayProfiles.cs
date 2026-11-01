@@ -129,24 +129,3 @@ public record ProfileLibrary(int Version, string SelectedId, IReadOnlyList<Displ
         return items.All(profile => profile is not null) ? this with { Items = items.Select(profile => profile!).ToArray() } : null;
     }
 }
-
-public record QuickMessage(string Id, string Name, string Text)
-{
-    public override string ToString() => Name;
-    [System.Text.Json.Serialization.JsonIgnore]
-    public bool IsValid => Id is {Length: > 0 and <= 64} && Name is {Length: > 0 and <= 32} && !string.IsNullOrWhiteSpace(Name) &&
-        Text is {Length: > 0 and <= 512} && !string.IsNullOrWhiteSpace(Text);
-}
-public record QuickMessageLibrary(int Version, IReadOnlyList<QuickMessage> Items)
-{
-    public const int Maximum = 16;
-    [System.Text.Json.Serialization.JsonIgnore]
-    public bool IsValid => Version == 1 && Items is {Count: <= Maximum} && Items.All(p=>p is {IsValid:true}) && Items.Select(p=>p.Id).Distinct().Count()==Items.Count;
-    public static QuickMessageLibrary Defaults() => new(1, new[] {"AFK","BRB","One sec","Can't talk rn"}.Select((s,i)=>new QuickMessage("quick-"+i,s,s)).ToArray());
-    public QuickMessageLibrary? Save(QuickMessage message)
-    {
-        if (!message.IsValid || Items.Count>=Maximum && !Items.Any(p=>p.Id==message.Id)) return null;
-        return this with {Items=Items.Any(p=>p.Id==message.Id) ? Items.Select(p=>p.Id==message.Id ? message : p).ToArray() : Items.Append(message).ToArray()};
-    }
-    public QuickMessageLibrary Delete(string id) => this with {Items=Items.Where(p=>p.Id!=id).ToArray()};
-}

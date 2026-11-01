@@ -68,7 +68,7 @@ public sealed class MultiPlayerTests : IDisposable
         File.WriteAllText(Path.Combine(root, "settings.json"),
             "{\"Enabled\":true,\"Offset\":0.7,\"Host\":\"192.168.1.40\",\"Port\":9123," +
             "\"Preset\":\"Custom\",\"CustomTemplate\":\"{title}\",\"Message\":\"retained\"," +
-            "\"Compact\":true,\"TypingIndicator\":true,\"LiveEdit\":true," +
+            "\"Compact\":true,\"TypingIndicator\":true,\"LiveEdit\":true,\"ManualAlignment\":\"Center\"," +
             "\"StartWithWindows\":true,\"StartMinimized\":true,\"MinimizeToTray\":true," +
             "\"CloseToTray\":true,\"AutomaticUpdateChecks\":true,\"AutoDiscoverOsc\":false," +
             "\"SkippedUpdateVersion\":\"0.5.9\",\"Appearance\":{" +
@@ -80,7 +80,6 @@ public sealed class MultiPlayerTests : IDisposable
         Assert.Equal("192.168.1.40", restored.Host); Assert.Equal(9123, restored.Port);
         Assert.Equal("Custom", restored.Preset); Assert.Equal("{title}", restored.CustomTemplate);
         Assert.Equal("retained", restored.Message); Assert.True(restored.Compact);
-        Assert.True(restored.TypingIndicator); Assert.True(restored.LiveEdit);
         Assert.True(restored.StartWithWindows); Assert.True(restored.StartMinimized);
         Assert.True(restored.MinimizeToTray); Assert.True(restored.CloseToTray);
         Assert.True(restored.AutomaticUpdateChecks); Assert.False(restored.AutoDiscoverOsc);
@@ -405,13 +404,12 @@ public sealed class MultiPlayerTests : IDisposable
     }
 
     [Fact]
-    public async Task BothPlayingBlocksActivePipelineAndManualDraftSurvives()
+    public async Task BothPlayingBlocksActivePipeline()
     {
         var apple = new FakeSource(PlaybackSourceKind.AppleMusic);
         var spotify = new FakeSource(PlaybackSourceKind.Spotify);
         await using var coordinator = new PlaybackSourceCoordinator(PlaybackSourceMode.Automatic, apple, spotify);
         var engine = new SynchronizationEngine();
-        var manual = new ManualChat(); manual.PrepareDraft("my unsent text");
         coordinator.Observed += (snapshot, _, _) => engine.Observe(snapshot);
         var a = CoreTests.Snapshot();
         apple.Raise(null, "No Apple Music session");
@@ -427,8 +425,6 @@ public sealed class MultiPlayerTests : IDisposable
         Assert.False(await coordinator.ControlAsync(MediaCommand.Next, coordinator.Revision));
         spotify.Raise(a with { Source = PlaybackSourceKind.Spotify });
         Assert.Null(engine.Track);
-        Assert.True(manual.IsManual);
-        Assert.Equal("my unsent text", manual.Draft);
     }
 
     [Fact]

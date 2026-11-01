@@ -177,10 +177,8 @@
         </Setter.Value>
       </Setter>
     </Style>
-    <DataTemplate x:Key="HomeQuickTemplate"><Button Click="UseQuickMessage" Style="{StaticResource SmallButton}" MaxWidth="200" Margin="0,0,6,6" ToolTip="Load as an unsent manual draft"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/></Button></DataTemplate>
     <Geometry x:Key="GitHubMarkGeometry">M8,0 C3.58,0 0,3.58 0,8 C0,11.54 2.29,14.53 5.47,15.59 C5.87,15.66 6.02,15.42 6.02,15.21 C6.02,15.02 6.01,14.4 6.01,13.73 C4,14.1 3.48,13.24 3.32,12.79 C3.23,12.56 2.84,11.85 2.5,11.66 C2.22,11.51 1.82,11.14 2.49,11.13 C3.12,11.12 3.57,11.71 3.72,11.95 C4.44,13.16 5.59,12.82 6.05,12.61 C6.12,12.09 6.33,11.74 6.56,11.54 C4.78,11.34 3,10.65 3,7.59 C3,6.72 3.31,6 3.82,5.44 C3.74,5.24 3.46,4.42 3.9,3.32 C3.9,3.32 4.57,3.11 6.1,4.14 C6.74,3.96 7.36,3.87 8.04,3.87 C8.72,3.87 9.4,3.96 10.04,4.14 C11.57,3.1 12.24,3.32 12.24,3.32 C12.68,4.42 12.4,5.24 12.32,5.44 C12.83,6 13.14,6.71 13.14,7.59 C13.14,10.66 11.27,11.34 9.49,11.54 C9.78,11.79 10.03,12.27 10.03,13.02 C10.03,14.09 10.02,14.95 10.02,15.22 C10.02,15.43 10.17,15.68 10.57,15.6 C13.74,14.53 16,11.53 16,8 C16,3.58 12.42,0 8,0 Z</Geometry>
     <BitmapImage x:Key="VrChatLogoCropped" UriSource="Assets/Brand/VRChat-Logo-Outline-White.png" SourceRect="164,105,873,391"/>
-    <DataTemplate x:Key="QuickMessageTemplate"><Button Content="{Binding Name}" Click="UseQuickMessage" Margin="0,0,8,8" MinWidth="92" ToolTip="Load as an unsent manual draft"/></DataTemplate>
   </Window.Resources>
   <Grid x:Name="ContentRoot">
     <Grid.ColumnDefinitions>
@@ -241,12 +239,6 @@
             <StackPanel Orientation="Horizontal">
               <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE7F4;" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <TextBlock Text="Display" FontSize="15"/>
-            </StackPanel>
-          </RadioButton>
-          <RadioButton Tag="Manual" AutomationProperties.Name="Manual" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8F2;" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Manual" FontSize="15"/>
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="SettingsNav" Tag="Settings" AutomationProperties.Name="Settings" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
@@ -347,7 +339,7 @@
             <ListBox x:Name="HomeSectionBox" SelectedIndex="0" SelectionChanged="HomeSectionChanged" ItemContainerStyle="{StaticResource HomeSectionTab}" Margin="0,0,0,14" Visibility="Collapsed" AutomationProperties.Name="Home section">
               <ListBox.Template><ControlTemplate TargetType="ListBox"><Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1"><ItemsPresenter/></Border></ControlTemplate></ListBox.Template>
               <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-              <ListBoxItem Content="Preview"/><ListBoxItem Content="Profiles"/><ListBoxItem Content="Context"/><ListBoxItem Content="Details"/><ListBoxItem Content="Messages"/><ListBoxItem Content="Tools"/>
+              <ListBoxItem Content="Preview"/><ListBoxItem Content="Profiles"/><ListBoxItem Content="Context"/><ListBoxItem Content="Details"/><ListBoxItem Content="Tools"/>
             </ListBox>
             <ScrollViewer x:Name="HomeSectionsScroller" Grid.Row="1" Margin="0,0,-24,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" AutomationProperties.Name="Home sections">
               <Grid x:Name="HomeColumns" Margin="0,0,24,8">
@@ -407,13 +399,6 @@
                       <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="13" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/></DataTemplate></ListBox.ItemTemplate>
                     </ListBox>
                     <TextBlock x:Name="ContextHint" Text="Adds nearby lyrics when they fit. The current lyric always stays." Style="{StaticResource Caption}" Margin="0,2,0,0" Visibility="Collapsed"/>
-                  </StackPanel>
-                  <StackPanel x:Name="QuickMessagesSection">
-                    <DockPanel><Button Content="Edit messages" Click="ManageQuickMessages" DockPanel.Dock="Right" Style="{StaticResource HomeHeaderAction}"/><TextBlock Text="Q U I C K  M E S S A G E S" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Quick messages"/></DockPanel>
-                    <Border Style="{StaticResource HomeSectionRule}"/>
-                    <TextBlock Text="Choose a draft, then Send." Style="{StaticResource Caption}" Margin="0,0,0,8"/>
-                    <ItemsControl x:Name="HomeQuickMessages" ItemTemplate="{StaticResource HomeQuickTemplate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel></ItemsControl>
-                    <TextBlock x:Name="QuickEmptyText" Text="Add reusable messages in Manual." Style="{StaticResource Caption}" Visibility="Collapsed"/>
                   </StackPanel>
                   <StackPanel x:Name="HomeToolsSection">
                     <TextBlock Text="L Y R I C S  T O O L S" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Lyrics tools"/>
@@ -551,47 +536,6 @@
               <StackPanel x:Name="AlignmentPanel"><TextBlock Text="Alignment" Style="{StaticResource Caption}" Margin="0,0,0,6"/><ComboBox x:Name="CustomAlignmentBox" Width="120" HorizontalAlignment="Left" SelectionChanged="DisplayChanged" AutomationProperties.Name="Custom and status alignment"/><TextBlock Text="Center and Right use ordinary spaces and are approximate in VRChat." Style="{StaticResource Caption}" Margin="0,6,0,0"/></StackPanel>
             </StackPanel>
           </Grid>
-        </StackPanel>
-      </ScrollViewer>
-      <ScrollViewer x:Name="ManualPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,14">
-            <StackPanel>
-              <TextBlock Text="Quick messages" Style="{StaticResource SectionTitle}"/>
-              <ItemsControl x:Name="ManualQuickMessages" ItemTemplate="{StaticResource QuickMessageTemplate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel></ItemsControl>
-              <TextBlock Text="Select to prepare an unsent draft, including when Live edit is on." Style="{StaticResource Caption}" Margin="0,4,0,12"/>
-              <Expander Header="Manage reusable messages">
-                <StackPanel Margin="0,12,0,0">
-                  <ComboBox x:Name="QuickEditBox" DisplayMemberPath="Name" SelectionChanged="EditQuickMessage" AutomationProperties.Name="Saved quick message"/>
-                  <TextBlock Text="Name" Style="{StaticResource Caption}" Margin="0,10,0,6"/>
-                  <TextBox x:Name="QuickNameBox" MaxLength="32" AutomationProperties.Name="Quick message name"/>
-                  <TextBlock Text="Message" Style="{StaticResource Caption}" Margin="0,10,0,6"/>
-                  <TextBox x:Name="QuickTextBox" FontFamily="Consolas" MaxLength="512" AcceptsReturn="True" TextWrapping="Wrap" Height="92" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Reusable message text"/>
-                  <WrapPanel Margin="0,12,0,0"><Button Content="New" Click="NewQuickMessage" Margin="0,0,8,8"/><Button Content="Save message" Click="SaveQuickMessage" Margin="0,0,8,8"/><Button Content="Remove" Click="DeleteQuickMessage" Margin="0,0,0,8"/></WrapPanel>
-                  <TextBlock x:Name="QuickStatus" Text="Saved only on this computer. This list is not chat history." Style="{StaticResource Caption}"/>
-                </StackPanel>
-              </Expander>
-            </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,8,16">
-            <StackPanel>
-              <DockPanel>
-                <TextBlock Text="Manual message" Style="{StaticResource SectionTitle}"/>
-                <TextBlock x:Name="ManualBudgetText" Text="0 characters" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
-              </DockPanel>
-              <TextBlock x:Name="ManualStateText" Text="Your draft takes priority over automatic lyrics." Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,16"/>
-<WrapPanel Margin="0,0,0,8"><ComboBox x:Name="ManualAlignmentBox" Width="110" SelectionChanged="DisplayChanged" AutomationProperties.Name="Manual alignment" Margin="0,0,8,8"/><Button Content="Decorations menu" Tag="Manual" Click="OpenDecorationPicker" Margin="0,0,0,8" AutomationProperties.Name="Open decorations menu" ToolTip="Add symbols, kaomoji, text art and more"/></WrapPanel>
-<TextBox x:Name="DraftBox" FontFamily="Consolas" MaxLength="2048" AcceptsReturn="True" TextWrapping="Wrap" Height="144" VerticalScrollBarVisibility="Auto" TextChanged="DraftChanged" GotKeyboardFocus="DraftFocused" LostKeyboardFocus="DraftUnfocused" PreviewKeyDown="DraftKeyDown" AutomationProperties.Name="Manual message"/>
-              <WrapPanel Margin="0,16,0,16">
-                <Button x:Name="SendButton" Content="Send · Ctrl+Enter" Style="{StaticResource PrimaryButton}" Click="SendManual" Margin="0,0,8,8"/>
-                <Button x:Name="ClearButton" Content="Clear" Click="ClearManual" Margin="0,0,8,8"/>
-                <Button Content="Resume Automatic" Click="ResumeAutomatic" Margin="0,0,8,8"/>
-              </WrapPanel>
-              <CheckBox x:Name="TypingBox" Content="Show typing indicator" Checked="DisplayChanged" Unchecked="DisplayChanged" Margin="0,0,0,12"/>
-              <CheckBox x:Name="LiveBox" Content="Live edit" Checked="LiveChanged" Unchecked="LiveChanged"/>
-              <TextBlock Text="Alignment uses spaces and may differ in VRChat. Decoration spacing is preserved. Send holds the message for eight seconds; drafts are not saved." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
-            </StackPanel>
-          </Border>
         </StackPanel>
       </ScrollViewer>
       <ScrollViewer x:Name="SettingsPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">

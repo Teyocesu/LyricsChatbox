@@ -49,13 +49,8 @@ public static class ChatboxFormatter
     // A 15-line encoder is smaller than importing a general OSC stack; no parser, bundles or generic protocol API.
     public static byte[] Packet(string formatted)
     {
-        return Encode("/chatbox/input", ",sTF", formatted);
-    }
-    public static byte[] TypingPacket(bool typing) => Encode("/chatbox/typing", typing ? ",T" : ",F");
-    private static byte[] Encode(params string[] parts)
-    {
         var bytes = new List<byte>();
-        foreach (var part in parts)
+        foreach (var part in new[] { "/chatbox/input", ",sTF", formatted })
         {
             bytes.AddRange(Encoding.UTF8.GetBytes(part));
             bytes.Add(0);
@@ -74,21 +69,19 @@ public sealed class ChatboxScheduler
     private string desired = "";
     private double next;
     private bool enabled;
-    private bool force;
     private bool retry;
-    public void Set(long activeEpoch, string text, bool isEnabled, bool compact = false, bool forceSend = false, bool preserveLayout = false)
+    public void Set(long activeEpoch, string text, bool isEnabled, bool compact = false, bool preserveLayout = false)
     {
         epoch = activeEpoch; desired = ChatboxFormatter.Format(text, compact, preserveLayout); enabled = isEnabled;
-        force = forceSend;
     }
     public void ReceiverChanged() { last = null; retry = true; }
     // After a hold: the current nonempty text counts as new. Unlike ReceiverChanged, empty text stays unsent.
     public void Rearm() { last = null; retry = false; }
     public (long Epoch, string Text)? Take(double now)
     {
-        if (!enabled || now < next || !force && !retry && (desired == last || last is null && desired.Length == 0)) return null;
+        if (!enabled || now < next || !retry && (desired == last || last is null && desired.Length == 0)) return null;
         // Attempts are paced here, but delivery dedupe advances only after SendTo succeeds.
-        next = now + IntervalSeconds; force = false; retry = false;
+        next = now + IntervalSeconds; retry = false;
         return (epoch, desired);
     }
     public void Complete((long Epoch, string Text) attempted, bool succeeded)
@@ -126,12 +119,6 @@ public sealed class ChatboxOutput : IDisposable
         }
         catch (SocketException) { Status = "OSC unavailable · next current line will be attempted"; return false; }
         catch (ObjectDisposedException) { return false; }
-    }
-    public void SendTyping(bool typing)
-    {
-        try { socket?.SendTo(ChatboxFormatter.TypingPacket(typing), destination); }
-        catch (SocketException) { }
-        catch (ObjectDisposedException) { }
     }
     public void Dispose() => socket?.Dispose();
 }

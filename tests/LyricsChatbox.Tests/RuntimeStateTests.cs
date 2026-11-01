@@ -9,7 +9,6 @@ public sealed class RuntimeStateTests : IDisposable
     [Theory]
     [InlineData("Home")]
     [InlineData("Display")]
-    [InlineData("Manual")]
     [InlineData("Settings")]
     [InlineData("About")]
     public void KnownNavigationSectionsRestore(string section) =>
@@ -21,6 +20,19 @@ public sealed class RuntimeStateTests : IDisposable
     [InlineData("settings")]
     public void UnknownNavigationFallsBackHome(string section) =>
         Assert.Equal("Home", RuntimeStatePolicy.Normalize(new(Section: section), Now).Section);
+
+    [Fact]
+    public void RetiredManualSectionOpensHomeAndKeepsOtherRuntimeState()
+    {
+        Directory.CreateDirectory(root);
+        File.WriteAllText(Path.Combine(root, "runtime-state.json"),
+            "{\"Version\":1,\"Window\":{\"X\":10,\"Y\":20,\"Width\":900,\"Height\":700,\"State\":\"Maximized\"},\"Section\":\"Manual\",\"OutputPause\":{\"Version\":1,\"Kind\":\"UntilResumed\"}}");
+        var restored = new LocalData(root).ReadRuntimeState(Now);
+        Assert.Equal(1, restored.Version);
+        Assert.Equal("Home", restored.Section);
+        Assert.Equal(new(10, 20, 900, 700, "Maximized"), restored.Window);
+        Assert.Equal(OutputPauseKind.UntilResumed, restored.OutputPause!.Mode);
+    }
 
     [Theory]
     [InlineData(5, "Timed")]
@@ -131,7 +143,7 @@ public sealed class RuntimeStateTests : IDisposable
     public void RuntimeStateSavesAtomicallyAndNormalizesState()
     {
         var data = new LocalData(root);
-        Assert.True(data.SaveRuntimeState(new(Window: new(10, 20, 900, 700, "Minimized"), Section: "Manual"), Now));
+        Assert.True(data.SaveRuntimeState(new(Window: new(10, 20, 900, 700, "Minimized"), Section: "Display"), Now));
         Assert.True(data.SaveRuntimeState(new(Window: new(20, 30, 1000, 800, "Maximized"), Section: "Settings"), Now));
         var restored = data.ReadRuntimeState(Now);
         Assert.Equal("Settings", restored.Section); Assert.Equal("Maximized", restored.Window!.State);

@@ -10,7 +10,6 @@ public partial class MainWindow
     private sealed record ProgressView(double Value, string Text);
     private sealed record PreviewView(string Text, bool Placeholder, bool PreserveLayout, int VisibleUnits, int Limit,
         string Profile, bool Compact, string Owner);
-    private sealed record ManualView(string Budget, string State, bool Enabled);
     private sealed record LyricsDetailsView(bool HasTrack, bool CanSearch, string? SearchHint, string IgnoreContent,
         RecoveryPresentation Recovery, string Source, string Cache, string Match, string Duration,
         string GlobalOffset, string SavedOffset, string EffectiveOffset, string Manual, string Ignored);
@@ -18,7 +17,6 @@ public partial class MainWindow
     private readonly PresentationChangeGate<PlaybackView> playbackView = new();
     private readonly PresentationChangeGate<ProgressView> progressView = new();
     private readonly PresentationChangeGate<PreviewView> previewView = new();
-    private readonly PresentationChangeGate<ManualView> manualView = new();
     private readonly PresentationChangeGate<LyricsDetailsView> lyricsDetailsView = new();
     private readonly PresentationChangeGate<string> oscView = new();
     private readonly PresentationChangeGate<(string Text, bool ChooseVisible)> sourceView = new();
@@ -56,13 +54,11 @@ public partial class MainWindow
         PositionProgress.Value = view.Value; PositionText.Text = view.Text;
     }
 
-    private void ApplyPreviewView(string visible, bool preserveLayout, bool showContext, string? desired, int limit, bool floating)
+    private void ApplyPreviewView(string visible, bool preserveLayout, bool showContext, int limit, bool floating)
     {
         var preview = PresentationText.Preview(visible);
-        var profile = (manual.IsManual ? "Manual · " + settings.ManualAlignment + " alignment"
-            : profiles.Selected.Name + " · " + (showContext ? contextMode : settings.Preset)) + FloatingCompatibility.SummaryLabel(settings.Compact);
-        var owner = !engine.Enabled ? "Output off · preview" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output paused · preview" : nativeChatbox.Holding ? "Held for VRChat Chatbox · preview" : manual.IsManual
-            ? desired is null ? "Manual · unsent draft" : "Manual · preview" : "Automatic · preview";
+        var profile = profiles.Selected.Name + " · " + (showContext ? contextMode : settings.Preset) + FloatingCompatibility.SummaryLabel(settings.Compact);
+        var owner = !engine.Enabled ? "Output off · preview" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output paused · preview" : nativeChatbox.Holding ? "Held for VRChat Chatbox · preview" : "Automatic · preview";
         var view = new PreviewView(preview.Text, preview.IsPlaceholder, preserveLayout, visible.Length,
             limit, profile, floating, owner);
         if (!previewView.ShouldApply(view)) return;
@@ -76,20 +72,6 @@ public partial class MainWindow
         else PreviewBubble.SetResourceReference(Border.BackgroundProperty, "RaisedBrush");
         PreviewBubble.Padding = view.Compact ? new Thickness(0, 4, 0, 4) : new Thickness(12, 8, 12, 8);
         OwnerText.Text = view.Owner;
-    }
-
-    private void ApplyManualView(ChatboxFormatAnalysis analysis, string? desired, double now)
-    {
-        var budget = analysis.VisibleUnits + " / " + analysis.Limit + (analysis.WouldTruncate ? " · trimmed" : "");
-        var paused = IsOutputPaused(DateTimeOffset.UtcNow);
-        var state = paused ? "Output paused · your draft stays here" : nativeChatbox.Holding ? "Held for VRChat Chatbox · your draft stays here" : manual.RemainingHold(now) is double remaining
-            ? $"Sent · automatic resumes in {Math.Ceiling(remaining):0} s"
-            : manual.IsManual ? manual.PendingSend ? "Sending your message…" : desired is null ? "Unsent draft · automatic lyrics are paused" : "Manual owns the Chatbox · automatic lyrics are paused"
-            : "Automatic mode · editing a draft takes priority";
-        var view = new ManualView(budget, state, engine.Enabled && !paused && !nativeChatbox.Holding);
-        if (!manualView.ShouldApply(view)) return;
-        ManualBudgetText.Text = view.Budget; ManualStateText.Text = view.State;
-        SendButton.IsEnabled = ClearButton.IsEnabled = view.Enabled;
     }
 
     private void ApplyOscView()

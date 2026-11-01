@@ -367,23 +367,6 @@ public sealed class NativeChatboxTests : IDisposable
     }
 
     [Fact]
-    public void PendingManualSendCannotLeakAfterTheHold()
-    {
-        var manual = new ManualChat();
-        var scheduler = new ChatboxScheduler();
-        manual.Edit("draft", false, 1);
-        manual.Send();
-        manual.PauseOutput(2);
-        Assert.False(manual.PendingSend);
-        manual.ResumeOutput(3);
-        scheduler.Rearm();
-        var desired = manual.Desired("automatic", 4);
-        Assert.Null(desired);
-        scheduler.Set(1, desired ?? "", desired is not null, false, manual.PendingSend);
-        Assert.Null(scheduler.Take(10));
-    }
-
-    [Fact]
     public void SidebarShowsOffThenPauseThenHold()
     {
         Assert.Equal("Off", OutputSidebarPresentation.Describe(false, false, "Active", "VRChat Chatbox open").Primary);

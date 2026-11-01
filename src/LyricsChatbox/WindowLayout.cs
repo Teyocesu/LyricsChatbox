@@ -93,7 +93,7 @@ internal static class WindowLayout
             ((ContentControl)preview.Parent).Content = null;
             destination.Content = preview;
         }
-        // Preview drops its card on migrated pages; Manual and Settings keep it until their phases.
+        // Preview drops its card on migrated pages; Settings keeps it until its phase.
         var continuousPreview = home || display;
         if (continuousPreview)
         {
@@ -178,7 +178,7 @@ internal static class WindowLayout
             button.MinHeight = shortWindow ? 30 : 36;
         }
 
-        var sections = new[] { "HomePreviewHost", "ProfilesSection", "ContextCard", "InspectorSection", "QuickMessagesSection", "HomeToolsSection" }
+        var sections = new[] { "HomePreviewHost", "ProfilesSection", "ContextCard", "InspectorSection", "HomeToolsSection" }
             .Select(Find<FrameworkElement>).ToArray();
         // One tree at every width: sections stay in place and only change cell or collapse.
         var selector = Find<ListBox>("HomeSectionBox");

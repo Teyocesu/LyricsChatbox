@@ -33,18 +33,10 @@ public sealed record OutputPauseState(int Version = 1, string Kind = "None",
     private static bool ValidKey(string? key) => key is { Length: 64 } && key.All(Uri.IsHexDigit);
 }
 
-public readonly record struct OutputPauseChange(bool Applied, bool BecamePaused);
-public readonly record struct OutputPauseEntryEffects(bool ClearText, bool ClearTyping)
+public readonly record struct OutputPauseChange(bool Applied, bool BecamePaused)
 {
-    public static OutputPauseEntryEffects For(OutputPauseChange change, bool outputEnabled) =>
-        change is { Applied: true, BecamePaused: true } && outputEnabled ? new(true, true) : new(false, false);
-    public void Apply(Action clearText, Action clearTyping)
-    {
-        if (ClearText) clearText();
-        if (ClearTyping) clearTyping();
-    }
+    public bool ClearsText(bool outputEnabled) => Applied && BecamePaused && outputEnabled;
 }
-
 public sealed class OutputPauseController
 {
     public OutputPauseState State { get; private set; }

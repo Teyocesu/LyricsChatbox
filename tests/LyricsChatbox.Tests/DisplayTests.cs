@@ -76,12 +76,12 @@ public class DisplayTests
         Assert.True(settings.Enabled);
         Assert.Equal(1.2, settings.Offset);
         Assert.Equal("{lyrics}", ChatboxComposer.Template(settings.Preset, settings.CustomTemplate));
-        Assert.False(settings.Compact || settings.LiveEdit || settings.TypingIndicator);
+        Assert.False(settings.Compact);
         Assert.False((settings with { CustomTemplate = null! }).IsValid);
         Assert.False((settings with { Preset = "invalid" }).IsValid);
         Assert.Equal("", ChatboxComposer.Compose(new string('x', 513), null, "", "", default, null));
         Assert.Equal("{broken", ChatboxComposer.Compose("{broken", null, "", "", default, null));
-        var roundtrip = settings with { Preset = "Custom", CustomTemplate = "{message}", Message = "日本語", Compact = true, LiveEdit = true };
+        var roundtrip = settings with { Preset = "Custom", CustomTemplate = "{message}", Message = "日本語", Compact = true };
         Assert.Equal(roundtrip, JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(roundtrip)));
     }
 
@@ -118,73 +118,6 @@ public class DisplayTests
         packet = scheduler.Take(2.1)!.Value; Assert.Equal("hello", packet.Text); scheduler.Complete(packet, true);
         scheduler.Set(2, "", true, true);
         packet = scheduler.Take(3.2)!.Value; Assert.Equal("", packet.Text); scheduler.Complete(packet, true);
-        scheduler.ReceiverChanged();
-        scheduler.Set(2, "", true, true, forceSend: true);
-        packet = scheduler.Take(4.3)!.Value; Assert.Equal("", packet.Text); scheduler.Complete(packet, true); // Explicit manual clear works even before any text.
     }
 
-    [Fact]
-    public void ManualSuppressesAutomaticAndLiveEditsCoalesceBeforeCurrentAutomaticResume()
-    {
-        var manual = new ManualChat();
-        var scheduler = new ChatboxScheduler();
-        Assert.Equal("A", manual.Desired("A", 0));
-        manual.Focus(true);
-        manual.Edit("draft", false, 0);
-        Assert.Null(manual.Desired("B", 0.2));
-        manual.LiveChanged(true);
-        foreach (var draft in new[] { "H", "He", "Hello" })
-        {
-            manual.Edit(draft, true, 0.3);
-            scheduler.Set(1, manual.Desired("ignored lyrics", 0.3)!, true, true);
-        }
-        var packet = scheduler.Take(0.3)!.Value; Assert.Equal("Hello" + ChatboxFormatter.CompactSuffix, packet.Text); scheduler.Complete(packet, true);
-        manual.Send();
-        Assert.False(manual.Typing(0.4));
-        Assert.Equal("Hello", manual.Desired("C", 20)); // Hold starts after emission, not button click.
-        manual.Sent(20);
-        Assert.Equal("Hello", manual.Desired("D", 27.9));
-        Assert.Equal("current E", manual.Desired("current E", 28));
-        manual.Focus(true); manual.Edit("new", true, 29); manual.Resume();
-        Assert.Equal("current F", manual.Desired("current F", 29));
-    }
-
-    [Fact]
-    public void TypingClearsOnIdleFocusLossSendClearResumeAndShutdownSignal()
-    {
-        var manual = new ManualChat(); var signal = new TypingSignal();
-        manual.Focus(true); manual.Edit("hello", false, 0);
-        Assert.True(signal.Take(manual.Typing(0), 0));
-        Assert.Null(signal.Take(manual.Typing(1), 1));
-        Assert.True(signal.Take(manual.Typing(2), 2));
-        Assert.False(signal.Take(manual.Typing(3), 3));
-        manual.Edit("hello!", false, 4); manual.Focus(false); Assert.False(manual.Typing(4));
-        manual.Focus(true); manual.Send(); Assert.False(manual.Typing(4));
-        manual.Edit("", true, 5); Assert.False(manual.Typing(5));
-        manual.Edit("x", true, 6); manual.Resume(); Assert.False(manual.Typing(6));
-        signal.Take(true, 7); Assert.False(signal.Take(false, 8));
-        Assert.Equal("/chatbox/typing\0,T\0\0", Encoding.UTF8.GetString(ChatboxFormatter.TypingPacket(true)));
-        Assert.Equal("/chatbox/typing\0,F\0\0", Encoding.UTF8.GetString(ChatboxFormatter.TypingPacket(false)));
-    }
-
-    [Fact]
-    public void InactiveTypingSendsNothing()
-    {
-        var signal = new TypingSignal();
-        Assert.Null(signal.Take(false, 0));
-        signal.Reset();
-        Assert.Null(signal.Take(false, 1));
-    }
-
-    [Fact]
-    public void ReceiverResetResendsActiveTypingAndKeepsItsPendingClear()
-    {
-        var signal = new TypingSignal();
-        Assert.True(signal.Take(true, 0));
-        signal.Reset();
-        Assert.True(signal.Take(true, 0.5));
-        signal.Reset();
-        Assert.False(signal.Take(false, 1));
-        Assert.Null(signal.Take(false, 2));
-    }
 }

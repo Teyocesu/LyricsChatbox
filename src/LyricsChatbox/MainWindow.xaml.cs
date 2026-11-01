@@ -5,7 +5,6 @@ using System.IO;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Win32;
 
@@ -20,8 +19,6 @@ public partial class MainWindow : Window
     private readonly SynchronizationEngine engine = new();
     private readonly ChatboxScheduler scheduler = new();
     private readonly ChatboxOutput output = new();
-    private readonly ManualChat manual = new();
-    private readonly TypingSignal typing = new();
     private readonly DispatcherTimer runtimeSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(50) };
     private readonly DispatcherTimer saveTimer = new() { Interval = TimeSpan.FromMilliseconds(400) };
@@ -50,7 +47,6 @@ public partial class MainWindow : Window
         profiles = data.ReadProfiles(settings);
         settings = profiles.Selected.Apply(settings);
         contextMode = profiles.Selected.ContextMode;
-        quickMessages = data.ReadQuickMessages();
         ThemeColors.Apply(Application.Current.Resources, settings.Appearance);
         InitializeComponent();
         InitializeAppearance();
@@ -64,10 +60,9 @@ public partial class MainWindow : Window
         };
         HostBox.Text = settings.Host; PortBox.Text = settings.Port.ToString(CultureInfo.InvariantCulture);
         PresetBox.ItemsSource = ChatboxComposer.Presets; PresetBox.SelectedItem = settings.Preset;
-        CustomAlignmentBox.ItemsSource = ManualAlignmentBox.ItemsSource = MessageLayout.Alignments;
-        CustomAlignmentBox.SelectedItem = settings.CustomAlignment; ManualAlignmentBox.SelectedItem = settings.ManualAlignment;
+        CustomAlignmentBox.ItemsSource = MessageLayout.Alignments;
+        CustomAlignmentBox.SelectedItem = settings.CustomAlignment;
         TemplateBox.Text = settings.CustomTemplate; CompactBox.IsChecked = settings.Compact;
-        TypingBox.IsChecked = settings.TypingIndicator; LiveBox.IsChecked = settings.LiveEdit;
         OffsetText.Text = settings.Offset.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) + " s";
         output.Configure(settings.Host, settings.Port);
         playback.Observed += OnObserved;
@@ -76,7 +71,6 @@ public partial class MainWindow : Window
         timer.Tick += (_, _) => Tick();
         saveTimer.Tick += (_, _) => { saveTimer.Stop(); Save(); };
         Closing += OnClosing;
-        Deactivated += (_, _) => { manual.Focus(false); Tick(); };
         InitializeLifecycle();
         InitializeAbout();
         InitializeUpdates();
@@ -186,7 +180,7 @@ public partial class MainWindow : Window
                 var processes = Process.GetProcessesByName("VRChat");
                 var pid = processes.FirstOrDefault()?.Id ?? 0;
                 foreach (var process in processes) process.Dispose();
-                if (pid != receiverPid) { receiverPid = pid; scheduler.ReceiverChanged(); typing.Reset(); DiscoveryReceiverChanged(); }
+                if (pid != receiverPid) { receiverPid = pid; scheduler.ReceiverChanged(); DiscoveryReceiverChanged(); }
             }
             catch (InvalidOperationException) { }
         }
@@ -201,8 +195,7 @@ public partial class MainWindow : Window
         UpdateLyricsDetails();
         var showContext = LyricContextComposer.SupportsContext(settings.Preset, settings.CustomTemplate);
         var consumesMessage = ChatboxComposer.ConsumesToken(settings.Preset, settings.CustomTemplate, "{message}");
-        var rotationEligible = MessageRotator.IsEligible(consumesMessage, engine.Enabled, outputBlocked,
-            manual.AutomaticAvailable(now));
+        var rotationEligible = MessageRotator.IsEligible(consumesMessage, engine.Enabled, outputBlocked);
         var profile = profiles.Selected;
         var currentMessage = messageRotator.Current(profile.Id, SelectedRotation(), profile.Message, now, rotationEligible);
         ApplyRotationRuntimeView(currentMessage, rotationEligible);
@@ -210,26 +203,15 @@ public partial class MainWindow : Window
         var automatic = LyricContextComposer.ComposeProfile(engine.Context(now), engine.Track, settings.Preset,
             settings.CustomTemplate, currentMessage.Text, contextMode, floating, DateTimeOffset.Now, position,
             settings.CustomAlignment);
-        var desired = manual.Desired(automatic, now);
-        var preserveLayout = manual.IsManual || settings.Preset is "Custom" or "Status / Time";
-        var alignment = manual.IsManual ? settings.ManualAlignment : settings.CustomAlignment;
-        if (desired is not null && preserveLayout) desired = MessageLayout.Align(desired, alignment);
-        var previewAnalysis = ChatboxFormatter.Analyze(desired ?? MessageLayout.Align(manual.Draft, settings.ManualAlignment), floating, preserveLayout);
+        var preserveLayout = settings.Preset is "Custom" or "Status / Time";
+        var desired = preserveLayout ? MessageLayout.Align(automatic, settings.CustomAlignment) : automatic;
+        var previewAnalysis = ChatboxFormatter.Analyze(desired, floating, preserveLayout);
         var visible = ChatboxFormatter.Visible(previewAnalysis.Payload);
-        ApplyPreviewView(visible, preserveLayout, showContext, desired, previewAnalysis.Limit, floating);
-        var manualLayout = MessageLayout.Align(manual.Draft, settings.ManualAlignment);
-        var manualAnalysis = ChatboxFormatter.Analyze(manualLayout, floating, true);
-        ApplyManualView(manualAnalysis, desired, now);
+        ApplyPreviewView(visible, preserveLayout, showContext, previewAnalysis.Limit, floating);
         var outputEligible = OutputEligibility.CanSend(engine.Enabled, outputBlocked);
-        scheduler.Set(engine.Epoch, desired ?? "", outputEligible && desired is not null, floating, manual.PendingSend, preserveLayout);
+        scheduler.Set(engine.Epoch, desired, outputEligible, floating, preserveLayout);
         if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && outputEligible)
-        {
-            var sent = output.Send(packet.Text);
-            scheduler.Complete(packet, sent);
-            if (sent) manual.Sent(now);
-        }
-        if (!nativeChatbox.Holding && typing.Take(outputEligible && settings.TypingIndicator && manual.Typing(now), now) is { } typingState)
-            output.SendTyping(typingState);
+            scheduler.Complete(packet, output.Send(packet.Text));
         ApplyOscView();
         ApplyNativeChatboxView(now);
     }
@@ -255,7 +237,6 @@ public partial class MainWindow : Window
         if (!ready || sender is not RadioButton { Tag: string page }) return;
         HomePage.Visibility = page == "Home" ? Visibility.Visible : Visibility.Collapsed;
         DisplayPage.Visibility = page == "Display" ? Visibility.Visible : Visibility.Collapsed;
-        ManualPage.Visibility = page == "Manual" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
         AboutRoot.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
         AboutPage.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
@@ -263,11 +244,6 @@ public partial class MainWindow : Window
         WindowLayout.Apply(this, ContentRoot.ActualHeight);
         activeSection = page;
         SaveRuntimeStateNow();
-    }
-    private void DraftKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control && engine.Enabled)
-        { RequestManualSend(); e.Handled = true; }
     }
 
     private void Save()
@@ -302,16 +278,14 @@ public partial class MainWindow : Window
     {
         if (!ready) return;
         engine.Enabled = EnabledBox.IsChecked == true;
-        if (!engine.Enabled) manual.Resume();
         Save(); UpdateTray(); Tick();
     }
     private void DisplayChanged(object sender, RoutedEventArgs e)
     {
         if (!ready || changingProfiles) return;
         settings = settings with { Preset = PresetBox.SelectedItem as string ?? "Lyrics Only", CustomTemplate = TemplateBox.Text,
-            Compact = FloatingCompatibility.Available ? CompactBox.IsChecked == true : settings.Compact, TypingIndicator = TypingBox.IsChecked == true,
-            LiveEdit = LiveBox.IsChecked == true, CustomAlignment = CustomAlignmentBox.SelectedItem as string ?? "Left",
-            ManualAlignment = ManualAlignmentBox.SelectedItem as string ?? "Left" };
+            Compact = FloatingCompatibility.Available ? CompactBox.IsChecked == true : settings.Compact,
+            CustomAlignment = CustomAlignmentBox.SelectedItem as string ?? "Left" };
         RememberProfileChanges();
         UpdateTray();
         saveTimer.Stop(); saveTimer.Start(); Tick();
@@ -327,28 +301,6 @@ public partial class MainWindow : Window
         TemplateBox.Focus();
         ClearError();
     }
-    private void DraftFocused(object sender, RoutedEventArgs e) { if (ready) { manual.Focus(true); Tick(); } }
-    private void DraftUnfocused(object sender, RoutedEventArgs e) { if (ready) { manual.Focus(false); Tick(); } }
-    private void DraftChanged(object sender, RoutedEventArgs e)
-    {
-        if (!ready || loadingQuickDraft) return;
-        manual.Focus(DraftBox.IsKeyboardFocusWithin);
-        manual.Edit(DraftBox.Text, engine.Enabled && settings.LiveEdit && !IsOutputBlocked(DateTimeOffset.UtcNow), MonotonicClock.Now); Tick();
-    }
-    private void LiveChanged(object sender, RoutedEventArgs e)
-    {
-        if (!ready) return;
-        manual.LiveChanged(engine.Enabled && LiveBox.IsChecked == true && !IsOutputBlocked(DateTimeOffset.UtcNow)); DisplayChanged(sender, e);
-    }
-    private void SendManual(object sender, RoutedEventArgs e) => RequestManualSend();
-    private void ClearManual(object sender, RoutedEventArgs e)
-    {
-        DraftBox.Clear();
-        manual.Edit("", engine.Enabled && settings.LiveEdit && !IsOutputBlocked(DateTimeOffset.UtcNow), MonotonicClock.Now);
-        if (!engine.Enabled || IsOutputBlocked(DateTimeOffset.UtcNow)) manual.SuppressOutput(); else manual.Send();
-        Tick();
-    }
-    private void ResumeAutomatic(object sender, RoutedEventArgs e) { manual.Resume(); Tick(); }
     private void OffsetChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (!ready || applyingCorrection) return;
@@ -362,10 +314,10 @@ public partial class MainWindow : Window
         if (!next.IsValid) { ErrorText.Text = "Use an IP address or localhost, and a port from 1 to 65535."; return; }
         try
         {
-            ClearTyping(); output.Configure(next.Host, next.Port); settings = next;
+            output.Configure(next.Host, next.Port); settings = next;
             discoveryCancellation?.Cancel(); destinationSelection.SetMode(false); configuredDestination = new(next.Host, next.Port);
             AutoOscBox.IsChecked = false; DiscoveryStatus.Text = "Manual destination"; ConfigureEffectiveDestination();
-            scheduler.ReceiverChanged(); typing.Reset(); ClearError(); Save(); Tick();
+            scheduler.ReceiverChanged(); ClearError(); Save(); Tick();
         }
         catch (Exception ex) when (ex is System.Net.Sockets.SocketException or ArgumentException) { ErrorText.Text = "Could not configure OSC destination."; }
     }
@@ -406,7 +358,6 @@ public partial class MainWindow : Window
         playback.ArtworkAvailable -= OnArtwork;
         SystemEvents.PowerModeChanged -= OnPowerModeChanged;
         engine.Enabled = false; lookup?.Cancel(); playback.Observed -= OnObserved;
-        manual.Resume(); ClearTyping();
         await playback.DisposeAsync();
         try { await Task.WhenAll(pending.ToArray()); }
         catch (Exception ex) when (ex is not OutOfMemoryException) { diagnostics.Add(DiagnosticCategory.Lifecycle, "Pending work ended during shutdown"); }

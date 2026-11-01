@@ -52,7 +52,7 @@ public partial class MainWindow
             if (closing) return;
             var transition = e.Mode == PowerModes.Resume ? PowerTransition.Resume : PowerTransition.Suspend;
             lookup?.Cancel(); engine.Observe(null); ClearArtwork(); CancelManualMatch(); LoadCorrection();
-            scheduler.ReceiverChanged(); typing.Reset(); manual.Resume(); ClearTyping();
+            scheduler.ReceiverChanged();
             InvalidateDiscoveryForLifecycle();
             nextReceiverCheck = 0;
             if (LifecyclePolicy.Playback(transition) == PlaybackRefresh.Resume) playback.ReanchorAfterResume();

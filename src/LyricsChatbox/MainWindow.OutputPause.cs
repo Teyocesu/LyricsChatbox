@@ -22,7 +22,6 @@ public partial class MainWindow
             runtimeState = runtimeState with { OutputPause = outputPause.State };
             _ = data.SaveRuntimeState(runtimeState);
             scheduler.ReceiverChanged();
-            if (!nativeChatbox.Holding) manual.ResumeOutput(MonotonicClock.Now);
             UpdateTray();
         }
         RefreshOutputPauseView(nowUtc);
@@ -59,12 +58,8 @@ public partial class MainWindow
         if (!change.Applied) return;
         runtimeState = runtimeState with { OutputPause = outputPause.State };
         if (!data.SaveRuntimeState(runtimeState)) ErrorText.Text = "Output pause is active, but could not be saved for restart.";
-        manual.PauseOutput(MonotonicClock.Now);
         scheduler.ReceiverChanged();
-        var now = MonotonicClock.Now;
-        typing.Suppress(now);
-        var effects = OutputPauseEntryEffects.For(change, engine.Enabled);
-        effects.Apply(() => _ = output.Send(""), () => output.SendTyping(false));
+        if (change.ClearsText(engine.Enabled)) _ = output.Send("");
         RefreshOutputPauseView(nowUtc);
         UpdateTray();
         Tick();
@@ -76,7 +71,6 @@ public partial class MainWindow
         runtimeState = runtimeState with { OutputPause = outputPause.State };
         if (!data.SaveRuntimeState(runtimeState)) ErrorText.Text = "Could not save the resumed output state.";
         scheduler.ReceiverChanged();
-        if (!nativeChatbox.Holding) manual.ResumeOutput(MonotonicClock.Now);
         RefreshOutputPauseView(DateTimeOffset.UtcNow);
         UpdateTray();
         Tick();
@@ -88,8 +82,7 @@ public partial class MainWindow
         var blocked = IsOutputBlocked(nowUtc);
         var state = OutputSidebarPresentation.Describe(engine.Enabled, paused, outputPause.Summary(nowUtc), nativeChatbox.HoldSummary(MonotonicClock.Now));
         var active = engine.Enabled && !blocked;
-        var sending = OutputSidebarPresentation.IsSending(engine.Enabled, blocked,
-            engine.Snapshot?.State == PlaybackState.Playing, manual.AutomaticAvailable(MonotonicClock.Now));
+        var sending = OutputSidebarPresentation.IsSending(engine.Enabled, blocked, engine.Snapshot?.State == PlaybackState.Playing);
         var status = active ? OutputSidebarPresentation.ActiveStatusText : state.Primary;
         if (OutputStateText.Text != status) OutputStateText.Text = status;
         OutputStateText.SetResourceReference(TextBlock.ForegroundProperty,
@@ -115,10 +108,4 @@ public partial class MainWindow
         OutputMusicWave.IsAnimating = animate;
     }
 
-    private void RequestManualSend()
-    {
-        if (!engine.Enabled || IsOutputBlocked(DateTimeOffset.UtcNow)) manual.SuppressOutput();
-        else manual.Send();
-        Tick();
-    }
 }

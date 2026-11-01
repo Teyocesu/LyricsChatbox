@@ -22,9 +22,9 @@ public static class OutputSidebarPresentation
     }
 
     // The automatic lyric pipeline is operating (never a delivery claim):
-    // master Output enabled, no pause, selected source Playing, automatic output available.
-    public static bool IsSending(bool enabled, bool paused, bool sourcePlaying, bool automaticAvailable) =>
-        enabled && !paused && sourcePlaying && automaticAvailable;
+    // master Output enabled, no pause or hold, selected source Playing.
+    public static bool IsSending(bool enabled, bool paused, bool sourcePlaying) =>
+        enabled && !paused && sourcePlaying;
 
     // Compact factual rendering of the configured OSC destination for the sidebar.
     // IPv6 literals are bracketed; no receiver presence is implied.

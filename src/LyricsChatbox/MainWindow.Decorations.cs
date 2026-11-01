@@ -23,7 +23,6 @@ public partial class MainWindow
         {
             "Custom" => TemplateBox,
             "Rotation" => RotationMessageBox,
-            "Manual" => DraftBox,
             _ => null
         };
         if (target is null) return;
@@ -56,7 +55,6 @@ public partial class MainWindow
         var wallNow = DateTimeOffset.Now;
         string Compose(string text)
         {
-            if (target == DraftBox) return MessageLayout.Align(text, settings.ManualAlignment);
             var template = target == TemplateBox ? text : settings.CustomTemplate;
             var message = target == RotationMessageBox ? text : activeRotationMessage.Text ?? profiles.Selected.Message;
             var raw = LyricContextComposer.ComposeProfile(engine.Context(monotonicNow), engine.Track, settings.Preset, template,

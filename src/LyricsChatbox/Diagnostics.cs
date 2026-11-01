@@ -25,7 +25,7 @@ public sealed class Diagnostics
         return text;
     }
     public string Export(PlaybackSnapshot? snapshot, AppSettings settings, string lyricsStatus, string oscStatus, double effectiveOffset,
-        bool manualMode = false, string? applicationStatus = null, PlaybackSourceKind? selectedSource = null,
+        string? applicationStatus = null, PlaybackSourceKind? selectedSource = null,
         string? sourceStatus = null, bool sourceAmbiguous = false, bool outputPaused = false,
         string? pauseMode = null, string? pauseStatus = null, string? nativeChatboxState = null)
     {
@@ -66,13 +66,13 @@ public sealed class Diagnostics
             Lyrics = new { Status = Clean(lyricsStatus), EffectiveOffset = effectiveOffset },
             Output = new { settings.Enabled, State = !settings.Enabled ? "Disabled" : outputPaused ? "Paused" : "Enabled",
                 Paused = outputPaused, PauseMode = outputPaused ? Clean(pauseMode) : null,
-                PauseStatus = outputPaused ? Clean(pauseStatus) : null, Mode = manualMode ? "Manual" : "Automatic",
+                PauseStatus = outputPaused ? Clean(pauseStatus) : null,
                 settings.Compact, FloatingEffective = FloatingCompatibility.Effective(settings.Compact),
                 settings.Host, settings.Port, settings.Preset, Status = Clean(oscStatus) },
             NativeChatbox = new { Enabled = settings.NativeChatboxProtection, State = Clean(nativeChatboxState) },
             ApplicationBehavior = new { settings.StartWithWindows, settings.StartMinimized, settings.MinimizeToTray, settings.CloseToTray, settings.AutomaticUpdateChecks },
             RecentEvents = recent,
-            Privacy = "Generated on demand. No lyric bodies, custom messages, drafts, credentials or persistent listening history."
+            Privacy = "Generated on demand. No lyric bodies, custom messages, credentials or persistent listening history."
         };
         return JsonSerializer.Serialize(report, new JsonSerializerOptions
         {

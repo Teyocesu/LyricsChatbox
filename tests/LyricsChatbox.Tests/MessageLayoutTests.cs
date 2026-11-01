@@ -64,10 +64,9 @@ public sealed class MessageLayoutTests
     {
         var old = JsonSerializer.Deserialize<AppSettings>("{\"Enabled\":true,\"Preset\":\"Custom\",\"Compact\":true}")!;
         Assert.Equal("Left", old.CustomAlignment);
-        Assert.Equal("Left", old.ManualAlignment);
         Assert.True(old.IsValid);
         Assert.False((old with { CustomAlignment = "<center>" }).IsValid);
-        Assert.True((old with { CustomAlignment = "Center", ManualAlignment = "Right" }).IsValid);
+        Assert.True((old with { CustomAlignment = "Center" }).IsValid);
     }
 
 }

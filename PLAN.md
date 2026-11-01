@@ -1,4 +1,4 @@
-# v1.0.0 execution plan — Phase 5A closed; Phase 5B next
+# v1.0.0 execution plan — Phase 5B closed; Phase 6 next
 
 ## State and baseline
 
@@ -661,3 +661,47 @@ Classification: confirmed, alternative fix, low severity. Output Off sent `/chat
 - Suppressing false while `Reset` still cleared the state was rejected: a reset during active typing would lose the pending clear.
 
 Loopback, same script on base and fix, on a hidden desktop with private ports and no VRChat. Output Off: base 6 typing packets, fix 0. Active typing keeps the same clears on focus loss, Output Off, Pause, destination change, hold release and shutdown, with no packet during the hold and true resent to a new destination. Validation: locked restore, Release build, full suite, package policy and diff check.
+
+## Phase 5B — Manual removal (2026-11-01)
+
+`SPEC.md` holds the contract. This is a removal, not a revamp. Manual lyrics matching is a different feature and stays.
+
+### Impact map
+
+| Area | Removed | Kept, and why |
+|---|---|---|
+| Navigation and UI | Manual nav item, `ManualPage`, Home Quick Messages section, Home `Messages` tab, two quick templates | `InspectorManual` and `Manual match` label, `Manual destination` status: lyrics and OSC, not messaging |
+| Output state | `ManualChat`, draft, ownership, pending send, 8 s hold, focus handlers | `IsOutputBlocked`, used by `Tick` and the sidebar |
+| `Tick` | Manual desired, alignment and analysis branches, `ApplyManualView`, typing send | Automatic composition, `outputBlocked`, scheduler |
+| Scheduler | `forceSend` and `force`: only Manual Send and Clear used them | `ReceiverChanged`: process, destination, Pause and power callers. `Rearm`: hold release. `retry`: failed sends. Rate limit |
+| Typing | `TypingSignal`, `SendTyping`, `TypingPacket`, `ClearTyping`, Pause typing clear: `manual.Typing` was the only source of true | None. A false with no true would only risk touching the native indicator |
+| Output Pause | `OutputPauseEntryEffects`, reduced to one text Clear decision | Pause semantics and persistence |
+| Rotation and sidebar | `automaticAvailable` input: it reflected only Manual ownership | Eligibility from message use, Output and blocked state |
+| Decorations | `Manual` target | Custom and rotation targets |
+| Persistence | `TypingIndicator`, `LiveEdit`, `ManualAlignment`, Quick Message models and `LocalData` access | Unknown JSON values are ignored by the serializer, so old files load |
+| Runtime state | `Manual` in `Sections` | Existing fallback opens Home and keeps window and Pause state |
+| Diagnostics | `manualMode` and `Mode` | Everything else |
+| Tests | Contracts of the removed features | Every surviving invariant, rewritten to automatic output where needed |
+
+### Order
+
+UI and handlers, direct rewiring of `Tick`, dead state and types, persistence, scheduler and typing, then tests and documentation.
+
+### Phase 5B validation (2026-11-01, uncommitted, awaiting review)
+
+- Automated: locked restore, Release build 0/0, focused 205/205, full suite 581/581, package policy PASS, `git diff --check` clean. The suite went from 591 to 581 only through retired contracts: Manual, Live Edit, typing and Quick Message tests, one About row and one Rotation row. Receiver absence, rotation eligibility and resume tests were rewritten on automatic output.
+- Isolated native and loopback, simulated: 65/65 checks on a hidden desktop with seeded legacy data, a synthetic log and a private listener. Four navigation sections; `Manual` runtime state opens Home; 32 views across four sizes and Rose and Blue without horizontal overflow; 15 packets, all `/chatbox/input`, none for typing including shutdown; pause sends one text Clear; hold, cooldown, reopen, empty resume and rotation unchanged; `quick-messages.json` keeps identical bytes and time; retired settings keys are dropped and other values kept.
+- Not performed: physical testing, real VRChat, and real music playback. Native Chatbox Protection detection code is unchanged, so its Desktop gates are not repeated, but this build has not run against the real client.
+
+### Phase 5B closure (2026-11-01)
+
+CLOSED / ACCEPTED by product-owner decision after independent source and visual review of the 36-file diff. This is not a release approval.
+
+- Manual Chatbox messaging and Quick Messages are removed. Navigation has four pages.
+- Production net reduction: 335 lines.
+- 581/581 automated tests and 65/65 isolated native checks.
+- `quick-messages.json` user data is preserved, unread and unmodified. Manual lyrics matching is preserved.
+- Independent code review PASS. Visual screenshot review accepted.
+- Physical QA remains a release gate: real input and focus, `Rename` at 820x650, non-100% DPI, screen reader, real music playback, Native Chatbox Protection on this build, tray, startup and updater.
+
+Next: Phase 6, Settings visual consolidation, on explicit approval.

@@ -7,9 +7,8 @@ namespace LyricsChatbox;
 public partial class MainWindow
 {
     private ProfileLibrary profiles;
-    private QuickMessageLibrary quickMessages;
     private string contextMode;
-    private bool changingProfiles, loadingQuickDraft, recordingIgnored;
+    private bool changingProfiles, recordingIgnored;
 
     private void InitializePresentation()
     {
@@ -17,7 +16,7 @@ public partial class MainWindow
         ContextBox.SelectedItem = contextMode;
         TokenChips.ItemsSource = ChatboxComposer.Tokens;
         InitializeRotation();
-        RefreshProfiles(); RefreshQuickMessages(); RefreshDisplayDerivedState();
+        RefreshProfiles(); RefreshDisplayDerivedState();
     }
     private void RefreshProfiles()
     {
@@ -113,7 +112,6 @@ public partial class MainWindow
         if (profiles.Delete(profiles.SelectedId) is { } next) ApplyProfileLibrary(next);
     }
     private void ManageProfiles(object sender, RoutedEventArgs e) => ShowPage("Display");
-    private void ManageQuickMessages(object sender, RoutedEventArgs e) => ShowPage("Manual");
     private void ShowPage(string page)
     {
         if (FindNavigationButton(page) is { } item) item.IsChecked = true;
@@ -121,50 +119,6 @@ public partial class MainWindow
 
     private RadioButton? FindNavigationButton(string page) =>
         NavigationPanel.Children.OfType<RadioButton>().FirstOrDefault(r => (string?)r.Tag == page);
-
-    private void RefreshQuickMessages()
-    {
-        HomeQuickMessages.ItemsSource = ManualQuickMessages.ItemsSource = QuickEditBox.ItemsSource = quickMessages.Items;
-        QuickEmptyText.Visibility = quickMessages.Items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-    }
-    private void UseQuickMessage(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { DataContext: QuickMessage message }) return;
-        loadingQuickDraft = true;
-        try
-        {
-            // TextChanged must not enter live edit while this reusable text is loaded.
-            manual.PrepareDraft(message.Text); DraftBox.Text = message.Text;
-            ShowPage("Manual"); DraftBox.Focus(); DraftBox.CaretIndex = DraftBox.Text.Length;
-        }
-        finally { loadingQuickDraft = false; }
-        Tick();
-    }
-    private void EditQuickMessage(object sender, SelectionChangedEventArgs e)
-    {
-        if (QuickEditBox.SelectedItem is not QuickMessage message) return;
-        QuickNameBox.Text = message.Name; QuickTextBox.Text = message.Text;
-    }
-    private void NewQuickMessage(object sender, RoutedEventArgs e)
-    {
-        QuickEditBox.SelectedItem = null; QuickNameBox.Clear(); QuickTextBox.Clear(); QuickNameBox.Focus();
-    }
-    private void SaveQuickMessage(object sender, RoutedEventArgs e)
-    {
-        var id = (QuickEditBox.SelectedItem as QuickMessage)?.Id ?? Guid.NewGuid().ToString("N");
-        var next = quickMessages.Save(new(id, QuickNameBox.Text.Trim(), QuickTextBox.Text));
-        if (next is null) { QuickStatus.Text = "Enter a name and message. Up to 16 messages can be saved."; return; }
-        if (!data.SaveQuickMessages(next)) { QuickStatus.Text = "Could not save quick messages."; return; }
-        quickMessages = next; RefreshQuickMessages(); QuickEditBox.SelectedItem = next.Items.First(q => q.Id == id);
-        QuickStatus.Text = "Saved on this computer.";
-    }
-    private void DeleteQuickMessage(object sender, RoutedEventArgs e)
-    {
-        if (QuickEditBox.SelectedItem is not QuickMessage message) return;
-        var next = quickMessages.Delete(message.Id);
-        if (!data.SaveQuickMessages(next)) { QuickStatus.Text = "Could not remove this message."; return; }
-        quickMessages = next; RefreshQuickMessages(); NewQuickMessage(sender, e); QuickStatus.Text = "Message removed.";
-    }
 
     private string FriendlyLyricsStatus()
     {

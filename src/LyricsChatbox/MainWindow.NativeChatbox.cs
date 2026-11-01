@@ -54,13 +54,7 @@ public partial class MainWindow
     {
         var held = nativeChatbox.Holding;
         if (held == wasHeld) return;
-        var now = MonotonicClock.Now;
-        if (held) manual.PauseOutput(now);
-        else
-        {
-            scheduler.Rearm();
-            if (!IsOutputPaused(DateTimeOffset.UtcNow)) manual.ResumeOutput(now);
-        }
+        if (!held) scheduler.Rearm();
         diagnostics.Add(DiagnosticCategory.OSC, held ? "Native Chatbox hold started" : "Native Chatbox hold ended");
         UpdateTray();
     }
@@ -72,8 +66,6 @@ public partial class MainWindow
         NativeChatboxStatus.Text = view.Item1;
         NativeChatboxResumeButton.Visibility = view.Holding ? Visibility.Visible : Visibility.Collapsed;
     }
-
-    private void ClearTyping() { if (!nativeChatbox.Holding && typing.Take(false, MonotonicClock.Now) is false) output.SendTyping(false); }
 
     private void NativeChatboxChanged(object sender, RoutedEventArgs e)
     {

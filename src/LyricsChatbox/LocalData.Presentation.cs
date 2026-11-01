@@ -7,7 +7,6 @@ public sealed partial class LocalData
 {
     // JSON can escape each UTF-16 unit as six ASCII bytes. These limits fit a full valid Unicode library.
     private const int ProfileBytes = 2 * 1024 * 1024;
-    private const int QuickMessageBytes = 64 * 1024;
     private const int DecorationBytes = 256 * 1024;
     public ProfileLibrary ReadProfiles(AppSettings legacy)
     {
@@ -19,12 +18,6 @@ public sealed partial class LocalData
         var saved = library.PrepareForSave();
         return saved is {IsValid:true} && WritePresentation("profiles.json", saved, ProfileBytes);
     }
-    public QuickMessageLibrary ReadQuickMessages()
-    {
-        var library = Read<QuickMessageLibrary>(Path.Combine(Root,"quick-messages.json"),QuickMessageBytes);
-        return library is {IsValid:true} ? library : QuickMessageLibrary.Defaults();
-    }
-    public bool SaveQuickMessages(QuickMessageLibrary library) => library.IsValid && WritePresentation("quick-messages.json", library, QuickMessageBytes);
     public DecorationState ReadDecorationState()
     {
         var state = Read<DecorationState>(Path.Combine(Root, "decorations.json"), DecorationBytes);

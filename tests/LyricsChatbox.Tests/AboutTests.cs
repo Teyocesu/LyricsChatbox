@@ -223,15 +223,13 @@ public sealed class AboutTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true, false, true, true, true)]
-    [InlineData(true, false, true, false, false)]
-    [InlineData(true, false, false, true, false)]
-    [InlineData(true, true, true, true, false)]
-    [InlineData(false, false, true, true, false)]
-    [InlineData(false, true, true, true, false)]
-    public void OutputSendingRequiresEnabledUnpausedPlayingAutomatic(
-        bool enabled, bool paused, bool playing, bool automatic, bool expected) =>
-        Assert.Equal(expected, OutputSidebarPresentation.IsSending(enabled, paused, playing, automatic));
+    [InlineData(true, false, true, true)]
+    [InlineData(true, false, false, false)]
+    [InlineData(true, true, true, false)]
+    [InlineData(false, false, true, false)]
+    [InlineData(false, true, true, false)]
+    public void OutputSendingRequiresEnabledUnpausedPlaying(bool enabled, bool paused, bool playing, bool expected) =>
+        Assert.Equal(expected, OutputSidebarPresentation.IsSending(enabled, paused, playing));
 
     [Theory]
     [InlineData("127.0.0.1", 9000, "To 127.0.0.1:9000")]

@@ -353,7 +353,6 @@ public sealed class RotationTests : IDisposable
     }
 
     [Theory]
-    [InlineData("Manual")]
     [InlineData("Output Off")]
     [InlineData("Output Pause")]
     [InlineData("no message token")]
@@ -607,32 +606,20 @@ public sealed class RotationTests : IDisposable
     }
 
     [Fact]
-    public void EligibilityPolicyFreezesForOffPauseManualAndMissingMessageThenResumesRemainder()
+    public void EligibilityPolicyFreezesForOffPauseAndMissingMessageThenResumesRemainder()
     {
         var rotation = Rotation(true, 10, Message("a", "A"), Message("b", "B"));
         var rotator = new MessageRotator();
-        var manual = new ManualChat();
-        bool Eligible(bool consumes = true, bool output = true, bool paused = false, double now = 0) =>
-            MessageRotator.IsEligible(consumes, output, paused, manual.AutomaticAvailable(now));
+        static bool Eligible(bool consumes = true, bool output = true, bool paused = false) =>
+            MessageRotator.IsEligible(consumes, output, paused);
 
-        Assert.Equal("A", rotator.Current("p", rotation, "A", 0, Eligible(now: 0)).Text);
-        Assert.Equal(6, rotator.Current("p", rotation, "A", 4, Eligible(output: false, now: 4)).RemainingSeconds, 6);
-        Assert.Equal(6, rotator.Current("p", rotation, "A", 24, Eligible(paused: true, now: 24)).RemainingSeconds, 6);
-        Assert.Equal(6, rotator.Current("p", rotation, "A", 44, Eligible(consumes: false, now: 44)).RemainingSeconds, 6);
-
-        manual.PrepareDraft("manual");
-        Assert.Equal(6, rotator.Current("p", rotation, "A", 64, Eligible(now: 64)).RemainingSeconds, 6);
-        manual.Resume();
-        Assert.Equal("A", rotator.Current("p", rotation, "A", 64, Eligible(now: 64)).Text);
-        Assert.Equal("A", rotator.Current("p", rotation, "A", 69, Eligible(now: 69)).Text);
-        Assert.Equal("B", rotator.Current("p", rotation, "A", 70, Eligible(now: 70)).Text);
-
-        manual.Edit("manual", false, 72);
-        manual.Send();
-        manual.Sent(72);
-        Assert.Equal(8, rotator.Current("p", rotation, "A", 72, Eligible(now: 72)).RemainingSeconds, 6);
-        Assert.Equal("B", rotator.Current("p", rotation, "A", 80, Eligible(now: 80)).Text);
-        Assert.Equal("A", rotator.Current("p", rotation, "A", 88, Eligible(now: 88)).Text);
+        Assert.Equal("A", rotator.Current("p", rotation, "A", 0, Eligible()).Text);
+        Assert.Equal(6, rotator.Current("p", rotation, "A", 4, Eligible(output: false)).RemainingSeconds, 6);
+        Assert.Equal(6, rotator.Current("p", rotation, "A", 24, Eligible(paused: true)).RemainingSeconds, 6);
+        Assert.Equal(6, rotator.Current("p", rotation, "A", 44, Eligible(consumes: false)).RemainingSeconds, 6);
+        Assert.Equal("A", rotator.Current("p", rotation, "A", 64, Eligible()).Text);
+        Assert.Equal("A", rotator.Current("p", rotation, "A", 69, Eligible()).Text);
+        Assert.Equal("B", rotator.Current("p", rotation, "A", 70, Eligible()).Text);
     }
 
     [Fact]

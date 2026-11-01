@@ -70,8 +70,8 @@ public sealed class MessageRotator
     private readonly Dictionary<string, State> states = [];
     private string? activeProfileId;
 
-    public static bool IsEligible(bool consumesMessage, bool outputEnabled, bool outputPaused, bool automaticAvailable) =>
-        consumesMessage && outputEnabled && !outputPaused && automaticAvailable;
+    public static bool IsEligible(bool consumesMessage, bool outputEnabled, bool outputPaused) =>
+        consumesMessage && outputEnabled && !outputPaused;
 
     public MessageRotationCurrent Current(string profileId, MessageRotation rotation, string legacyMessage,
         double now, bool isEligible)
