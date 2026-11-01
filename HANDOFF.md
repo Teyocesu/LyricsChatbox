@@ -8,5 +8,4 @@
 - Last gates: locked restore, Release build (0/0), full test suite, package policy, diff check.
 - Final release gate, physical: mouse and keyboard on Display, Decorations modal, Tab order with the `TokenChips` empty stop, caption-button overlap at 820x650, non-100% DPI, screen reader, live playback on Home, candidate search results, Home tab deselection and focus-to-tab retest, VR headset view, automatic lyrics with Lyric Context, real music playback with Native Chatbox Protection, saved-false tray menu. If `Rename` is physically inaccessible, the release is BLOCKED until fixed.
 - Neutral naming is permanent: new branches, commits, PRs, public documentation and release metadata carry no AI model or tool names. History is not rewritten.
-- Open before release: startup `/chatbox/typing` false with Output Off. It conflicts with the Off boundary and must be reassessed and, if justified, corrected. Do not weaken the contract to excuse it.
-- Next: the typing issue, then Phase 5B, Manual removal and consolidation, on explicit approval. Do not start Settings.
+- Next: Phase 5B, Manual removal and consolidation, on explicit approval. Do not start Settings.

@@ -73,7 +73,7 @@ public partial class MainWindow
         NativeChatboxResumeButton.Visibility = view.Holding ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void ClearTyping() { if (!nativeChatbox.Holding) output.SendTyping(false); }
+    private void ClearTyping() { if (!nativeChatbox.Holding && typing.Take(false, MonotonicClock.Now) is false) output.SendTyping(false); }
 
     private void NativeChatboxChanged(object sender, RoutedEventArgs e)
     {

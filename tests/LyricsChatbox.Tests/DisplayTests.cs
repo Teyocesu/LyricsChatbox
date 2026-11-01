@@ -166,4 +166,25 @@ public class DisplayTests
         Assert.Equal("/chatbox/typing\0,T\0\0", Encoding.UTF8.GetString(ChatboxFormatter.TypingPacket(true)));
         Assert.Equal("/chatbox/typing\0,F\0\0", Encoding.UTF8.GetString(ChatboxFormatter.TypingPacket(false)));
     }
+
+    [Fact]
+    public void InactiveTypingSendsNothing()
+    {
+        var signal = new TypingSignal();
+        Assert.Null(signal.Take(false, 0));
+        signal.Reset();
+        Assert.Null(signal.Take(false, 1));
+    }
+
+    [Fact]
+    public void ReceiverResetResendsActiveTypingAndKeepsItsPendingClear()
+    {
+        var signal = new TypingSignal();
+        Assert.True(signal.Take(true, 0));
+        signal.Reset();
+        Assert.True(signal.Take(true, 0.5));
+        signal.Reset();
+        Assert.False(signal.Take(false, 1));
+        Assert.Null(signal.Take(false, 2));
+    }
 }

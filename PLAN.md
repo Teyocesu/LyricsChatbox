@@ -1,4 +1,4 @@
-# v1.0.0 execution plan — Phase 5A closed; typing issue, then Phase 5B next
+# v1.0.0 execution plan — Phase 5A closed; Phase 5B next
 
 ## State and baseline
 
@@ -651,3 +651,13 @@ Limitations:
 Open: the inherited startup `/chatbox/typing` false with Output Off is confirmed and not fixed here. It must be independently reassessed and, if justified, corrected before the v1.0.0 release. The Output Off contract stays as written.
 
 Earlier release gates stay in force, including the physical checks from Phases 3 and 4 and the `Rename` blocker. Manual remains until Phase 5B.
+
+### Typing signal correction (2026-11-01)
+
+Classification: confirmed, alternative fix, low severity. Output Off sent `/chatbox/typing` false at startup, on destination changes, on power events and at shutdown, against the Off boundary and the master switch rule in SPEC. SPEC is unchanged: disabling and shutdown clears are required only when typing was active.
+
+- `TypingSignal` keeps its state across `Reset`, which now only makes active typing resend at once. Inactive typing stays silent.
+- `ClearTyping` goes through the signal and sends only after a true.
+- Suppressing false while `Reset` still cleared the state was rejected: a reset during active typing would lose the pending clear.
+
+Loopback, same script on base and fix, on a hidden desktop with private ports and no VRChat. Output Off: base 6 typing packets, fix 0. Active typing keeps the same clears on focus loss, Output Off, Pause, destination change, hold release and shutdown, with no packet during the hold and true resent to a new destination. Validation: locked restore, Release build, full suite, package policy and diff check.

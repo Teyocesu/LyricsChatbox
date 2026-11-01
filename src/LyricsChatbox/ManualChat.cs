@@ -79,9 +79,10 @@ public sealed class ManualChat
 
 public sealed class TypingSignal
 {
-    private bool? last;
+    private bool last;
     private double nextRefresh;
-    public void Reset() => last = null;
+    // A new receiver gets active typing at once. The state stays, so a sent true can still be cleared.
+    public void Reset() => nextRefresh = 0;
     public void Suppress(double now) { last = false; nextRefresh = now + 2; }
     public bool? Take(bool typing, double now)
     {
