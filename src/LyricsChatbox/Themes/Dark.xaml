@@ -19,13 +19,6 @@
     <Setter Property="FontWeight" Value="SemiBold"/>
     <Setter Property="Margin" Value="0,0,0,12"/>
   </Style>
-  <Style x:Key="Card" TargetType="Border">
-    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}"/>
-    <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="12"/>
-    <Setter Property="Padding" Value="20"/>
-  </Style>
   <Style TargetType="Button">
     <Setter Property="Background" Value="{DynamicResource RaisedBrush}"/>
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
@@ -365,10 +358,10 @@
                 </RepeatButton>
               </Track.DecreaseRepeatButton>
               <Track.Thumb>
-                <Thumb x:Name="Handle" Width="16" Height="24">
+                <Thumb x:Name="Handle" Width="16" Height="24" BorderBrush="{DynamicResource SurfaceBrush}">
                   <Thumb.Template>
                     <ControlTemplate TargetType="Thumb">
-                      <Ellipse x:Name="Circle" Width="14" Height="14" Fill="{DynamicResource AccentBrush}" Stroke="{DynamicResource SurfaceBrush}" StrokeThickness="2"/>
+                      <Ellipse x:Name="Circle" Width="14" Height="14" Fill="{DynamicResource AccentBrush}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2"/>
                       <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                           <Setter TargetName="Circle" Property="Stroke" Value="{DynamicResource TextBrush}"/>
@@ -385,7 +378,7 @@
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="IsKeyboardFocusWithin" Value="True">
-              <Setter TargetName="Handle" Property="Opacity" Value="0.75"/>
+              <Setter TargetName="Handle" Property="BorderBrush" Value="{DynamicResource TextBrush}"/>
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
               <Setter Property="Opacity" Value="0.4"/>

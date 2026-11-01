@@ -1,4 +1,4 @@
-# v1.0.0 execution plan — Phase 5B closed; Phase 6 next
+# v1.0.0 execution plan — Phase 6 closed; release readiness next
 
 ## State and baseline
 
@@ -705,3 +705,39 @@ CLOSED / ACCEPTED by product-owner decision after independent source and visual 
 - Physical QA remains a release gate: real input and focus, `Rename` at 820x650, non-100% DPI, screen reader, real music playback, Native Chatbox Protection on this build, tray, startup and updater.
 
 Next: Phase 6, Settings visual consolidation, on explicit approval.
+
+## Phase 6 — Settings visual consolidation
+
+### Approach
+
+- `SPEC.md` holds the contract. Settings joins Display as a full-bleed workspace: eyebrow, tracked labels, rules, center divider and pinned continuous Preview. Card and page-heading wiring existed only for Settings, so it is gone.
+- Arrangement verified on native renders: first column Playback source, Lyrics sources, VRChat OSC; second column Appearance, Application behavior, Native Chatbox Protection. Accent and Background share a row so the columns balance. Column order is also the single-column reading and Tab order, which needs no reparenting.
+
+### Findings and classification
+
+| Finding | Evidence | Classification |
+|---|---|---|
+| Scrolled controls entered the 36-DIP caption area, under the window buttons and where a click drags the window | Native scrolled renders, `WindowChrome.CaptionHeight`, SPEC shell rule | CONFIRMED — FIX, Settings only: page scrolls below the area, position at rest unchanged |
+| Slider focus was only 75% opacity on a 14-DIP dot | Native focus render | CONFIRMED — FIX in the theme: white thumb ring on keyboard focus. The unfocused state is pixel-identical |
+| Display and About also scroll under the caption area | Code reading | DEFERRED — NON-BLOCKING: frozen pages, already in the caption and `Rename` release gate |
+| ComboBox focus changes text color only | Native focus render | REJECTED — NOT A DEFECT: visible, shared by frozen pages |
+| The stated arrangement could harm reading order | Tab walk, automation tree, renders at each size | REJECTED — NOT A DEFECT: arrangement kept |
+
+### Phase 6 validation (2026-11-01, uncommitted, awaiting review)
+
+- Automated: locked restore, Release build 0/0, focused 279/279, full suite 581/581 with no test changes, package policy PASS, `git diff --check` clean. Layout is visual, so no test was added.
+- Isolated native, simulated: 140/140 checks across three runs on a hidden desktop with synthetic data and a private listener. The registry startup store, mDNS browse, lyrics lookups and player switching were stubbed. The live handlers ran for source selection, accent, hex, color picker Cancel and OK, background, tint, startup success and failure, tray options, Import, Retry, Forget, OSCQuery, Advanced destination, Apply and errors, and every protection state. Also checked: 21-step Tab order, reachability at seven sizes plus 820x500, no horizontal extent, one Preview, focus and draft kept across 840 DIP, and direct startup on Settings.
+- Frozen pages: 60/60 native renders of Home, Display and About pixel-identical to `c3e780d`, across five sizes, Rose and Blue, scrolled ends and Home tabs. Focused slider states are excluded from that comparison and changed on purpose.
+- Copy: all 103 tracked attributes of the Settings block survive, apart from the six group titles, which keep their plain text as accessible names.
+- Not performed: physical input, real DPI, a screen reader, real VRChat or real music playback. Scaling was simulated by DIP size and render scale only.
+
+### Phase 6 closure (2026-11-01)
+
+CLOSED / ACCEPTED by product-owner decision after independent source and visual review of the seven-file diff. This is not a release approval.
+
+- The Settings continuous visual redesign is accepted. All four pages use the approved visual system with one shared continuous Preview.
+- 581/581 automated tests, 140/140 isolated WPF checks and 60/60 frozen-page renders identical.
+- Independent source and visual review PASS, with no production defects identified.
+- Physical QA remains a release gate: real input, focus and popups, `Rename` at 820x650, non-100% DPI, screen reader, real music playback, Native Chatbox Protection on this build, the real color picker and LRC import, tray, startup and updater.
+
+Next: v1.0.0 release readiness, on explicit approval.

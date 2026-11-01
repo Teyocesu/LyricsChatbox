@@ -2,7 +2,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace LyricsChatbox;
 
@@ -69,48 +68,22 @@ internal static class WindowLayout
         var home = Find<Grid>("HomePage").Visibility == Visibility.Visible;
         var about = Find<Grid>("AboutPage").Visibility == Visibility.Visible;
         var display = Find<ScrollViewer>("DisplayPage").Visibility == Visibility.Visible;
-        // Home, About and Display are full-bleed: they fill the entire post-sidebar cell, so the
-        // shared ContentPanel margin is removed while one is active. Other pages keep it.
-        var fullBleed = home || about || display;
-        Find<Grid>("ContentPanel").Margin = fullBleed ? new(0) : shortWindow ? new(16, 38, 16, 10) : new(28, 48, 28, 16);
-        Find<TextBlock>("ErrorText").Margin = fullBleed ? new(30, 8, 30, 8) : new(0, 8, 0, 0);
-        Find<StackPanel>("HeadingPanel").Margin = new(0, 0, 0, shortWindow ? 8 : 16);
-        Find<StackPanel>("HeadingPanel").Visibility = fullBleed ? Visibility.Collapsed : Visibility.Visible;
-        var previewHost = Find<ContentControl>("PersistentPreviewHost");
-        previewHost.Visibility = home || about ? Visibility.Collapsed : Visibility.Visible;
-        previewHost.Margin = display ? new(30, 0, 30, 0) : new(0);
-        previewHost.MaxWidth = display ? 1400 : double.PositiveInfinity;
+        var settings = Find<ScrollViewer>("SettingsPage").Visibility == Visibility.Visible;
+        Find<ContentControl>("PersistentPreviewHost").Visibility = home || about ? Visibility.Collapsed : Visibility.Visible;
         // The About breakpoint uses usable content width. Derive it synchronously from the
         // post-sidebar cell (stable across navigation) rather than the About viewport,
         // whose ActualWidth is stale on the navigating pass before WPF runs layout.
         var cellWidth = Find<Grid>("ContentRoot").ActualWidth - Find<Border>("Sidebar").ActualWidth;
         if (cellWidth <= 0) cellWidth = Find<Grid>("ContentPanel").ActualWidth;
         ApplyAboutLayout(scope, AboutUsableWidth(cellWidth));
-        var preview = Find<Border>("PreviewCard");
+        var preview = Find<Grid>("PreviewPanel");
         var destination = Find<ContentControl>(home ? "HomePreviewHost" : "PersistentPreviewHost");
         if (preview.Parent != destination)
         {
             ((ContentControl)preview.Parent).Content = null;
             destination.Content = preview;
         }
-        // Preview drops its card on migrated pages; Settings keeps it until its phase.
-        var continuousPreview = home || display;
-        if (continuousPreview)
-        {
-            preview.Background = Brushes.Transparent;
-            preview.BorderThickness = new(0);
-        }
-        else
-        {
-            preview.ClearValue(Border.BackgroundProperty);
-            preview.ClearValue(Border.BorderThicknessProperty);
-        }
-        preview.Padding = continuousPreview ? new(0) : shortWindow ? new(10, 6, 10, 6) : new(18);
         preview.Margin = home ? new(0, 0, 0, 24) : new(0, shortWindow ? 8 : 16, 0, 0);
-        var previewLabel = Find<TextBlock>("PreviewLabel");
-        previewLabel.Text = continuousPreview ? "C H A T B O X  P R E V I E W" : "Live Preview";
-        previewLabel.Style = continuousPreview ? (Style)scope.FindResource("AboutSectionLabel") : null;
-        Find<Border>("PreviewRule").Visibility = continuousPreview ? Visibility.Visible : Visibility.Collapsed;
         Find<DockPanel>("PreviewHeading").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
         Find<ScrollViewer>("PreviewScroller").MaxHeight = home ? 130 : shortWindow ? 24 : 72;
         Find<TextBlock>("PreviewProfileText").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
@@ -119,22 +92,24 @@ internal static class WindowLayout
         Find<Border>("PreviewFrame").Padding = home ? new(12, 8, 12, 8) : new(8, 2, 8, 2);
         Find<Border>("PreviewFrame").Margin = new(0, 0, 0, home ? 10 : 6);
         if (home) ApplyHomeLayout(scope, cellWidth - AboutContentGutters, contentHeight, shortWindow);
-        if (display) ApplyDisplayLayout(scope, cellWidth - AboutContentGutters);
+        if (display) ApplyWorkspaceLayout(scope, "Display", 40, cellWidth - AboutContentGutters);
+        // Settings scrolls below the caption area, where a click would drag the window instead of reaching a control.
+        if (settings) ApplyWorkspaceLayout(scope, "Settings", 4, cellWidth - AboutContentGutters);
     }
 
-    private static void ApplyDisplayLayout(FrameworkElement scope, double contentWidth)
+    private static void ApplyWorkspaceLayout(FrameworkElement scope, string page, double top, double contentWidth)
     {
-        T Find<T>(string name) => (T)scope.FindName(name);
+        T Find<T>(string part) => (T)scope.FindName(page + part);
         // The scrollbar column is always reserved, so content keeps Preview's right edge and never reflows.
-        Find<StackPanel>("DisplayCanvas").Margin = new(30, 40, 30 - SystemParameters.VerticalScrollBarWidth, 8);
+        Find<StackPanel>("Canvas").Margin = new(30, top, 30 - SystemParameters.VerticalScrollBarWidth, 8);
         var columns = UsesHomeColumns(contentWidth);
-        var support = Find<StackPanel>("DisplaySupportColumn");
-        Grid.SetColumnSpan(Find<StackPanel>("DisplayPrimaryColumn"), columns ? 1 : 3);
+        var support = Find<StackPanel>("SupportColumn");
+        Grid.SetColumnSpan(Find<StackPanel>("PrimaryColumn"), columns ? 1 : 3);
         Grid.SetColumn(support, columns ? 2 : 0);
         Grid.SetColumnSpan(support, columns ? 1 : 3);
         Grid.SetRow(support, columns ? 0 : 1);
         support.Margin = new(0, columns ? 0 : 24, 0, 0);
-        Find<Border>("DisplayColumnDivider").Visibility = columns ? Visibility.Visible : Visibility.Collapsed;
+        Find<Border>("ColumnDivider").Visibility = columns ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private static void ApplyHomeLayout(FrameworkElement scope, double contentWidth, double contentHeight, bool shortWindow)

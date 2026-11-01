@@ -240,7 +240,6 @@ public partial class MainWindow : Window
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
         AboutRoot.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
         AboutPage.Visibility = page == "About" ? Visibility.Visible : Visibility.Collapsed;
-        PageTitle.Text = page;
         WindowLayout.Apply(this, ContentRoot.ActualHeight);
         activeSection = page;
         SaveRuntimeStateNow();
