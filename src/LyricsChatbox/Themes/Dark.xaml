@@ -88,29 +88,22 @@
   </Style>
   <Style x:Key="NavigationItem" TargetType="RadioButton">
     <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
-    <Setter Property="Padding" Value="16,13"/>
-    <Setter Property="Margin" Value="0,0,0,6"/>
+    <Setter Property="Padding" Value="0,10"/>
+    <Setter Property="Margin" Value="0,0,0,2"/>
     <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{StaticResource InsetFocusRing}"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="RadioButton">
-          <Grid>
-            <Border x:Name="Shell" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
-              <ContentPresenter RecognizesAccessKey="True"/>
-            </Border>
-            <Border x:Name="Marker" Width="3" CornerRadius="1.5" Background="{DynamicResource AccentBrush}" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="1,10,0,10" Visibility="Collapsed"/>
+          <Grid Background="Transparent">
+            <Border Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" RecognizesAccessKey="True"/></Border>
+            <Border x:Name="Marker" Width="3" CornerRadius="0,2,2,0" Background="{DynamicResource AccentBrush}" HorizontalAlignment="Left" Margin="0,8" Visibility="Collapsed"/>
           </Grid>
           <ControlTemplate.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Shell" Property="Background" Value="{DynamicResource HoverBrush}"/>
-            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="{DynamicResource TextBrush}"/></Trigger>
             <Trigger Property="IsChecked" Value="True">
-              <Setter TargetName="Shell" Property="Background" Value="{DynamicResource SelectedBrush}"/>
               <Setter TargetName="Marker" Property="Visibility" Value="Visible"/>
-              <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
-            </Trigger>
-            <Trigger Property="IsKeyboardFocused" Value="True">
-              <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource FocusBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>

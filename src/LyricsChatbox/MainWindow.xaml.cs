@@ -271,6 +271,7 @@ public partial class MainWindow : Window
         SettingsNav.IsChecked = true;
         PlaybackSourceBox.Focus();
     }
+    private void OpenAbout(object sender, RoutedEventArgs e) => AboutNav.IsChecked = true;
     private void SetError(string message) => ErrorText.Text = message;
     private void ClearError() => ErrorText.Text = "";
     private void EnabledChanged(object sender, RoutedEventArgs e)

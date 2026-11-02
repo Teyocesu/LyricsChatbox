@@ -7,8 +7,12 @@
       <Setter Property="Width" Value="46"/><Setter Property="Height" Value="46"/>
       <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Circle" CornerRadius="23" BorderThickness="1.5" BorderBrush="{DynamicResource AccentBrush}" Background="Transparent"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Circle" Property="Background" Value="{DynamicResource AccentMutedBrush}"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter TargetName="Circle" Property="Opacity" Value="0.4"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Circle" Property="BorderBrush" Value="{DynamicResource TextBrush}"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
     </Style>
-    <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Width" Value="46"/><Setter Property="Height" Value="32"/><Setter Property="MinHeight" Value="32"/><Setter Property="Padding" Value="0"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="FontFamily" Value="Segoe Fluent Icons"/><Setter Property="FontSize" Value="10"/><Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/></Style>
-    <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Padding" Value="10,5"/><Setter Property="MinHeight" Value="30"/><Setter Property="FontSize" Value="11"/></Style>
+    <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Width" Value="46"/><Setter Property="Height" Value="32"/><Setter Property="MinHeight" Value="32"/><Setter Property="Padding" Value="0"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="FontFamily" Value="Segoe Fluent Icons"/><Setter Property="FontSize" Value="10"/><Setter Property="FocusVisualStyle" Value="{StaticResource InsetFocusRing}"/><Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/></Style>
+    <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Padding" Value="10,5"/><Setter Property="MinHeight" Value="30"/><Setter Property="FontSize" Value="12"/></Style>
+    <Style x:Key="StatusButton" TargetType="Button" BasedOn="{StaticResource SmallButton}"><Setter Property="Padding" Value="10,2"/><Setter Property="MinHeight" Value="24"/><Setter Property="Margin" Value="0,0,6,0"/></Style>
+    <Style x:Key="StatusSegment" TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource LineBrush}"/><Setter Property="BorderThickness" Value="1,0,0,0"/><Setter Property="Padding" Value="12,0"/></Style>
+    <Style x:Key="StatusText" TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Setter Property="TextWrapping" Value="NoWrap"/><Setter Property="TextTrimming" Value="CharacterEllipsis"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/></Style>
+    <Style x:Key="RailLogoButton" TargetType="Button"><Setter Property="Cursor" Value="Hand"/><Setter Property="HorizontalAlignment" Value="Center"/><Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/><Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><ContentPresenter/></ControlTemplate></Setter.Value></Setter></Style>
     <Style x:Key="AboutSectionLabel" TargetType="TextBlock">
       <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
       <Setter Property="FontSize" Value="13"/>
@@ -182,88 +186,95 @@
   </Window.Resources>
   <Grid x:Name="ContentRoot">
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="240"/>
+      <ColumnDefinition Width="72"/>
       <ColumnDefinition/>
     </Grid.ColumnDefinitions>
-    <Border x:Name="Sidebar" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource SidebarBrush}" Padding="20,28,20,16">
+    <Grid.RowDefinitions>
+      <RowDefinition/>
+      <RowDefinition Height="32"/>
+    </Grid.RowDefinitions>
+    <Border x:Name="Sidebar" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource SidebarBrush}">
       <DockPanel>
-        <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,6,0,30">
-          <Image x:Name="BrandIcon" Source="Assets/AppIcon.png" Width="52" Height="52" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
-          <TextBlock Text="LyricsChatbox" FontSize="17" FontWeight="SemiBold" TextAlignment="Center" Margin="0,12,0,0"/>
-          <TextBlock x:Name="VersionCaption" Style="{StaticResource Caption}" FontSize="11" TextAlignment="Center" Margin="0,3,0,0"/>
-        </StackPanel>
-        <StackPanel x:Name="OutputPanel" DockPanel.Dock="Bottom">
-          <Border Height="1" Background="{DynamicResource LineBrush}" Margin="0,0,0,14"/>
-          <DockPanel Margin="0,0,0,2" VerticalAlignment="Center">
-            <CheckBox x:Name="EnabledBox" DockPanel.Dock="Right" VerticalAlignment="Center" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"/>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE713;" FontSize="16" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center"/>
-              <TextBlock Text="Output" FontSize="13" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-            </StackPanel>
-          </DockPanel>
-          <StackPanel Orientation="Horizontal" Margin="0,10,0,0" VerticalAlignment="Center">
-            <Ellipse x:Name="OutputStatusDot" Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" Margin="2,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"/>
-            <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource Caption}" FontSize="12" VerticalAlignment="Center"/>
-          </StackPanel>
-          <TextBlock x:Name="OutputDestinationText" Text="" Style="{StaticResource Caption}" Margin="0,4,0,0" FontSize="11" AutomationProperties.Name="Configured OSC destination"/>
-          <TextBlock x:Name="OutputActivityText" Text="" Style="{StaticResource Caption}" Margin="0,4,0,0" FontSize="11" Visibility="Collapsed"/>
-          <TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource Caption}" Margin="0,4,0,0" Visibility="Collapsed"/>
-          <WrapPanel Margin="0,12,0,0">
-            <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="0,0,6,0" AutomationProperties.Name="Resume Chatbox output"/>
-            <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource SmallButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
-              <Button.ContextMenu>
-                <ContextMenu>
-                  <MenuItem Header="Pause for 5 minutes" Tag="5" Click="PauseOutputSelected"/>
-                  <MenuItem Header="Pause for 15 minutes" Tag="15" Click="PauseOutputSelected"/>
-                  <MenuItem Header="Pause for 30 minutes" Tag="30" Click="PauseOutputSelected"/>
-                  <Separator/>
-                  <MenuItem x:Name="PauseUntilTrackMenuItem" Header="Pause until next track" Tag="track" Click="PauseOutputSelected"/>
-                  <MenuItem Header="Pause until I resume" Tag="resume" Click="PauseOutputSelected"/>
-                </ContextMenu>
-              </Button.ContextMenu>
-            </Button>
-          </WrapPanel>
-          <Grid x:Name="OutputVisualizer" Height="74" Margin="0,12,0,6" Focusable="False" IsHitTestVisible="False" Opacity="0.35">
-            <local:MusicRibbonWaveform x:Name="OutputMusicWave" Margin="5,0" AccentBrush="{DynamicResource AccentBrush}" Focusable="False" IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-          </Grid>
+        <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,14,0,20">
+          <Button Click="OpenAbout" Style="{StaticResource RailLogoButton}" AutomationProperties.Name="About LyricsChatbox" ToolTip="About LyricsChatbox">
+            <Image x:Name="BrandIcon" Source="Assets/AppIcon.png" Width="36" Height="36" RenderOptions.BitmapScalingMode="HighQuality"/>
+          </Button>
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="NavigationPanel">
           <RadioButton Tag="Home" AutomationProperties.Name="Home" GroupName="Navigation" IsChecked="True" Checked="Navigate" Style="{StaticResource NavigationItem}">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Home" FontSize="15"/>
+            <StackPanel>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="20" HorizontalAlignment="Center"/>
+              <TextBlock Text="Home" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
             </StackPanel>
           </RadioButton>
           <RadioButton Tag="Display" AutomationProperties.Name="Display" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE7F4;" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Display" FontSize="15"/>
+            <StackPanel>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE7F4;" FontSize="20" HorizontalAlignment="Center"/>
+              <TextBlock Text="Display" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="SettingsNav" Tag="Settings" AutomationProperties.Name="Settings" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="Settings" FontSize="15"/>
+            <StackPanel>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="" FontSize="20" HorizontalAlignment="Center"/>
+              <TextBlock Text="Settings" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
             </StackPanel>
           </RadioButton>
           <RadioButton x:Name="AboutNav" Tag="About" AutomationProperties.Name="About" GroupName="Navigation" Checked="Navigate" Style="{StaticResource NavigationItem}">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE946;" FontSize="22" Width="26" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <TextBlock Text="About" FontSize="15"/>
+            <StackPanel>
+              <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE946;" FontSize="20" HorizontalAlignment="Center"/>
+              <TextBlock Text="About" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
             </StackPanel>
           </RadioButton>
         </StackPanel>
         </ScrollViewer>
       </DockPanel>
     </Border>
+    <Border x:Name="OutputPanel" Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0">
+      <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" Margin="16,0,8,0">
+          <TextBlock Text="Output" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+          <CheckBox x:Name="EnabledBox" VerticalAlignment="Center" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"/>
+        </StackPanel>
+        <Border Grid.Column="1" Style="{StaticResource StatusSegment}">
+          <StackPanel Orientation="Horizontal">
+            <Ellipse x:Name="OutputStatusDot" Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" Margin="0,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+            <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource StatusText}" MaxWidth="220"/>
+          </StackPanel>
+        </Border>
+        <DockPanel Grid.Column="2" LastChildFill="False">
+          <Border Style="{StaticResource StatusSegment}"><TextBlock x:Name="OutputDestinationText" Text="" Style="{StaticResource StatusText}" AutomationProperties.Name="Configured OSC destination"/></Border>
+          <Border Style="{StaticResource StatusSegment}" Visibility="{Binding Visibility, ElementName=OutputActivityText}"><TextBlock x:Name="OutputActivityText" Text="" Style="{StaticResource StatusText}" Visibility="Collapsed"/></Border>
+          <Border Style="{StaticResource StatusSegment}" Visibility="{Binding Visibility, ElementName=OutputPauseHint}"><TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource StatusText}" Visibility="Collapsed"/></Border>
+        </DockPanel>
+        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource StatusButton}" Visibility="Collapsed" AutomationProperties.Name="Resume Chatbox output"/>
+          <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource StatusButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
+            <Button.ContentTemplate><DataTemplate><StackPanel Orientation="Horizontal"><TextBlock Text="{Binding}"/><TextBlock Text="▾" Margin="6,0,0,0" FontSize="10" VerticalAlignment="Center" AutomationProperties.Name=" "/></StackPanel></DataTemplate></Button.ContentTemplate>
+            <Button.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="Pause for 5 minutes" Tag="5" Click="PauseOutputSelected"/>
+                <MenuItem Header="Pause for 15 minutes" Tag="15" Click="PauseOutputSelected"/>
+                <MenuItem Header="Pause for 30 minutes" Tag="30" Click="PauseOutputSelected"/>
+                <Separator/>
+                <MenuItem x:Name="PauseUntilTrackMenuItem" Header="Pause until next track" Tag="track" Click="PauseOutputSelected"/>
+                <MenuItem Header="Pause until I resume" Tag="resume" Click="PauseOutputSelected"/>
+              </ContextMenu>
+            </Button.ContextMenu>
+          </Button>
+        </StackPanel>
+        <Border Grid.Column="4" Style="{StaticResource StatusSegment}"><TextBlock x:Name="VersionCaption" Style="{StaticResource Caption}" FontSize="11" VerticalAlignment="Center"/></Border>
+      </Grid>
+    </Border>
     <Grid x:Name="ContentPanel" Grid.Column="1">
       <Grid.RowDefinitions>
+        <RowDefinition Height="36"/>
         <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <Grid x:Name="HomePage" Grid.RowSpan="2" ClipToBounds="True">
+      <Grid x:Name="HomePage" Grid.RowSpan="3" ClipToBounds="True">
         <Grid x:Name="HomeAtmosphere" VerticalAlignment="Top" Height="{Binding ActualHeight, ElementName=NowPlayingPanel}" IsHitTestVisible="False" Focusable="False" ClipToBounds="True" AutomationProperties.Name=" ">
           <Grid.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#FF000000" Offset="0"/><GradientStop Color="#D9000000" Offset="0.5"/><GradientStop Color="#00000000" Offset="0.86"/></LinearGradientBrush></Grid.OpacityMask>
           <Border Background="{DynamicResource HeroBrush}"/>
@@ -425,7 +436,7 @@
           </Grid>
         </Grid>
       </Grid>
-      <ScrollViewer x:Name="DisplayPage" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
+      <ScrollViewer x:Name="DisplayPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
         <StackPanel x:Name="DisplayCanvas" MaxWidth="1400">
           <Grid Height="22" Margin="0,0,0,18">
             <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
@@ -534,7 +545,7 @@
           </Grid>
         </StackPanel>
       </ScrollViewer>
-      <ScrollViewer x:Name="SettingsPage" Margin="0,36,0,0" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
+      <ScrollViewer x:Name="SettingsPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
         <StackPanel x:Name="SettingsCanvas" MaxWidth="1400">
           <Grid Height="22" Margin="0,0,0,18">
             <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
@@ -628,7 +639,7 @@
           </Grid>
         </StackPanel>
       </ScrollViewer>
-      <Grid x:Name="AboutRoot" Grid.RowSpan="3" Panel.ZIndex="1" Visibility="Collapsed" Background="{DynamicResource CanvasBrush}" ClipToBounds="True">
+      <Grid x:Name="AboutRoot" Grid.RowSpan="4" Panel.ZIndex="1" Visibility="Collapsed" Background="{DynamicResource CanvasBrush}" ClipToBounds="True">
         <Grid x:Name="AboutHeroArtLayer" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="420" IsHitTestVisible="False" Focusable="False" AutomationProperties.Name=" ">
           <Grid.RenderTransform><TranslateTransform x:Name="AboutHeroArtScrollTransform"/></Grid.RenderTransform>
           <Grid.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#FF000000" Offset="0"/><GradientStop Color="#E6000000" Offset="0.40"/><GradientStop Color="#00000000" Offset="1"/></LinearGradientBrush></Grid.OpacityMask>
@@ -637,7 +648,7 @@
             <Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#00000000" Offset="0"/><GradientStop Color="#40000000" Offset="0.36"/><GradientStop Color="#D9000000" Offset="0.72"/><GradientStop Color="#FF000000" Offset="1"/></LinearGradientBrush></Border.OpacityMask>
           </Border>
         </Grid>
-        <ScrollViewer x:Name="AboutScrollViewer" Background="Transparent" BorderThickness="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" HorizontalContentAlignment="Stretch" ScrollChanged="AboutScrollChanged" AutomationProperties.Name="About content">
+        <ScrollViewer x:Name="AboutScrollViewer" Margin="0,36,0,0" Background="Transparent" BorderThickness="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" HorizontalContentAlignment="Stretch" ScrollChanged="AboutScrollChanged" AutomationProperties.Name="About content">
           <Grid x:Name="AboutPage" Visibility="Collapsed" MaxWidth="1400" HorizontalAlignment="Center" Margin="30,40,30,24">
           <Grid x:Name="AboutBody">
           <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -759,7 +770,7 @@
         </Grid>
         </ScrollViewer>
       </Grid>
-      <ContentControl x:Name="PersistentPreviewHost" Grid.Row="1" Margin="30,0" MaxWidth="1400" HorizontalContentAlignment="Stretch">
+      <ContentControl x:Name="PersistentPreviewHost" Grid.Row="2" Margin="30,0" MaxWidth="1400" HorizontalContentAlignment="Stretch">
         <Grid x:Name="PreviewPanel">
           <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <DockPanel x:Name="PreviewHeading"><Border Style="{StaticResource HomeSectionRule}" DockPanel.Dock="Bottom" Margin="0,4,0,0"/><TextBlock x:Name="BudgetText" Text="0 / 144" Style="{StaticResource Caption}" DockPanel.Dock="Right" VerticalAlignment="Center"/><TextBlock Text="C H A T B O X  P R E V I E W" Style="{StaticResource AboutSectionLabel}" FontWeight="SemiBold" FontSize="14" AutomationProperties.Name="Chatbox preview"/></DockPanel>
@@ -770,7 +781,9 @@
           <StackPanel x:Name="PreviewStatus" Grid.Row="3" Orientation="Horizontal"><TextBlock x:Name="OwnerText" Text="Automatic" Foreground="{DynamicResource AccentBrush}" FontSize="11"/><TextBlock x:Name="OscText" Text="OSC ready" Style="{StaticResource Caption}" FontSize="10" Margin="12,0,0,0"/></StackPanel>
         </Grid>
       </ContentControl>
-      <TextBlock Grid.Row="2" x:Name="ErrorText" Panel.ZIndex="2" Foreground="{DynamicResource WarningBrush}" Margin="30,8"/>
+      <TextBlock Grid.Row="3" x:Name="ErrorText" Panel.ZIndex="2" Foreground="{DynamicResource WarningBrush}" Margin="30,8">
+        <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers></Style></TextBlock.Style>
+      </TextBlock>
     </Grid>
     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0">
       <Button Content="&#xE921;" Style="{StaticResource CaptionButton}" Click="MinimizeWindow" AutomationProperties.Name="Minimize" ToolTip="Minimize"/>

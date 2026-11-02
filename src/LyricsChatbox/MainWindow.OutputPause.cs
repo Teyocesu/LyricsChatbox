@@ -31,7 +31,7 @@ public partial class MainWindow
     {
         if (OutputPauseButton.ContextMenu is not { } menu) return;
         menu.PlacementTarget = OutputPauseButton;
-        menu.Placement = PlacementMode.Bottom;
+        menu.Placement = PlacementMode.Top;
         menu.IsOpen = true;
     }
 
@@ -100,12 +100,6 @@ public partial class MainWindow
         var effective = destinationSelection.Effective(settings);
         var destination = OutputSidebarPresentation.FormatDestination(effective.Host, effective.Port);
         if (OutputDestinationText.Text != destination) OutputDestinationText.Text = destination;
-        // The motif is decorative playback activity, never measured audio or delivery proof:
-        // full opacity while Active, dim otherwise; motion only while sending (and animations allowed).
-        var opacity = active ? 1d : 0.35d;
-        if (!OutputVisualizer.Opacity.Equals(opacity)) OutputVisualizer.Opacity = opacity;
-        var animate = sending && SystemParameters.ClientAreaAnimation;
-        OutputMusicWave.IsAnimating = animate;
     }
 
 }

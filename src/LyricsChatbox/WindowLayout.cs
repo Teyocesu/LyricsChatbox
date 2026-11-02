@@ -57,14 +57,9 @@ internal static class WindowLayout
     {
         var shortWindow = contentHeight < 540;
         T Find<T>(string name) => (T)scope.FindName(name);
-        Find<Border>("Sidebar").Padding = shortWindow ? new(12, 16, 12, 12) : new(20, 28, 20, 16);
-        Find<StackPanel>("BrandPanel").Margin = shortWindow ? new(0, 0, 0, 16) : new(0, 6, 0, 30);
-        Find<Image>("BrandIcon").Width = Find<Image>("BrandIcon").Height = shortWindow ? 38 : 52;
-        Find<TextBlock>("VersionCaption").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
+        Find<StackPanel>("BrandPanel").Margin = shortWindow ? new(0, 6, 0, 8) : new(0, 14, 0, 20);
         foreach (var item in Find<StackPanel>("NavigationPanel").Children.OfType<RadioButton>())
-            item.Padding = shortWindow ? new(12, 8, 12, 8) : new(16, 11, 16, 11);
-        // Decoration hides first at cramped heights; Output text and controls stay accessible.
-        Find<Grid>("OutputVisualizer").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
+            item.Padding = shortWindow ? new(0, 6, 0, 6) : new(0, 10, 0, 10);
         var home = Find<Grid>("HomePage").Visibility == Visibility.Visible;
         var about = Find<Grid>("AboutPage").Visibility == Visibility.Visible;
         var display = Find<ScrollViewer>("DisplayPage").Visibility == Visibility.Visible;
@@ -92,16 +87,15 @@ internal static class WindowLayout
         Find<Border>("PreviewFrame").Padding = home ? new(12, 8, 12, 8) : new(8, 2, 8, 2);
         Find<Border>("PreviewFrame").Margin = new(0, 0, 0, home ? 10 : 6);
         if (home) ApplyHomeLayout(scope, cellWidth - AboutContentGutters, contentHeight, shortWindow);
-        if (display) ApplyWorkspaceLayout(scope, "Display", 40, cellWidth - AboutContentGutters);
-        // Settings scrolls below the caption area, where a click would drag the window instead of reaching a control.
-        if (settings) ApplyWorkspaceLayout(scope, "Settings", 4, cellWidth - AboutContentGutters);
+        if (display) ApplyWorkspaceLayout(scope, "Display", cellWidth - AboutContentGutters);
+        if (settings) ApplyWorkspaceLayout(scope, "Settings", cellWidth - AboutContentGutters);
     }
 
-    private static void ApplyWorkspaceLayout(FrameworkElement scope, string page, double top, double contentWidth)
+    private static void ApplyWorkspaceLayout(FrameworkElement scope, string page, double contentWidth)
     {
         T Find<T>(string part) => (T)scope.FindName(page + part);
         // The scrollbar column is always reserved, so content keeps Preview's right edge and never reflows.
-        Find<StackPanel>("Canvas").Margin = new(30, top, 30 - SystemParameters.VerticalScrollBarWidth, 8);
+        Find<StackPanel>("Canvas").Margin = new(30, 4, 30 - SystemParameters.VerticalScrollBarWidth, 8);
         var columns = UsesHomeColumns(contentWidth);
         var support = Find<StackPanel>("SupportColumn");
         Grid.SetColumnSpan(Find<StackPanel>("PrimaryColumn"), columns ? 1 : 3);
@@ -190,7 +184,7 @@ internal static class WindowLayout
         eyebrow.Height = 22;
         eyebrow.Margin = new(0, 0, 0, compact ? 8 : 12);
 
-        Find<Grid>("AboutPage").Margin = compact ? new(30, 40, 42, 24) : new(30, 40, 30, 24);
+        Find<Grid>("AboutPage").Margin = compact ? new(30, 4, 42, 24) : new(30, 4, 30, 24);
 
         var hero = Find<Grid>("AboutHero");
         hero.MinHeight = compact ? 0 : 248;
