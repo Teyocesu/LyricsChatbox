@@ -76,6 +76,13 @@ Text keeps 4.5:1 against its real background, including over artwork. Focus and 
 - **Preview:** the shared instance stays pinned below the content column, bounded as on Display when stacked.
 - **Responsive layout:** the index stays at every width. Below 1000 DIP after the rail it narrows to 180 DIP. Rows keep their two columns, content wraps, and the page scrolls vertically only.
 
+### About
+
+- **Composition:** an editorial identity page beside a 400-DIP panel. The main column has the product logo and name as protagonists, with the description and origin text below. Overview and Community & contact share a column beside Project & tools, including Diagnostics, built from typography, proximity and clean rows. The panel holds Updates and Privacy & data. There are no cards, glows or artwork.
+- **Rows:** a muted label with a value or action. The GitHub, VRChat and Discord marks stay in Community & contact; other rows carry no icons.
+- **Behavior:** links, Copy, Export, Open Data Folder, notices, update check, channel, preferences, What's new, release details, download, cancel and explicit installer launch are unchanged. What's new stays conditional. Existing artwork files stay in the project.
+- **Responsive layout:** below the existing 1000-DIP usable width the panel stacks after the main content in one scrolling page, in reading order. The text columns need 800 DIP beside the panel and stack inside the main column below that. Nothing enters the safe band.
+
 ### Preview
 
 One shared instance stays on Home, Display and Settings, and About has none. It reuses the existing count as its character meter and adds no new measurement.

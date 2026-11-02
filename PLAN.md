@@ -786,3 +786,14 @@ Settings is committed locally and awaits owner visual review. It has an index wi
 - A startup crash from `SelectedIndex` firing during XAML load was found by native QA and guarded with `ready`.
 - The new summary copy is limited to `All off` and `N on`; the other summaries reuse existing state text.
 - `UsesHomeColumns` no longer has a production caller and stays only because a test covers it. Review it during cleanup.
+
+### Stage e accepted, stage f About (2026-11-02)
+
+The owner accepted Settings. Physical QA keeps one observation: legibility of the 180-DIP index at 820x650 with DPI and text scaling. Do not change that layout without a demonstrated problem.
+
+About is committed locally and awaits owner visual review: editorial identity column with logo and wordmark, Overview, Community & contact and Project & tools rows, and a 400-DIP panel for Updates and Privacy & data.
+
+- Automated: 578/578. Three tests left with the code they covered: Updates reflow modes and About section reparenting, both retired by this layout.
+- Isolated native: 382/382 across all pages, with links, folders, installer launch and clipboard intercepted in the QA copy. Update check, download and installer states were injected with synthetic text, and no network or installer ran. `MainWindow.Updates.cs` is unchanged.
+- Approved pages: 68 of 76 renders pixel-identical. The other 8 differ only in the clock digit of the Status / Time preview.
+- Existing artwork files stay bundled, as `AboutArtworkAndBrandMarksAreBundledAsWpfResources` requires, even though About no longer shows them.

@@ -229,8 +229,6 @@ public partial class MainWindow : Window
     private void ToggleMaximizeWindow(object sender, RoutedEventArgs e) =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     private void CloseWindow(object sender, RoutedEventArgs e) => Close();
-    private void AboutScrollChanged(object sender, ScrollChangedEventArgs e) =>
-        AboutHeroArtScrollTransform.Y = -e.VerticalOffset;
 
     private void Navigate(object sender, RoutedEventArgs e)
     {

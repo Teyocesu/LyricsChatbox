@@ -85,31 +85,9 @@ public sealed class AboutTests : IDisposable
     [Theory]
     [InlineData(1060, true)]
     [InlineData(1080, false)]
-    [InlineData(1448 - 240, false)]
+    [InlineData(1448 - 72, false)]
     public void AboutViewportSwitchesAtUsableWidth(double viewport, bool expectedCompact) =>
         Assert.Equal(expectedCompact, WindowLayout.IsAboutCompact(WindowLayout.AboutUsableWidth(viewport)));
-
-    [Fact]
-    public void UpdatesReflowsBeforeTheAboutCascade()
-    {
-        Assert.Equal(WindowLayout.AboutUpdatesMode.Compact, WindowLayout.SelectAboutUpdatesMode(559.9));
-        Assert.Equal(WindowLayout.AboutUpdatesMode.CompactColumns, WindowLayout.SelectAboutUpdatesMode(560));
-        Assert.Equal(WindowLayout.AboutUpdatesMode.CompactColumns, WindowLayout.SelectAboutUpdatesMode(999.9));
-        Assert.Equal(WindowLayout.AboutUpdatesMode.Medium, WindowLayout.SelectAboutUpdatesMode(1000));
-        Assert.Equal(WindowLayout.AboutUpdatesMode.Medium, WindowLayout.SelectAboutUpdatesMode(1119.9));
-        Assert.Equal(WindowLayout.AboutUpdatesMode.Wide, WindowLayout.SelectAboutUpdatesMode(1120));
-    }
-
-    [Fact]
-    public void UpdatesUsesTwoColumnsFromCascadeThroughMediumWidths()
-    {
-        Assert.False(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(559.9)));
-        Assert.True(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(560)));
-        Assert.True(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(999.9)));
-        Assert.True(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(1000)));
-        Assert.True(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(1119.9)));
-        Assert.False(WindowLayout.UsesAboutUpdatesTwoColumnLayout(WindowLayout.SelectAboutUpdatesMode(1120)));
-    }
 
     [Fact]
     public void AboutScrollReachesOverflowWithoutHorizontalMovement() => RunOnSta(() =>
@@ -151,35 +129,6 @@ public sealed class AboutTests : IDisposable
         Assert.Equal(0, scroll.ScrollableHeight);
         Assert.Equal(System.Windows.Visibility.Collapsed, scroll.ComputedVerticalScrollBarVisibility);
         Assert.Equal(System.Windows.Controls.ScrollBarVisibility.Disabled, scroll.HorizontalScrollBarVisibility);
-    });
-
-    [Fact]
-    public void AboutSectionsReuseControlsAcrossRepeatedWidthChanges() => RunOnSta(() =>
-    {
-        var overview = new System.Windows.Controls.StackPanel();
-        var community = new System.Windows.Controls.StackPanel();
-        var project = new System.Windows.Controls.StackPanel();
-        var privacy = new System.Windows.Controls.StackPanel();
-        var left = new System.Windows.Controls.StackPanel();
-        var right = new System.Windows.Controls.StackPanel();
-        var cascade = new System.Windows.Controls.StackPanel();
-        left.Children.Add(overview);
-        left.Children.Add(project);
-        right.Children.Add(community);
-        right.Children.Add(privacy);
-
-        for (var i = 0; i < 2; i++)
-        {
-            Assert.True(WindowLayout.ReparentAboutSections(true, overview, community, project, privacy, left, right, cascade));
-            Assert.Equal(new[] { overview, community, project, privacy }, cascade.Children.Cast<System.Windows.Controls.StackPanel>());
-            Assert.Equal(4, left.Children.Count + right.Children.Count + cascade.Children.Count);
-            Assert.False(WindowLayout.ReparentAboutSections(true, overview, community, project, privacy, left, right, cascade));
-
-            Assert.True(WindowLayout.ReparentAboutSections(false, overview, community, project, privacy, left, right, cascade));
-            Assert.Equal(new[] { overview, project }, left.Children.Cast<System.Windows.Controls.StackPanel>());
-            Assert.Equal(new[] { community, privacy }, right.Children.Cast<System.Windows.Controls.StackPanel>());
-            Assert.Equal(4, left.Children.Count + right.Children.Count + cascade.Children.Count);
-        }
     });
 
     private static void RunOnSta(Action action)
