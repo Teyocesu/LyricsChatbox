@@ -10,5 +10,5 @@
 - Final release gate, physical: mouse and keyboard on Display, Decorations modal, Tab order with the `TokenChips` empty stop, Settings mouse, keyboard, focus and popups, caption-button overlap at 820x650, non-100% DPI, screen reader, live playback on Home, candidate search results, Home tab deselection and focus-to-tab retest, VR headset view, automatic lyrics with Lyric Context, real music playback with Native Chatbox Protection, saved-false tray menu. If `Rename` is physically inaccessible, the release is BLOCKED until fixed.
 - Neutral naming is permanent: new branches, commits, PRs, public documentation and release metadata carry no AI model or tool names. History is not rewritten.
 - Manual messaging, Quick Messages and the typing indicator are gone. Manual lyrics matching stays. `quick-messages.json` stays on disk, unread and untouched.
-- All four pages use the approved visual system with one shared continuous Preview. The visual redesign is complete.
-- Next: v1.0.0 release readiness, on explicit approval, starting with the physical QA gate. No merge, tag, version bump or release before that.
+- Instrumento, the owner-approved visual revamp, replaces the earlier visual system page by page. `SPEC.md` lists what it substitutes. Pages not yet migrated are transitional. One shared Preview stays on Home, Display and Settings.
+- Next: owner visual review of Shell and Home. Display, Settings, About, Logo and Decorations wait for that approval. Local commits per stage, no push. Physical QA and release readiness follow the revamp.

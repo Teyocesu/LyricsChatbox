@@ -1,6 +1,86 @@
 # LyricsChatbox
 
+## v1.0.0 normative visual contract — Instrumento
+
+Instrumento is the visual direction of v1.0.0. It treats the app as a precise instrument: a dark workspace organized by proximity, alignment and 1-pixel separators. It changes presentation only. Every behavior, persistence rule, privacy statement and safety contract in this document stays in force.
+
+### Precedence and substitution
+
+Instrumento replaces earlier visual requirements only where listed here. A page's earlier visual contract stays in force until that page's stage closes, so the app is transitional while the stages run.
+
+| Earlier requirement | Status |
+|---|---|
+| Continuous surface: 230–250 DIP sidebar, bottom-anchored Output in the sidebar, selected item tint | Replaced by the Instrumento shell |
+| Decorative waveform in Output, including its motion rules | Removed. Textual Output state and controls stay |
+| Tracked uppercase section labels and accent rules | Replaced by sentence-case headings, page by page |
+| Canonical About reference image and About coordinates | Replaced when the About stage closes. The file stays in `docs/visual` as history |
+| Home contract: composition, hierarchy, atmosphere, responsive width | Replaced by Instrumento Home. Its behavior, one-tree and accessibility rules stay |
+| Display contract: composition | Replaced when the Display stage closes |
+| Settings contract (Phase 6): composition | Replaced when the Settings stage closes. The shared Preview stays on Settings |
+| Application icon artwork | Replaced when the Logo stage closes |
+| Decorations appearance | Adapted when the Decorations stage closes, with every flow preserved |
+
+The reference for each stage is the owner's approved mockups. They define composition, not copy: current text stays unless a rule here changes its form.
+
+### Principles
+
+- No repeated cards or rounded containers, glassmorphism, glows, gradient borders, or fake metrics, waves or charts.
+- Headings use sentence case: 13 DIP SemiBold in the text color, with no rule beneath.
+- The accent marks selection, progress, primary actions, links and state only. It is never used on titles, dividers or decorative borders.
+- Alternative and custom accents recolor everything the accent colors, and the Accent brushes stay dynamic resources.
+
+### Tokens
+
+Values are for Midnight and Rose. Other backgrounds keep the same offset from their canvas, and other accents derive their variants from the same proportions, adjusted for contrast.
+
+| Role | Value |
+|---|---|
+| Canvas, rail and status bar, inspector, list hover | `#101115`, `#0B0C0F`, `#0D0E12`, `#17181D` |
+| Input and preview, button, button hover | `#07080A`, `#1A1B21`, `#22232A` |
+| Line, control line, control edge | `#1C1E25`, `#2B2E37`, `#60636F` |
+| Text, secondary, muted, tertiary | `#ECEDF1`, `#C5C7CF`, `#9396A2`, `#7F828D` |
+| Accent, hover, link text, selection subtitle, ink on accent | `#FF647E`, `#FF7A90`, `#FF8A9C`, `#FF9AAA`, `#2A0A12` |
+| Selection | 13% accent over the inspector, white text |
+| Success, warning | `#5FD38D`, `#F0B35A` |
+
+Type uses Segoe UI Variable Display for large titles and Text for interface text, with Segoe UI as fallback. The scale is 11 rail, 12 caption, 13 body, 14 setting rows, 15–16 panel titles, 22–24 page titles, 30–40 track and 60–64 Light current lyric. The Chatbox preview uses a monospaced face at 15–18. Radii are 5 for controls, 6–8 for preview and 8–10 for artwork, on a base spacing of 4.
+
+### Contrast and focus
+
+Text keeps 4.5:1 against its real background, including over artwork. Focus and the signals needed to identify a control keep 3:1: the control edge marks inputs, combo boxes and switches. Buttons are identified by their label, and separators and decorative lines stay subtle. Disabled controls are exempt and keep their tooltips. Keyboard focus shows a 2-DIP ring in the focus color, offset by 2 DIP.
+
+### Shell
+
+- The window has a 72-DIP rail, the content area, and a 32-DIP status bar across the full width.
+- The rail has the 36-DIP logo, a link to About, and Home, Display, Settings and About as a 20-DIP icon above an 11-DIP label. The active item has light text and a 3-DIP rounded accent bar at the left edge.
+- The status bar holds every Output control and state from the former sidebar, in order: Output and its switch, state, destination, activity and hint, Resume and Pause with the same menu, and the version. Vertical 1-pixel lines separate the segments. Text that lacks room trims with its full value in a tooltip; actions are never clipped or hidden.
+- **Safe band:** the top 36 DIP of the content area belong to the window chrome. No interactive content or scrolling content enters them on any page. Page backgrounds may extend behind the band. Caption buttons, window drag, resize and their accessible names are preserved.
+
+### Home
+
+- **Composition:** a stage beside a 400-DIP inspector. The stage has a status row, a vertically centered block of artwork, track metadata and current lyric, and a transport bar at the bottom. The inspector has, separated by lines: Chatbox preview, Profiles, Lyric context, Lyrics details and Lyrics tools, with Recording & timing, recovery and candidate search intact.
+- **Atmosphere:** only with artwork tint enabled, which stays off by default. It reuses the existing artwork and tint pipeline: the current artwork enlarged and blurred behind a vertical darkening and a horizontal fade toward the inspector. Text contrast takes priority over the strength of the effect. With tint off the stage is flat. No shader or new image pipeline.
+- **Responsive layout:** usable width is the width after the rail. The inspector shows from 1000 DIP, which leaves the stage 600 DIP for transport, metadata and lyric. Below that the stage sits above the existing section selector, with every section reachable. Height only scales artwork and type. The stage never scrolls, sections scroll vertically, and horizontal scrolling never appears.
+- The Home rules for one visual tree, focus selecting a section, reading order and truncated lyrics with a tooltip stay in force.
+
+### Preview
+
+One shared instance stays on Home, Display and Settings, and About has none. It reuses the existing count as its character meter and adds no new measurement.
+
+### Approved exceptions and exclusions
+
+- Approved UX exceptions: the navigable Settings index and the rail logo link to About. Editor line numbers are optional and only if they need no unjustified complexity. Nothing else adds behavior.
+- Copy stays as it is. Mockup wording is not an instruction to rewrite text, and What's new stays conditional.
+- No assets are deleted because a mockup omits them. Removing the SkiaSharp package is a separate cleanup, only after confirming there are no consumers or packaging risk.
+- Out of scope: version, release, functional contracts, and music or OSC logic.
+
+### Acceptance
+
+The 304-control inventory taken at `38e24da` is the baseline: every control, binding, handler, accessible name, state and persistence path keeps working, apart from the decorative waveform. Functional flows are checked, not only names. Each stage is rendered natively at 1448x990 and 820x650 in Rose and Blue with no clipping or horizontal scrolling. Artistic approval belongs to the owner.
+
 ## v1.0.0 normative visual contract — continuous surface
+
+> **Superseded visually.** The visual requirements of this section are replaced as listed in the Instrumento contract. Its functional, privacy and safety requirements remain in force.
 
 v1.0.0 is a Windows WPF UI/UX revamp of the released v0.7.0 behavior. The canonical About reference is [`docs/visual/v0.8.0-about-reference.png`](docs/visual/v0.8.0-about-reference.png), a 1448 × 1086 image. It is a composition contract, not generic mood art. At a matching dark/rose theme and nominal window size, the implemented About screen must be recognizably the same arrangement, density, hierarchy and alignment. Where the image's copy or data conflicts with the real product, product truth takes priority without moving the section or changing its visual role. This section supersedes v0.7.0 UI layout requirements while preserving its functional contracts.
 
@@ -50,6 +130,8 @@ This contract supersedes prior requirements that Floating must remain effective 
 
 ## v1.0.0 normative Home contract
 
+> **Superseded visually.** The visual requirements of this section are replaced as listed in the Instrumento contract. Its functional, privacy and safety requirements remain in force.
+
 Home is a visual revamp in the About language, not a behavior change. It supersedes the v0.5 Home layout wording while keeping its rule that the page itself does not scroll.
 
 - **Composition:** one full-bleed page beside the frozen sidebar, with no page heading and no card grid. A hero sits on an atmosphere that spans the post-sidebar width and fades into the canvas. Content is capped at 1400 DIP with 30-DIP gutters. Below the hero, sections flow independently in two columns with About's tracked accent labels, accent rules and fine center divider. Bounded surfaces are limited to the preview text, the candidate editor and individual controls.
@@ -63,6 +145,8 @@ Home is a visual revamp in the About language, not a behavior change. It superse
 - **Out of scope:** Display and Settings redesign, new Home features, new controls, and any change to Phase 1, About or Floating behavior.
 
 ## v1.0.0 normative Display contract
+
+> **Superseded visually.** The visual requirements of this section are replaced as listed in the Instrumento contract. Its functional, privacy and safety requirements remain in force.
 
 Display is a visual revamp in the Home and About language, not a behavior change. It is a configuration workspace, so it carries no hero, atmosphere or decoration.
 
@@ -107,6 +191,8 @@ Users write messages in VRChat's native Chatbox. LyricsChatbox sends synchronize
 - **Out of scope:** Quick Send, any replacement editor, migrating saved messages to Status or rotation, the Settings redesign, new features, and any change to Native Chatbox detection.
 
 ## v1.0.0 normative Settings contract (Phase 6)
+
+> **Superseded visually.** The visual requirements of this section are replaced as listed in the Instrumento contract. Its functional, privacy and safety requirements remain in force.
 
 Settings is a visual consolidation in the Home, Display and About language, not a behavior change. It is a configuration workspace, so it carries no hero, atmosphere or decoration. This completes the migration: every page is now full-bleed, and a page heading or Card wrapper no longer exists anywhere in the main window.
 

@@ -1,4 +1,4 @@
-# v1.0.0 execution plan — Phase 6 closed; release readiness next
+# v1.0.0 execution plan — Instrumento revamp in progress
 
 ## State and baseline
 
@@ -741,3 +741,11 @@ CLOSED / ACCEPTED by product-owner decision after independent source and visual 
 - Physical QA remains a release gate: real input, focus and popups, `Rename` at 820x650, non-100% DPI, screen reader, real music playback, Native Chatbox Protection on this build, the real color picker and LRC import, tray, startup and updater.
 
 Next: v1.0.0 release readiness, on explicit approval.
+
+## Instrumento visual revamp
+
+Approved by the owner on 2026-11-02 with a control baseline taken at `38e24da`. `SPEC.md` holds the contract. Stages, one local commit each: 0 contract, a tokens, b shell, c Home, then on separate approval d Display, e Settings, f About, g Logo, h Decorations.
+
+Phase 6 stays recorded as closed: its evidence belongs to that build. The revamp replaces its visual result, so release QA must run on the final revamp.
+
+- Authorized now: stages 0, a, b and c, then stop for owner review of real WPF renders.
