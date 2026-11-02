@@ -38,6 +38,7 @@ public partial class MainWindow
         StartMinimizedBox.IsChecked = settings.StartMinimized;
         MinimizeTrayBox.IsChecked = settings.MinimizeToTray;
         CloseTrayBox.IsChecked = settings.CloseToTray;
+        ApplyBehaviorSummary();
         UpdateTray();
         SourceInitialized += (_, _) =>
         {
@@ -225,7 +226,7 @@ public partial class MainWindow
             };
             UpdateTray(); Save();
         }
-        finally { changingBehavior = false; }
+        finally { changingBehavior = false; ApplyBehaviorSummary(); }
     }
     private void DisposeTray()
     {

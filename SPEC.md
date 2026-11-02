@@ -69,6 +69,13 @@ Text keeps 4.5:1 against its real background, including over artwork. Focus and 
 - **Responsive layout:** the columns show from 1020 DIP after the rail, which leaves the center 440 DIP. Below that, or on a short window, they stack in the same reading order and the page scrolls, with Preview pinned below it. Side columns and the stacked page scroll vertically only, and nothing enters the safe band.
 - The Display behavior, Floating and accessibility rules stay in force. Controls stay in one visual tree; only Preview moves between its hosts.
 
+### Settings
+
+- **Composition:** a 280-DIP index column beside a scrolling content column capped at 860 DIP. The index has the page title and the six groups, each with a one-line summary of its real state, and it remains navigation only: choosing a group scrolls to it, and scrolling marks the current group. A warning state in the summary uses the warning color.
+- **Rows:** each setting is a row with its text at the left and its control at the right in a 240-DIP column, separated by lines. Switches sit at the right edge of their row, and Find destination now is the primary button. All copy and help text stay, and no row labels are added.
+- **Preview:** the shared instance stays pinned below the content column, bounded as on Display when stacked.
+- **Responsive layout:** the index stays at every width. Below 1000 DIP after the rail it narrows to 180 DIP. Rows keep their two columns, content wraps, and the page scrolls vertically only.
+
 ### Preview
 
 One shared instance stays on Home, Display and Settings, and About has none. It reuses the existing count as its character meter and adds no new measurement.

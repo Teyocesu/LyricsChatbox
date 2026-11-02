@@ -164,6 +164,43 @@
         </Setter.Value>
       </Setter>
     </Style>
+    <Style x:Key="SettingsIndexDetail" TargetType="TextBlock" BasedOn="{StaticResource HomeChoiceDetail}">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Margin" Value="0,2,0,0"/>
+      <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+      <Style.Triggers>
+        <Trigger Property="Text" Value="VRChat not discovered · using manual destination"><Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/></Trigger>
+        <Trigger Property="Text" Value="OSC destination unavailable · check manual settings"><Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/></Trigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="SettingsSectionTitle" TargetType="TextBlock" BasedOn="{StaticResource SectionHeading}"><Setter Property="FontSize" Value="16"/><Setter Property="Margin" Value="0,0,0,6"/></Style>
+    <Style x:Key="SettingsRow" TargetType="Grid"><Setter Property="Margin" Value="0,12"/></Style>
+    <Style x:Key="SettingsToggleHint" TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Setter Property="Margin" Value="0,0,60,12"/></Style>
+    <Style x:Key="SettingsToggle" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <DockPanel Background="Transparent">
+              <Border x:Name="Track" DockPanel.Dock="Right" Width="36" Height="20" CornerRadius="10" Background="{DynamicResource StrongLineBrush}" BorderBrush="{DynamicResource ControlEdgeBrush}" BorderThickness="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                <Ellipse x:Name="Thumb" Width="14" Height="14" Fill="{DynamicResource MutedBrush}" HorizontalAlignment="Left" Margin="2,0"/>
+              </Border>
+              <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="True"/>
+            </DockPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                <Setter TargetName="Thumb" Property="Fill" Value="{DynamicResource AccentInkBrush}"/>
+                <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource TextBrush}"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <Style x:Key="ProfileChoiceItem" TargetType="ListBoxItem" BasedOn="{StaticResource HomeChoiceItem}"><Setter Property="AutomationProperties.Name" Value="{Binding Name}"/></Style>
     <Style x:Key="HomeSectionTab" TargetType="ListBoxItem">
       <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
@@ -521,41 +558,73 @@
           </Border>
         </Grid>
       </ScrollViewer>
-      <ScrollViewer x:Name="SettingsPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
-        <StackPanel x:Name="SettingsCanvas" MaxWidth="1400">
-          <Grid Height="22" Margin="0,0,0,18">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-            <Border Background="{DynamicResource AccentBrush}"/>
-            <TextBlock Grid.Column="2" Text="S E T T I N G S" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Settings"/>
-          </Grid>
-          <Grid>
-            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="48"/><ColumnDefinition/></Grid.ColumnDefinitions>
-            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <StackPanel x:Name="SettingsPrimaryColumn">
-              <TextBlock Text="P L A Y B A C K  S O U R C E" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Playback source"/>
-              <Border Style="{StaticResource HomeSectionRule}"/>
-              <TextBlock Text="Choose which music app LyricsChatbox follows." Style="{StaticResource Caption}" Margin="0,0,0,8"/>
-              <ComboBox x:Name="PlaybackSourceBox" SelectionChanged="PlaybackSourceChanged" AutomationProperties.Name="Playback source" Width="220" HorizontalAlignment="Left"/>
-              <TextBlock Text="Automatic follows the only playing app. If both play, choose one here." Style="{StaticResource Caption}" Margin="0,8,0,0"/>
-              <TextBlock Text="L Y R I C S  S O U R C E S" Style="{StaticResource AboutSectionLabel}" Margin="0,24,0,0" AutomationProperties.Name="Lyrics sources"/>
-              <Border Style="{StaticResource HomeSectionRule}"/>
-              <TextBlock Text="Local LRC → cache → LRCLIB → NetEase" Foreground="{DynamicResource AccentBrush}"/>
-              <TextBlock Text="NetEase is a best-effort fallback, searched only when LRCLIB cannot supply synchronized lyrics. No account or key is needed." Style="{StaticResource Caption}" Margin="0,6,0,12"/>
-              <WrapPanel>
-                <Button x:Name="ImportButton" Content="Import local LRC…" Click="ImportLrc" Margin="0,0,8,8"/>
-                <Button Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,8,8"/>
-                <Button x:Name="ForgetMatchButton" Content="Forget manual match" Click="ForgetMatch" IsEnabled="False" Margin="0,0,0,8"/>
-              </WrapPanel>
-              <TextBlock Text="Searches send song metadata to the lyrics source. Settings and cached lyrics stay on this computer. Community endpoints may change or be unavailable in some regions." Style="{StaticResource Caption}" Margin="0,4,0,0"/>
-              <TextBlock Text="V R C H A T  O S C" Style="{StaticResource AboutSectionLabel}" Margin="0,24,0,0" AutomationProperties.Name="VRChat OSC"/>
-              <Border Style="{StaticResource HomeSectionRule}"/>
-              <TextBlock x:Name="DiscoveryStatus" Text="Manual destination" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,4"/>
-              <TextBlock x:Name="OscDestinationText" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
-              <CheckBox x:Name="AutoOscBox" Content="Discover local VRChat with OSCQuery" Checked="DiscoveryModeChanged" Unchecked="DiscoveryModeChanged" Margin="0,0,0,10"/>
-              <Button x:Name="DiscoverButton" Content="Find destination now" Click="DiscoverNow" HorizontalAlignment="Left" Margin="0,0,0,8"/>
-              <TextBlock Text="Enable OSC in VRChat and stop competing Chatbox senders. UDP cannot confirm that a message was displayed." Style="{StaticResource Caption}" Margin="0,4,0,10"/>
-              <Expander Header="Advanced destination" AutomationProperties.Name="Advanced destination">
-                <Grid Margin="0,8,0,0">
+      <Grid x:Name="SettingsPage" Grid.RowSpan="3" Visibility="Collapsed">
+        <Grid.ColumnDefinitions><ColumnDefinition x:Name="SettingsIndexColumn" Width="280"/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Border Grid.RowSpan="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0">
+          <DockPanel Margin="0,36,0,0">
+            <TextBlock DockPanel.Dock="Top" Text="Settings" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="24" FontWeight="SemiBold" Margin="20,4,20,14"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
+              <ListBox x:Name="SettingsIndex" SelectedIndex="0" SelectionChanged="SettingsIndexChanged" ItemContainerStyle="{StaticResource HomeChoiceItem}" Margin="20,0" TextElement.FontSize="14" AutomationProperties.Name="Settings sections">
+                <ListBox.Template><ControlTemplate TargetType="ListBox"><ItemsPresenter/></ControlTemplate></ListBox.Template>
+                <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                <ListBoxItem Tag="SettingsPlaybackSection" AutomationProperties.Name="Playback source"><StackPanel><TextBlock Text="Playback source"/><TextBlock Text="{Binding SelectedItem, ElementName=PlaybackSourceBox}" Style="{StaticResource SettingsIndexDetail}"/></StackPanel></ListBoxItem>
+                <ListBoxItem Tag="SettingsLyricsSection" AutomationProperties.Name="Lyrics sources"><StackPanel><TextBlock Text="Lyrics sources"/><TextBlock Text="{Binding Text, ElementName=LyricsOrderText}" Style="{StaticResource SettingsIndexDetail}"/></StackPanel></ListBoxItem>
+                <ListBoxItem Tag="SettingsOscSection" AutomationProperties.Name="VRChat OSC"><StackPanel><TextBlock Text="VRChat OSC"/><TextBlock Text="{Binding Text, ElementName=DiscoveryStatus}" Style="{StaticResource SettingsIndexDetail}"/></StackPanel></ListBoxItem>
+                <ListBoxItem Tag="SettingsAppearanceSection" AutomationProperties.Name="Appearance"><StackPanel><TextBlock Text="Appearance"/><TextBlock Style="{StaticResource SettingsIndexDetail}"><TextBlock.Text><MultiBinding StringFormat="{}{0} · {1}"><Binding Path="SelectedItem" ElementName="AccentBox"/><Binding Path="SelectedItem" ElementName="BackgroundBox"/></MultiBinding></TextBlock.Text></TextBlock></StackPanel></ListBoxItem>
+                <ListBoxItem Tag="SettingsBehaviorSection" AutomationProperties.Name="Application behavior"><StackPanel><TextBlock Text="Application behavior"/><TextBlock x:Name="BehaviorSummaryText" Style="{StaticResource SettingsIndexDetail}"/></StackPanel></ListBoxItem>
+                <ListBoxItem Tag="SettingsProtectionSection" AutomationProperties.Name="Native Chatbox Protection (Experimental)"><StackPanel><TextBlock Text="Native Chatbox Protection"/><TextBlock Text="{Binding Text, ElementName=NativeChatboxStatus}" Style="{StaticResource SettingsIndexDetail}"/></StackPanel></ListBoxItem>
+              </ListBox>
+            </ScrollViewer>
+          </DockPanel>
+        </Border>
+        <ScrollViewer x:Name="SettingsScroller" Grid.Column="1" Margin="0,36,0,0" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" ScrollChanged="SettingsScrolled">
+          <StackPanel x:Name="SettingsContent" HorizontalAlignment="Left" TextElement.FontSize="14">
+            <StackPanel x:Name="SettingsPlaybackSection">
+              <TextBlock Text="Playback source" Style="{StaticResource SettingsSectionTitle}"/>
+              <Grid Style="{StaticResource SettingsRow}">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,24,0">
+                  <TextBlock Text="Choose which music app LyricsChatbox follows."/>
+                  <TextBlock Text="Automatic follows the only playing app. If both play, choose one here." Style="{StaticResource Caption}" Margin="0,2,0,0"/>
+                </StackPanel>
+                <ComboBox x:Name="PlaybackSourceBox" Grid.Column="1" VerticalAlignment="Center" SelectionChanged="PlaybackSourceChanged" AutomationProperties.Name="Playback source"/>
+              </Grid>
+            </StackPanel>
+            <StackPanel x:Name="SettingsLyricsSection" Margin="0,28,0,0">
+              <TextBlock Text="Lyrics sources" Style="{StaticResource SettingsSectionTitle}"/>
+              <Grid Style="{StaticResource SettingsRow}">
+                <StackPanel>
+                  <TextBlock x:Name="LyricsOrderText" Text="Local LRC → cache → LRCLIB → NetEase"/>
+                  <TextBlock Text="NetEase is a best-effort fallback, searched only when LRCLIB cannot supply synchronized lyrics. No account or key is needed." Style="{StaticResource Caption}" Margin="0,2,0,0"/>
+                </StackPanel>
+              </Grid>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <Grid Style="{StaticResource SettingsRow}">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
+                <TextBlock Text="Searches send song metadata to the lyrics source. Settings and cached lyrics stay on this computer. Community endpoints may change or be unavailable in some regions." Style="{StaticResource Caption}" Margin="0,0,24,0"/>
+                <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
+                  <Button x:Name="ImportButton" Content="Import local LRC…" Click="ImportLrc" Margin="0,0,8,8"/>
+                  <Button Content="Retry lyrics" Click="RetryLyrics" Margin="0,0,0,8"/>
+                  <Button x:Name="ForgetMatchButton" Content="Forget manual match" Click="ForgetMatch" IsEnabled="False"/>
+                </WrapPanel>
+              </Grid>
+            </StackPanel>
+            <StackPanel x:Name="SettingsOscSection" Margin="0,28,0,0">
+              <WrapPanel Margin="0,0,0,6"><TextBlock Text="VRChat OSC" Style="{StaticResource SettingsSectionTitle}" Margin="0,0,12,0"/><TextBlock x:Name="DiscoveryStatus" Text="Manual destination" Style="{StaticResource SettingsIndexDetail}" FontSize="13" VerticalAlignment="Center"/></WrapPanel>
+              <Grid Style="{StaticResource SettingsRow}">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
+                <TextBlock Text="Enable OSC in VRChat and stop competing Chatbox senders. UDP cannot confirm that a message was displayed." Style="{StaticResource Caption}" Margin="0,0,24,0" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1">
+                  <TextBlock x:Name="OscDestinationText" FontFamily="Cascadia Mono, Consolas" FontSize="16" FontWeight="SemiBold" TextAlignment="Right" Margin="0,0,0,8"/>
+                  <Button x:Name="DiscoverButton" Content="Find destination now" Click="DiscoverNow" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right"/>
+                </StackPanel>
+              </Grid>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <CheckBox x:Name="AutoOscBox" Content="Discover local VRChat with OSCQuery" Checked="DiscoveryModeChanged" Unchecked="DiscoveryModeChanged" Style="{StaticResource SettingsToggle}" Margin="0,10"/>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <Expander Header="Advanced destination" AutomationProperties.Name="Advanced destination" Margin="0,8">
+                <Grid Margin="20,8,0,6">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition Width="96"/>
@@ -573,48 +642,66 @@
                 </Grid>
               </Expander>
             </StackPanel>
-            <Border x:Name="SettingsColumnDivider" Grid.Column="1" Width="1" Background="{DynamicResource LineBrush}" HorizontalAlignment="Center"/>
-            <StackPanel x:Name="SettingsSupportColumn" Grid.Column="2">
-              <TextBlock Text="A P P E A R A N C E" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Appearance"/>
-              <Border Style="{StaticResource HomeSectionRule}"/>
-              <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                <StackPanel>
-                  <TextBlock Text="Accent color" Style="{StaticResource Caption}" Margin="0,0,0,6"/>
+            <StackPanel x:Name="SettingsAppearanceSection" Margin="0,28,0,0">
+              <TextBlock Text="Appearance" Style="{StaticResource SettingsSectionTitle}"/>
+              <Grid Style="{StaticResource SettingsRow}">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,24,0" VerticalAlignment="Top">
+                  <TextBlock Text="Accent color"/>
+                  <TextBlock x:Name="AppearanceStatus" Style="{StaticResource Caption}" Margin="0,2,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1">
                   <ComboBox x:Name="AccentBox" SelectionChanged="AppearanceChanged" AutomationProperties.Name="Accent color"/>
                   <StackPanel x:Name="CustomAccentPanel" Visibility="Collapsed" Margin="0,8,0,0">
-                    <WrapPanel><TextBox x:Name="CustomColorBox" Width="130" MaxLength="7" TextChanged="CustomAccentChanged" AutomationProperties.Name="Custom accent hex color" Margin="0,0,8,6"/><Button Content="Choose color…" Click="ChooseAccentColor" Margin="0,0,0,6"/></WrapPanel>
+                    <WrapPanel><TextBox x:Name="CustomColorBox" Width="112" MaxLength="7" TextChanged="CustomAccentChanged" AutomationProperties.Name="Custom accent hex color" Margin="0,0,8,0"/><Button Content="Choose color…" Click="ChooseAccentColor"/></WrapPanel>
                   </StackPanel>
                 </StackPanel>
-                <StackPanel Grid.Column="2">
-                  <TextBlock Text="Background" Style="{StaticResource Caption}" Margin="0,0,0,6"/>
-                  <ComboBox x:Name="BackgroundBox" SelectionChanged="AppearanceChanged" AutomationProperties.Name="Background style"/>
-                </StackPanel>
               </Grid>
-              <CheckBox x:Name="ArtworkTintBox" Content="Tint Now Playing from album artwork" Checked="AppearanceChanged" Unchecked="AppearanceChanged" Margin="0,12,0,6"/>
-              <TextBlock x:Name="AppearanceStatus" Style="{StaticResource Caption}"/>
-              <TextBlock Text="A P P L I C A T I O N  B E H A V I O R" Style="{StaticResource AboutSectionLabel}" Margin="0,24,0,0" AutomationProperties.Name="Application behavior"/>
-              <Border Style="{StaticResource HomeSectionRule}"/>
-              <CheckBox x:Name="StartWindowsBox" Content="Start with Windows" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Margin="0,0,0,4"/>
-              <TextBlock Text="Launch when you sign in. If you move a portable copy, enable this again from its new location." Style="{StaticResource Caption}"/>
-              <CheckBox x:Name="StartMinimizedBox" Content="Start minimized" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Margin="0,12,0,4"/>
-              <TextBlock Text="Start without opening the main working view." Style="{StaticResource Caption}"/>
-              <CheckBox x:Name="MinimizeTrayBox" Content="Minimize to system tray" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Margin="0,12,0,4"/>
-              <TextBlock Text="Hide in the notification area when minimized." Style="{StaticResource Caption}"/>
-              <CheckBox x:Name="CloseTrayBox" Content="Close window to system tray" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Margin="0,12,0,4"/>
-              <TextBlock Text="Keep running when closed. Use Exit in the tray menu to quit." Style="{StaticResource Caption}"/>
-              <TextBlock Style="{StaticResource AboutSectionLabel}" Margin="0,24,0,0" AutomationProperties.Name="Native Chatbox Protection (Experimental)"><Run Text="N A T I V E  C H A T B O X  P R O T E C T I O N"/><Run Text="  (Experimental)" FontSize="12" FontWeight="Normal" Foreground="{DynamicResource MutedBrush}"/></TextBlock>
-              <Border Style="{StaticResource HomeSectionRule}"/>
-              <CheckBox x:Name="NativeChatboxBox" Content="Hold automatic output while the VRChat Chatbox is open" Checked="NativeChatboxChanged" Unchecked="NativeChatboxChanged" Margin="0,0,0,4"/>
-              <TextBlock Text="Reads local VRChat diagnostic events. Unofficial and best-effort, for Windows Desktop and PCVR only. A VRChat update can stop it working without notice." Style="{StaticResource Caption}" Margin="0,0,0,10"/>
-              <TextBlock x:Name="NativeChatboxStatus" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
-              <Button x:Name="NativeChatboxResumeButton" Content="Resume now" Click="ResumeNativeChatbox" HorizontalAlignment="Left" Visibility="Collapsed" Margin="0,0,0,8"/>
-              <TextBlock x:Name="NativeChatboxCooldownText" Style="{StaticResource Caption}" Margin="0,0,0,6"/>
-              <Slider x:Name="NativeChatboxCooldownSlider" Minimum="5" Maximum="60" TickFrequency="5" IsSnapToTickEnabled="True" SmallChange="5" LargeChange="5" Width="360" HorizontalAlignment="Left" ValueChanged="NativeChatboxCooldownChanged" AutomationProperties.Name="Wait after the Chatbox closes, in seconds"/>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <Grid Style="{StaticResource SettingsRow}">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
+                <TextBlock Text="Background" VerticalAlignment="Center"/>
+                <ComboBox x:Name="BackgroundBox" Grid.Column="1" SelectionChanged="AppearanceChanged" AutomationProperties.Name="Background style"/>
+              </Grid>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <CheckBox x:Name="ArtworkTintBox" Content="Tint Now Playing from album artwork" Checked="AppearanceChanged" Unchecked="AppearanceChanged" Style="{StaticResource SettingsToggle}" Margin="0,10"/>
             </StackPanel>
-          </Grid>
-        </StackPanel>
-      </ScrollViewer>
+            <StackPanel x:Name="SettingsBehaviorSection" Margin="0,28,0,0">
+              <TextBlock Text="Application behavior" Style="{StaticResource SettingsSectionTitle}"/>
+              <CheckBox x:Name="StartWindowsBox" Content="Start with Windows" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Style="{StaticResource SettingsToggle}" Margin="0,10,0,2"/>
+              <TextBlock Text="Launch when you sign in. If you move a portable copy, enable this again from its new location." Style="{StaticResource SettingsToggleHint}"/>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <CheckBox x:Name="StartMinimizedBox" Content="Start minimized" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Style="{StaticResource SettingsToggle}" Margin="0,10,0,2"/>
+              <TextBlock Text="Start without opening the main working view." Style="{StaticResource SettingsToggleHint}"/>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <CheckBox x:Name="MinimizeTrayBox" Content="Minimize to system tray" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Style="{StaticResource SettingsToggle}" Margin="0,10,0,2"/>
+              <TextBlock Text="Hide in the notification area when minimized." Style="{StaticResource SettingsToggleHint}"/>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <CheckBox x:Name="CloseTrayBox" Content="Close window to system tray" Checked="BehaviorChanged" Unchecked="BehaviorChanged" Style="{StaticResource SettingsToggle}" Margin="0,10,0,2"/>
+              <TextBlock Text="Keep running when closed. Use Exit in the tray menu to quit." Style="{StaticResource SettingsToggleHint}"/>
+            </StackPanel>
+            <StackPanel x:Name="SettingsProtectionSection" Margin="0,28,0,24">
+              <TextBlock Style="{StaticResource SettingsSectionTitle}" AutomationProperties.Name="Native Chatbox Protection (Experimental)"><Run Text="Native Chatbox Protection"/><Run Text="  (Experimental)" FontSize="13" FontWeight="Normal" Foreground="{DynamicResource MutedBrush}"/></TextBlock>
+              <CheckBox x:Name="NativeChatboxBox" Content="Hold automatic output while the VRChat Chatbox is open" Checked="NativeChatboxChanged" Unchecked="NativeChatboxChanged" Style="{StaticResource SettingsToggle}" Margin="0,10,0,2"/>
+              <TextBlock Text="Reads local VRChat diagnostic events. Unofficial and best-effort, for Windows Desktop and PCVR only. A VRChat update can stop it working without notice." Style="{StaticResource SettingsToggleHint}"/>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <Grid Style="{StaticResource SettingsRow}">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock x:Name="NativeChatboxStatus" Foreground="{DynamicResource AccentTextBrush}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,24,0"/>
+                <Button x:Name="NativeChatboxResumeButton" Grid.Column="1" Content="Resume now" Click="ResumeNativeChatbox" Visibility="Collapsed"/>
+              </Grid>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <Grid Style="{StaticResource SettingsRow}">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
+                <TextBlock x:Name="NativeChatboxCooldownText" VerticalAlignment="Center" Margin="0,0,24,0"/>
+                <Slider x:Name="NativeChatboxCooldownSlider" Grid.Column="1" Minimum="5" Maximum="60" TickFrequency="5" IsSnapToTickEnabled="True" SmallChange="5" LargeChange="5" VerticalAlignment="Center" ValueChanged="NativeChatboxCooldownChanged" AutomationProperties.Name="Wait after the Chatbox closes, in seconds"/>
+              </Grid>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+        <Border x:Name="SettingsPreviewEdge" Grid.Row="1" Grid.Column="1" Style="{StaticResource PanelSeparator}" VerticalAlignment="Top"/>
+        <ContentControl x:Name="SettingsPreviewHost" Grid.Row="1" Grid.Column="1" Focusable="False" HorizontalAlignment="Left" HorizontalContentAlignment="Stretch"/>
+      </Grid>
       <Grid x:Name="AboutRoot" Grid.RowSpan="4" Panel.ZIndex="1" Visibility="Collapsed" Background="{DynamicResource CanvasBrush}" ClipToBounds="True">
         <Grid x:Name="AboutHeroArtLayer" VerticalAlignment="Top" HorizontalAlignment="Stretch" Height="420" IsHitTestVisible="False" Focusable="False" AutomationProperties.Name=" ">
           <Grid.RenderTransform><TranslateTransform x:Name="AboutHeroArtScrollTransform"/></Grid.RenderTransform>

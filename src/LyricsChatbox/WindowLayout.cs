@@ -27,6 +27,8 @@ internal static class WindowLayout
     internal const double DisplayColumnsMinWidth = 1020;
     // Nine Chatbox lines at the 18-DIP preview size.
     internal const double PreviewNineLines = 216;
+    // Width after the rail: the full index beside rows of 240-DIP controls and readable text.
+    internal const double SettingsFullIndexMinWidth = 1000;
     internal const double HomeRoomyMinHeight = 760;
     internal const double HomeTallMinHeight = 900;
     internal enum AboutUpdatesMode { Wide, Medium, CompactColumns, Compact }
@@ -80,7 +82,7 @@ internal static class WindowLayout
         var home = Find<Grid>("HomePage").Visibility == Visibility.Visible;
         var about = Find<Grid>("AboutPage").Visibility == Visibility.Visible;
         var display = Find<ScrollViewer>("DisplayPage").Visibility == Visibility.Visible;
-        var settings = Find<ScrollViewer>("SettingsPage").Visibility == Visibility.Visible;
+        var settings = Find<Grid>("SettingsPage").Visibility == Visibility.Visible;
         // The About breakpoint uses usable content width. Derive it synchronously from the
         // post-sidebar cell (stable across navigation) rather than the About viewport,
         // whose ActualWidth is stale on the navigating pass before WPF runs layout.
@@ -88,15 +90,15 @@ internal static class WindowLayout
         if (cellWidth <= 0) cellWidth = Find<Grid>("ContentPanel").ActualWidth;
         ApplyAboutLayout(scope, AboutUsableWidth(cellWidth));
         var displayColumns = display && UsesDisplayColumns(cellWidth, shortWindow);
-        Find<ContentControl>("PersistentPreviewHost").Visibility = home || about || displayColumns ? Visibility.Collapsed : Visibility.Visible;
+        Find<ContentControl>("PersistentPreviewHost").Visibility = home || about || settings || displayColumns ? Visibility.Collapsed : Visibility.Visible;
         var preview = Find<Grid>("PreviewPanel");
-        var destination = Find<ContentControl>(home ? "HomePreviewHost" : displayColumns ? "DisplayPreviewHost" : "PersistentPreviewHost");
+        var destination = Find<ContentControl>(home ? "HomePreviewHost" : displayColumns ? "DisplayPreviewHost" : settings ? "SettingsPreviewHost" : "PersistentPreviewHost");
         if (preview.Parent != destination)
         {
             ((ContentControl)preview.Parent).Content = null;
             destination.Content = preview;
         }
-        preview.Margin = home || displayColumns ? new(0) : new(0, shortWindow ? 8 : 16, 0, 0);
+        preview.Margin = home || displayColumns || settings ? new(0) : new(0, shortWindow ? 8 : 16, 0, 0);
         Find<DockPanel>("PreviewHeading").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
         Find<ScrollViewer>("PreviewScroller").MaxHeight = home ? 130 : displayColumns ? PreviewNineLines : shortWindow ? 24 : 72;
         Find<Border>("PreviewBubble").VerticalAlignment = displayColumns ? VerticalAlignment.Top : VerticalAlignment.Center;
@@ -107,7 +109,7 @@ internal static class WindowLayout
         Find<Border>("PreviewFrame").Margin = new(0, 0, 0, home ? 8 : 6);
         if (home) ApplyHomeLayout(scope, cellWidth, contentHeight, shortWindow);
         if (display) ApplyDisplayLayout(scope, displayColumns);
-        if (settings) ApplyWorkspaceLayout(scope, "Settings", cellWidth - AboutContentGutters);
+        if (settings) ApplySettingsLayout(scope, cellWidth, shortWindow);
     }
 
     private static void ApplyDisplayLayout(FrameworkElement scope, bool columns)
@@ -150,19 +152,20 @@ internal static class WindowLayout
         }
     }
 
-    private static void ApplyWorkspaceLayout(FrameworkElement scope, string page, double contentWidth)
+    private static void ApplySettingsLayout(FrameworkElement scope, double cellWidth, bool shortWindow)
     {
-        T Find<T>(string part) => (T)scope.FindName(page + part);
-        // The scrollbar column is always reserved, so content keeps Preview's right edge and never reflows.
-        Find<StackPanel>("Canvas").Margin = new(30, 4, 30 - SystemParameters.VerticalScrollBarWidth, 8);
-        var columns = UsesHomeColumns(contentWidth);
-        var support = Find<StackPanel>("SupportColumn");
-        Grid.SetColumnSpan(Find<StackPanel>("PrimaryColumn"), columns ? 1 : 3);
-        Grid.SetColumn(support, columns ? 2 : 0);
-        Grid.SetColumnSpan(support, columns ? 1 : 3);
-        Grid.SetRow(support, columns ? 0 : 1);
-        support.Margin = new(0, columns ? 0 : 24, 0, 0);
-        Find<Border>("ColumnDivider").Visibility = columns ? Visibility.Visible : Visibility.Collapsed;
+        T Find<T>(string name) => (T)scope.FindName(name);
+        var full = cellWidth >= SettingsFullIndexMinWidth;
+        Find<ColumnDefinition>("SettingsIndexColumn").Width = new(full ? 280 : 180);
+        var (left, right) = full ? (56, 32) : (24, 16);
+        // Content and Preview share one capped width from the same left edge.
+        var width = Math.Min(860, Math.Max(0, cellWidth - (full ? 280 : 180) - left - right - SystemParameters.VerticalScrollBarWidth));
+        var content = Find<StackPanel>("SettingsContent");
+        content.Margin = new(left, 4, 0, 8);
+        content.Width = width;
+        var host = Find<ContentControl>("SettingsPreviewHost");
+        host.Margin = new(left, shortWindow ? 6 : 12, 0, shortWindow ? 6 : 12);
+        host.Width = width;
     }
 
     private static void ApplyHomeLayout(FrameworkElement scope, double cellWidth, double contentHeight, bool shortWindow)

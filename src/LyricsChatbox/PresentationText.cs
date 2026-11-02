@@ -18,6 +18,8 @@ public record RecoveryPresentation(bool Visible, string Title, string Hint, bool
 
 public static partial class PresentationText
 {
+    public static string BehaviorSummary(params bool[] options) =>
+        options.Count(enabled => enabled) is var enabled && enabled == 0 ? "All off" : enabled + " on";
     public const string EmptyPreview = "Nothing to send";
     public const string TrackLyricsDurationLabel = "Track / lyrics duration";
 

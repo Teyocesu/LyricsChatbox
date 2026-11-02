@@ -775,3 +775,14 @@ Three columns with the editor and Preview together, one tree, Preview moved only
 - `Rename` is clear of the caption band at seven sizes: `WM_NCHITTEST` returns client and the hit test reaches the button, also when scrolled. A physical click is still outstanding.
 - `TokenChips` is no longer an empty Tab stop, and profile rows expose their name instead of the record text.
 - Editor line numbers were skipped: they would need scroll and wrap synchronization for no functional gain.
+
+### Display adjustment and stage e, Settings (2026-11-02)
+
+Display is accepted by the owner: Preview fits its content up to nine Chatbox lines, and it stays pinned when stacked.
+
+Settings is committed locally and awaits owner visual review. It has an index with real state summaries, 240-DIP control rows, and the shared Preview pinned below the content.
+
+- The index stays at every width and narrows to 180 DIP below 1000 DIP after the rail.
+- A startup crash from `SelectedIndex` firing during XAML load was found by native QA and guarded with `ready`.
+- The new summary copy is limited to `All off` and `N on`; the other summaries reuse existing state text.
+- `UsesHomeColumns` no longer has a production caller and stays only because a test covers it. Review it during cleanup.
