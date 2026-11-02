@@ -65,7 +65,7 @@ Text keeps 4.5:1 against its real background, including over artwork. Focus and 
 
 ### Display
 
-- **Composition:** three columns on the canvas. A 260-DIP left column holds the profile list, name and profile actions, then Composition. The center holds the Custom composition header with Decorations, a fixed 180-DIP editor and tokens, with Chatbox preview directly below it taking the remaining height. A 320-DIP right column holds Lyric context, Presentation, and Status messages when they apply. Lines separate the columns and their sections, with no cards.
+- **Composition:** three columns on the canvas. A 260-DIP left column holds the profile list, name and profile actions, then Composition. The center holds the Custom composition header with Decorations, a fixed 180-DIP editor and tokens, with Chatbox preview directly below it, sized to its content up to nine Chatbox lines. A 320-DIP right column holds Lyric context, Presentation, and Status messages when they apply. Lines separate the columns and their sections, with no cards.
 - **Responsive layout:** the columns show from 1020 DIP after the rail, which leaves the center 440 DIP. Below that, or on a short window, they stack in the same reading order and the page scrolls, with Preview pinned below it. Side columns and the stacked page scroll vertically only, and nothing enters the safe band.
 - The Display behavior, Floating and accessibility rules stay in force. Controls stay in one visual tree; only Preview moves between its hosts.
 

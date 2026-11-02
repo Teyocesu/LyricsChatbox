@@ -25,6 +25,8 @@ internal static class WindowLayout
     internal const double HomeInspectorMinWidth = 1000;
     // Width after the rail: both side columns plus 440 DIP for the editor and its token row.
     internal const double DisplayColumnsMinWidth = 1020;
+    // Nine Chatbox lines at the 18-DIP preview size.
+    internal const double PreviewNineLines = 216;
     internal const double HomeRoomyMinHeight = 760;
     internal const double HomeTallMinHeight = 900;
     internal enum AboutUpdatesMode { Wide, Medium, CompactColumns, Compact }
@@ -96,7 +98,7 @@ internal static class WindowLayout
         }
         preview.Margin = home || displayColumns ? new(0) : new(0, shortWindow ? 8 : 16, 0, 0);
         Find<DockPanel>("PreviewHeading").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
-        Find<ScrollViewer>("PreviewScroller").MaxHeight = home ? 130 : displayColumns ? double.PositiveInfinity : shortWindow ? 24 : 72;
+        Find<ScrollViewer>("PreviewScroller").MaxHeight = home ? 130 : displayColumns ? PreviewNineLines : shortWindow ? 24 : 72;
         Find<Border>("PreviewBubble").VerticalAlignment = displayColumns ? VerticalAlignment.Top : VerticalAlignment.Center;
         Find<TextBlock>("PreviewText").FontSize = displayColumns ? 18 : 17;
         Find<TextBlock>("PreviewProfileText").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;

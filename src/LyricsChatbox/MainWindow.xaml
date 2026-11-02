@@ -455,7 +455,7 @@
                     </DataTemplate>
                   </ListBox.ItemTemplate>
                 </ListBox>
-                <TextBlock Text="Choose a layout. The live preview below shows your actual output." Style="{StaticResource InspectorCaption}" Margin="0,8,0,0"/>
+                <TextBlock Text="Choose a layout. The Chatbox preview shows your actual output." Style="{StaticResource InspectorCaption}" Margin="0,8,0,0"/>
               </StackPanel>
             </local:ColumnScrollViewer>
           </Border>
@@ -470,7 +470,7 @@
               </ItemsControl>
               <TextBlock x:Name="CustomMessageHint" Text="Add {message} to include status or rotating messages." Style="{StaticResource InspectorCaption}" Visibility="Collapsed"/>
             </StackPanel>
-            <ContentControl x:Name="DisplayPreviewHost" Grid.Row="1" Focusable="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+            <ContentControl x:Name="DisplayPreviewHost" Grid.Row="1" Focusable="False" VerticalAlignment="Top" HorizontalContentAlignment="Stretch"/>
           </Grid>
           <Border x:Name="DisplaySupportPanel" Grid.Column="2" BorderBrush="{DynamicResource LineBrush}">
             <local:ColumnScrollViewer x:Name="DisplaySupportScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
