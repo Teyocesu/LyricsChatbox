@@ -12,7 +12,7 @@ namespace LyricsChatbox;
 
 public partial class MainWindow : Window
 {
-    private static readonly System.Windows.Media.FontFamily TextFont = new("Segoe UI"), LayoutFont = new("Consolas");
+    private static readonly System.Windows.Media.FontFamily TextFont = new("Cascadia Mono, Consolas"), LayoutFont = new("Consolas");
     private readonly LocalData data = new(LocalData.DefaultRoot);
     private readonly HttpClient http = new(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false });
     private readonly PlaybackSourceCoordinator playback;

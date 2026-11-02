@@ -7,7 +7,7 @@ namespace LyricsChatbox;
 public partial class MainWindow
 {
     private sealed record PlaybackView(string Track, string Artist, string Album, string Lyric, string LyricsStatus);
-    private sealed record ProgressView(double Value, string Text);
+    private sealed record ProgressView(double Value, string Position, string Duration);
     private sealed record PreviewView(string Text, bool Placeholder, bool PreserveLayout, int VisibleUnits, int Limit,
         string Profile, bool Compact, string Owner);
     private sealed record LyricsDetailsView(bool HasTrack, bool CanSearch, string? SearchHint, string IgnoreContent,
@@ -46,12 +46,11 @@ public partial class MainWindow
     {
         if (!progressCadence.IsDue(now)) return;
         var value = engine.Track?.Duration > 0 && position.HasValue ? Math.Clamp(position.Value / engine.Track.Duration, 0, 1) : 0;
-        var text = position.HasValue
-            ? $"{DurationFormatter.Format(position)} / {DurationFormatter.Format(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400))}"
-            : "No playback position";
-        var view = new ProgressView(value, text);
+        var view = position.HasValue
+            ? new ProgressView(value, DurationFormatter.Format(position), DurationFormatter.Format(Math.Clamp(engine.Track?.Duration ?? 0, 0, 86400)))
+            : new ProgressView(value, "No playback position", "");
         if (!progressView.ShouldApply(view)) return;
-        PositionProgress.Value = view.Value; PositionText.Text = view.Text;
+        PositionProgress.Value = view.Value; PositionText.Text = view.Position; DurationText.Text = view.Duration;
     }
 
     private void ApplyPreviewView(string visible, bool preserveLayout, bool showContext, int limit, bool floating)
@@ -69,7 +68,7 @@ public partial class MainWindow
         BudgetText.Text = view.VisibleUnits + " / " + view.Limit;
         PreviewProfileText.Text = view.Profile;
         if (view.Compact) PreviewBubble.Background = Brushes.Transparent;
-        else PreviewBubble.SetResourceReference(Border.BackgroundProperty, "RaisedBrush");
+        else PreviewBubble.SetResourceReference(Border.BackgroundProperty, "InputBrush");
         PreviewBubble.Padding = view.Compact ? new Thickness(0, 4, 0, 4) : new Thickness(12, 8, 12, 8);
         OwnerText.Text = view.Owner;
     }

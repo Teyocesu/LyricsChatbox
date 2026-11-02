@@ -4,8 +4,8 @@
   <Window.Resources>
     <Style x:Key="MusicTransportButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Width" Value="36"/><Setter Property="Height" Value="36"/><Setter Property="Padding" Value="0"/><Setter Property="FontSize" Value="16"/></Style>
     <Style x:Key="MusicPlayButton" TargetType="Button" BasedOn="{StaticResource MusicTransportButton}">
-      <Setter Property="Width" Value="46"/><Setter Property="Height" Value="46"/>
-      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Circle" CornerRadius="23" BorderThickness="1.5" BorderBrush="{DynamicResource AccentBrush}" Background="Transparent"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Circle" Property="Background" Value="{DynamicResource AccentMutedBrush}"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter TargetName="Circle" Property="Opacity" Value="0.4"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Circle" Property="BorderBrush" Value="{DynamicResource TextBrush}"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+      <Setter Property="Width" Value="44"/><Setter Property="Height" Value="44"/><Setter Property="Foreground" Value="{DynamicResource AccentInkBrush}"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Circle" CornerRadius="22" Background="{DynamicResource AccentBrush}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Circle" Property="Background" Value="{DynamicResource AccentHoverBrush}"/><Setter Property="Foreground" Value="{DynamicResource AccentHoverInkBrush}"/></Trigger><Trigger Property="IsPressed" Value="True"><Setter TargetName="Circle" Property="Background" Value="{DynamicResource AccentPressedBrush}"/><Setter Property="Foreground" Value="{DynamicResource AccentPressedInkBrush}"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter TargetName="Circle" Property="Opacity" Value="0.35"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
     </Style>
     <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Width" Value="46"/><Setter Property="Height" Value="32"/><Setter Property="MinHeight" Value="32"/><Setter Property="Padding" Value="0"/><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="FontFamily" Value="Segoe Fluent Icons"/><Setter Property="FontSize" Value="10"/><Setter Property="FocusVisualStyle" Value="{StaticResource InsetFocusRing}"/><Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/></Style>
     <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Padding" Value="10,5"/><Setter Property="MinHeight" Value="30"/><Setter Property="FontSize" Value="12"/></Style>
@@ -134,28 +134,26 @@
     </Style>
     <Style x:Key="HomeSectionRule" TargetType="Border"><Setter Property="Height" Value="2"/><Setter Property="Background" Value="{DynamicResource AccentBrush}"/><Setter Property="Margin" Value="0,4,0,8"/></Style>
     <Style x:Key="HomeRowSeparator" TargetType="Border"><Setter Property="Height" Value="1"/><Setter Property="Background" Value="{DynamicResource LineBrush}"/><Setter Property="Opacity" Value="0.28"/></Style>
-    <Style x:Key="HomeStatusText" TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Setter Property="TextWrapping" Value="NoWrap"/><Setter Property="TextTrimming" Value="CharacterEllipsis"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
-    <Style x:Key="HomeDetailLabel" TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Setter Property="FontSize" Value="13"/><Setter Property="Margin" Value="0,7,14,7"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
-    <Style x:Key="HomeDetailValue" TargetType="TextBlock"><Setter Property="FontSize" Value="13"/><Setter Property="Margin" Value="0,7,14,7"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
-    <Style x:Key="HomeHeaderAction" TargetType="Button" BasedOn="{StaticResource AboutAction}"><Setter Property="Padding" Value="6,0"/><Setter Property="MinHeight" Value="20"/><Setter Property="FontSize" Value="12"/><Setter Property="HorizontalContentAlignment" Value="Center"/></Style>
+    <Style x:Key="HomeStatusText" TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}"/><Setter Property="TextWrapping" Value="NoWrap"/><Setter Property="TextTrimming" Value="CharacterEllipsis"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+    <Style x:Key="HomeTimeText" TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}"/><Setter Property="TextWrapping" Value="NoWrap"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+    <Style x:Key="HomeDetailLabel" TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Setter Property="FontSize" Value="13"/><Setter Property="Margin" Value="0,4,12,4"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+    <Style x:Key="HomeDetailValue" TargetType="TextBlock"><Setter Property="FontSize" Value="13"/><Setter Property="Margin" Value="0,4,0,4"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+    <Style x:Key="HomeHeaderAction" TargetType="Button" BasedOn="{StaticResource AboutAction}"><Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/><Setter Property="Padding" Value="6,0"/><Setter Property="MinHeight" Value="20"/><Setter Property="FontSize" Value="12"/><Setter Property="HorizontalContentAlignment" Value="Center"/></Style>
+    <Style x:Key="HomeChoiceDetail" TargetType="TextBlock" BasedOn="{StaticResource Caption}"><Setter Property="TextWrapping" Value="NoWrap"/><Setter Property="TextTrimming" Value="CharacterEllipsis"/><Setter Property="VerticalAlignment" Value="Center"/><Style.Triggers><DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"><Setter Property="Foreground" Value="{DynamicResource AccentSubtleBrush}"/></DataTrigger></Style.Triggers></Style>
     <Style x:Key="HomeChoiceItem" TargetType="ListBoxItem">
       <Setter Property="Padding" Value="12,7"/>
-      <Setter Property="Margin" Value="0,0,6,6"/>
+      <Setter Property="Margin" Value="-12,0,-12,2"/>
       <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="FocusVisualStyle" Value="{StaticResource InsetFocusRing}"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ListBoxItem">
-            <Grid>
-              <Border x:Name="Shell" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
-              <Border x:Name="Marker" Width="3" CornerRadius="1.5" Background="{DynamicResource AccentBrush}" HorizontalAlignment="Left" Margin="1,8,0,8" Visibility="Collapsed"/>
-            </Grid>
+            <Border x:Name="Shell" Background="Transparent" CornerRadius="5" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Shell" Property="Background" Value="{DynamicResource HoverBrush}"/></Trigger>
-              <Trigger Property="IsSelected" Value="True"><Setter TargetName="Shell" Property="Background" Value="{DynamicResource SelectedBrush}"/><Setter TargetName="Marker" Property="Visibility" Value="Visible"/><Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/></Trigger>
-              <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource FocusBrush}"/></Trigger>
+              <Trigger Property="IsSelected" Value="True"><Setter TargetName="Shell" Property="Background" Value="{DynamicResource SelectedBrush}"/><Setter Property="Foreground" Value="{DynamicResource SelectedTextBrush}"/></Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -230,43 +228,6 @@
         </ScrollViewer>
       </DockPanel>
     </Border>
-    <Border x:Name="OutputPanel" Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0">
-      <Grid>
-        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-        <StackPanel Orientation="Horizontal" Margin="16,0,8,0">
-          <TextBlock Text="Output" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
-          <CheckBox x:Name="EnabledBox" VerticalAlignment="Center" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"/>
-        </StackPanel>
-        <Border Grid.Column="1" Style="{StaticResource StatusSegment}">
-          <StackPanel Orientation="Horizontal">
-            <Ellipse x:Name="OutputStatusDot" Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" Margin="0,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"/>
-            <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource StatusText}" MaxWidth="220"/>
-          </StackPanel>
-        </Border>
-        <DockPanel Grid.Column="2" LastChildFill="False">
-          <Border Style="{StaticResource StatusSegment}"><TextBlock x:Name="OutputDestinationText" Text="" Style="{StaticResource StatusText}" AutomationProperties.Name="Configured OSC destination"/></Border>
-          <Border Style="{StaticResource StatusSegment}" Visibility="{Binding Visibility, ElementName=OutputActivityText}"><TextBlock x:Name="OutputActivityText" Text="" Style="{StaticResource StatusText}" Visibility="Collapsed"/></Border>
-          <Border Style="{StaticResource StatusSegment}" Visibility="{Binding Visibility, ElementName=OutputPauseHint}"><TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource StatusText}" Visibility="Collapsed"/></Border>
-        </DockPanel>
-        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource StatusButton}" Visibility="Collapsed" AutomationProperties.Name="Resume Chatbox output"/>
-          <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource StatusButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
-            <Button.ContentTemplate><DataTemplate><StackPanel Orientation="Horizontal"><TextBlock Text="{Binding}"/><TextBlock Text="▾" Margin="6,0,0,0" FontSize="10" VerticalAlignment="Center" AutomationProperties.Name=" "/></StackPanel></DataTemplate></Button.ContentTemplate>
-            <Button.ContextMenu>
-              <ContextMenu>
-                <MenuItem Header="Pause for 5 minutes" Tag="5" Click="PauseOutputSelected"/>
-                <MenuItem Header="Pause for 15 minutes" Tag="15" Click="PauseOutputSelected"/>
-                <MenuItem Header="Pause for 30 minutes" Tag="30" Click="PauseOutputSelected"/>
-                <Separator/>
-                <MenuItem x:Name="PauseUntilTrackMenuItem" Header="Pause until next track" Tag="track" Click="PauseOutputSelected"/>
-                <MenuItem Header="Pause until I resume" Tag="resume" Click="PauseOutputSelected"/>
-              </ContextMenu>
-            </Button.ContextMenu>
-          </Button>
-        </StackPanel>
-        <Border Grid.Column="4" Style="{StaticResource StatusSegment}"><TextBlock x:Name="VersionCaption" Style="{StaticResource Caption}" FontSize="11" VerticalAlignment="Center"/></Border>
-      </Grid>
-    </Border>
     <Grid x:Name="ContentPanel" Grid.Column="1">
       <Grid.RowDefinitions>
         <RowDefinition Height="36"/>
@@ -275,165 +236,167 @@
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
       <Grid x:Name="HomePage" Grid.RowSpan="3" ClipToBounds="True">
-        <Grid x:Name="HomeAtmosphere" VerticalAlignment="Top" Height="{Binding ActualHeight, ElementName=NowPlayingPanel}" IsHitTestVisible="False" Focusable="False" ClipToBounds="True" AutomationProperties.Name=" ">
-          <Grid.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#FF000000" Offset="0"/><GradientStop Color="#D9000000" Offset="0.5"/><GradientStop Color="#00000000" Offset="0.86"/></LinearGradientBrush></Grid.OpacityMask>
-          <Border Background="{DynamicResource HeroBrush}"/>
-          <Grid x:Name="HeroArtworkLayer">
-            <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsChecked, ElementName=ArtworkTintBox}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding Source, ElementName=ArtImage}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
-            <Border Margin="-32" Opacity="0.48" CacheMode="BitmapCache">
-              <Border.Background><ImageBrush ImageSource="{Binding Source, ElementName=ArtImage}" Stretch="UniformToFill" AlignmentY="Center"/></Border.Background>
-              <Border.Effect><BlurEffect Radius="28" RenderingBias="Performance"/></Border.Effect>
-            </Border>
-            <Border Background="{DynamicResource CanvasBrush}" Opacity="0.5"/>
-            <Border Background="{DynamicResource CanvasBrush}"><Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#E6000000" Offset="0"/><GradientStop Color="#99000000" Offset="0.45"/><GradientStop Color="#10000000" Offset="1"/></LinearGradientBrush></Border.OpacityMask></Border>
+        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition x:Name="HomeInspectorColumn" Width="400"/></Grid.ColumnDefinitions>
+        <Grid.RowDefinitions><RowDefinition x:Name="HomeStageRow"/><RowDefinition x:Name="HomeSectionsRow" Height="Auto"/></Grid.RowDefinitions>
+        <Grid x:Name="HomeCanvas" Grid.RowSpan="2" ClipToBounds="True">
+          <Grid x:Name="HomeAtmosphere" IsHitTestVisible="False" Focusable="False" ClipToBounds="True" AutomationProperties.Name=" ">
+            <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding IsChecked, ElementName=ArtworkTintBox}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
+            <Border Background="{DynamicResource HeroBrush}"/>
+            <Grid x:Name="HeroArtworkLayer">
+              <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding Source, ElementName=ArtImage}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
+              <Border Margin="-96" Opacity="0.5" CacheMode="BitmapCache">
+                <Border.Background><ImageBrush ImageSource="{Binding Source, ElementName=ArtImage}" Stretch="UniformToFill" AlignmentY="Center"/></Border.Background>
+                <Border.Effect><BlurEffect Radius="64" RenderingBias="Performance"/></Border.Effect>
+              </Border>
+            </Grid>
+            <Border Background="{DynamicResource CanvasBrush}"><Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#70000000" Offset="0"/><GradientStop Color="#C0000000" Offset="0.45"/><GradientStop Color="#EB000000" Offset="1"/></LinearGradientBrush></Border.OpacityMask></Border>
+            <Border Background="{DynamicResource CanvasBrush}"><Border.OpacityMask><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#00000000" Offset="0.62"/><GradientStop Color="#FF000000" Offset="1"/></LinearGradientBrush></Border.OpacityMask></Border>
           </Grid>
-        </Grid>
-        <Grid x:Name="HomeCanvas" MaxWidth="1400" Margin="30,0">
-          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
-          <Border x:Name="NowPlayingPanel" Padding="0,40,0,20">
+          <Border x:Name="NowPlayingPanel">
             <Grid>
-              <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-              <Grid x:Name="HeroStatusRow" Margin="0,0,0,14" MinHeight="22">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="12"/><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <Border Background="{DynamicResource AccentBrush}"/>
-                <TextBlock Grid.Column="2" Text="N O W  P L A Y I N G" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Now playing"/>
-                <TextBlock x:Name="LyricsStatusText" Grid.Column="3" Style="{StaticResource HomeStatusText}" HorizontalAlignment="Right" Margin="24,0,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                <Border Grid.Column="4" Width="1" Height="12" Background="{DynamicResource LineBrush}" Margin="10,0"><Border.Style><Style TargetType="Border"><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=SourceText}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style></Border>
-                <TextBlock x:Name="SourceText" Grid.Column="5" Style="{StaticResource HomeStatusText}" MaxWidth="300" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                <Button x:Name="ChoosePlaybackSourceButton" Grid.Column="6" Content="Choose source" Click="GoToPlaybackSourceSettings" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="10,0,0,0"/>
+              <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+              <Grid x:Name="HeroStatusRow" MinHeight="22">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock Text="Now playing" Style="{StaticResource HomeStatusText}"/>
+                <TextBlock x:Name="LyricsStatusText" Grid.Column="1" Style="{StaticResource HomeStatusText}" HorizontalAlignment="Right" Margin="24,0,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                <Border Grid.Column="2" Width="1" Height="12" Background="{DynamicResource StrongLineBrush}" Margin="10,0"><Border.Style><Style TargetType="Border"><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=SourceText}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style></Border>
+                <TextBlock x:Name="SourceText" Grid.Column="3" Style="{StaticResource HomeStatusText}" MaxWidth="300" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                <Button x:Name="ChoosePlaybackSourceButton" Grid.Column="4" Content="Choose source" Click="GoToPlaybackSourceSettings" Style="{StaticResource SmallButton}" Visibility="Collapsed" Margin="10,0,0,0"/>
               </Grid>
-              <Grid x:Name="HeroGrid" Grid.Row="1">
-                <Grid.ColumnDefinitions><ColumnDefinition x:Name="ArtworkColumn" Width="236"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
-                <Border x:Name="ArtworkFrame" Grid.RowSpan="2" Width="208" Height="208" CornerRadius="10" HorizontalAlignment="Left" VerticalAlignment="Top" Background="{DynamicResource AccentMutedBrush}">
+              <Grid x:Name="HeroGrid" Grid.Row="1" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions><ColumnDefinition x:Name="ArtworkColumn"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Border x:Name="ArtworkFrame" CornerRadius="10" HorizontalAlignment="Left" VerticalAlignment="Top" Background="{DynamicResource AccentMutedBrush}">
+                  <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.35" RenderingBias="Performance"/></Border.Effect>
                   <Grid><Grid.OpacityMask><VisualBrush><VisualBrush.Visual><Border Width="208" Height="208" CornerRadius="10" Background="White"/></VisualBrush.Visual></VisualBrush></Grid.OpacityMask>
                     <Image x:Name="ArtImage" Stretch="UniformToFill" AutomationProperties.Name="Album artwork"/>
                     <TextBlock x:Name="ArtFallback" Text="♫" FontSize="60" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                   </Grid>
                 </Border>
-                <StackPanel x:Name="TrackMetadata" Grid.Column="1">
+                <StackPanel x:Name="TrackMetadata" Grid.Column="1" VerticalAlignment="Bottom">
                   <TextBlock x:Name="TrackText" Text="No track playing" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="32" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                  <TextBlock x:Name="ArtistText" FontSize="16" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                  <TextBlock x:Name="AlbumText" Style="{StaticResource Caption}" FontSize="13" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  <TextBlock x:Name="ArtistText" FontSize="16" Foreground="{DynamicResource SecondaryBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  <TextBlock x:Name="AlbumText" FontSize="14" Foreground="{DynamicResource SecondaryBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                 </StackPanel>
-                <TextBlock x:Name="LyricText" Grid.Row="1" Grid.Column="1" Text="—" FontFamily="Segoe UI Variable Display, Segoe UI" FontWeight="Light" LineStackingStrategy="BlockLineHeight" TextTrimming="CharacterEllipsis" VerticalAlignment="Bottom" Margin="0,12,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}">
+                <TextBlock x:Name="LyricText" Grid.Row="1" Grid.ColumnSpan="2" Text="—" FontFamily="Segoe UI Variable Display, Segoe UI" FontWeight="Light" LineStackingStrategy="BlockLineHeight" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}">
                   <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Style.Triggers><Trigger Property="Text" Value="—"><Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/></Trigger></Style.Triggers></Style></TextBlock.Style>
                 </TextBlock>
               </Grid>
-              <StackPanel x:Name="HeroTransport" Grid.Row="2" Margin="0,18,0,0">
-                <ProgressBar x:Name="PositionProgress" Maximum="1" Height="4" BorderThickness="0" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Playback progress" ToolTip="Seeking is not available here"/>
-                <Grid Margin="0,6,0,0">
-                  <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                  <TextBlock x:Name="PositionText" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
-                  <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button x:Name="ShuffleButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8B1;" FontFamily="Segoe Fluent Icons" Tag="Shuffle" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Shuffle is unavailable" AutomationProperties.Name="Shuffle"/>
-                    <Button x:Name="PreviousButton" Style="{StaticResource MusicTransportButton}" Content="&#xE892;" FontFamily="Segoe Fluent Icons" Tag="Previous" Click="TransportClicked" ToolTip="Previous track" AutomationProperties.Name="Previous track"/>
-                    <Button x:Name="PlayPauseButton" Style="{StaticResource MusicPlayButton}" Content="&#xE768;" FontFamily="Segoe Fluent Icons" Tag="PlayPause" Click="TransportClicked" Foreground="{DynamicResource AccentBrush}" BorderBrush="{DynamicResource AccentBrush}" Margin="8,0" ToolTip="Play or pause" AutomationProperties.Name="Play or pause"/>
-                    <Button x:Name="NextButton" Style="{StaticResource MusicTransportButton}" Content="&#xE893;" FontFamily="Segoe Fluent Icons" Tag="Next" Click="TransportClicked" ToolTip="Next track" AutomationProperties.Name="Next track"/>
-                    <Button x:Name="RepeatButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8EE;" FontFamily="Segoe Fluent Icons" Tag="Repeat" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Repeat is unavailable" AutomationProperties.Name="Repeat"/>
-                  </StackPanel>
-                  <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE767;" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name=" "/>
-                    <Slider x:Name="MusicVolumeSlider" ValueChanged="MusicVolumeChanged" Minimum="0" Maximum="1" Width="96" IsEnabled="False" IsMoveToPointEnabled="True" SmallChange="0.02" LargeChange="0.1" AutomationProperties.Name="Music volume" ToolTip="Music volume" PreviewMouseLeftButtonUp="VolumeReleased" KeyUp="VolumeKeyReleased"/>
-                  </StackPanel>
-                </Grid>
-                <TextBlock x:Name="TransportStatus" Style="{StaticResource Caption}" FontSize="11" TextAlignment="Center" Visibility="Collapsed"/>
-              </StackPanel>
-            </Grid>
-          </Border>
-          <Grid x:Name="HomeSectionsPanel" Grid.Row="1">
-            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
-            <ListBox x:Name="HomeSectionBox" SelectedIndex="0" SelectionChanged="HomeSectionChanged" ItemContainerStyle="{StaticResource HomeSectionTab}" Margin="0,0,0,14" Visibility="Collapsed" AutomationProperties.Name="Home section">
-              <ListBox.Template><ControlTemplate TargetType="ListBox"><Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1"><ItemsPresenter/></Border></ControlTemplate></ListBox.Template>
-              <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-              <ListBoxItem Content="Preview"/><ListBoxItem Content="Profiles"/><ListBoxItem Content="Context"/><ListBoxItem Content="Details"/><ListBoxItem Content="Tools"/>
-            </ListBox>
-            <ScrollViewer x:Name="HomeSectionsScroller" Grid.Row="1" Margin="0,0,-24,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" AutomationProperties.Name="Home sections">
-              <Grid x:Name="HomeColumns" Margin="0,0,24,8">
-                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="48"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                <StackPanel x:Name="HomeLeftColumn">
-                  <ContentControl x:Name="HomePreviewHost" HorizontalContentAlignment="Stretch"/>
-                  <StackPanel x:Name="InspectorSection">
-                    <TextBlock Text="L Y R I C S  D E T A I L S" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Lyrics details"/>
-                    <Border Style="{StaticResource HomeSectionRule}"/>
-                    <Grid>
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                      <TextBlock Text="Source" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorSource" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
-                      <TextBlock Grid.Column="2" Text="Cache" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorCache" Grid.Column="3" Text="—" Style="{StaticResource HomeDetailValue}"/>
-                      <Border Grid.Row="1" Grid.ColumnSpan="4" Style="{StaticResource HomeRowSeparator}"/>
-                      <TextBlock Grid.Row="2" Text="{x:Static local:PresentationText.TrackLyricsDurationLabel}" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorDuration" Grid.Row="2" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
-                      <TextBlock Grid.Row="2" Grid.Column="2" Text="Global offset" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorGlobalOffset" Grid.Row="2" Grid.Column="3" Text="—" Style="{StaticResource HomeDetailValue}"/>
-                      <Border Grid.Row="3" Grid.ColumnSpan="4" Style="{StaticResource HomeRowSeparator}"/>
-                      <TextBlock Grid.Row="4" Text="Saved offset" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorSavedOffset" Grid.Row="4" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
-                      <TextBlock Grid.Row="4" Grid.Column="2" Text="Effective offset" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorEffectiveOffset" Grid.Row="4" Grid.Column="3" Text="—" Style="{StaticResource HomeDetailValue}" Foreground="{DynamicResource AccentBrush}"/>
-                    </Grid>
-                    <Expander Header="Recording &amp; timing" FontSize="13" Margin="0,8,0,0">
-                      <StackPanel Margin="0,8,0,0">
-                        <Grid>
-                          <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                          <TextBlock Text="Match" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorMatch" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
-                          <TextBlock Grid.Row="1" Text="Manual match" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorManual" Grid.Row="1" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
-                          <TextBlock Grid.Row="2" Text="Ignored" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorIgnored" Grid.Row="2" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
-                        </Grid>
-                        <Button Content="Forget manual match" Click="ForgetMatch" IsEnabled="{Binding IsEnabled, ElementName=ForgetMatchButton}" Style="{StaticResource SmallButton}" HorizontalAlignment="Left" Margin="0,8,0,12"/>
-                        <DockPanel><TextBlock x:Name="OffsetText" Text="0.0 s" DockPanel.Dock="Right" Foreground="{DynamicResource AccentBrush}"/><TextBlock Text="Lyric timing" FontWeight="SemiBold"/></DockPanel>
-                        <Slider x:Name="OffsetSlider" ToolTip="Positive timing values show lyrics later." Minimum="-5" Maximum="5" TickFrequency="0.1" SmallChange="0.1" LargeChange="0.5" IsSnapToTickEnabled="True" ValueChanged="OffsetChanged" AutomationProperties.Name="Lyric offset in seconds" Margin="0,6,0,2"/>
-                        <TextBlock x:Name="CorrectionStatus" Style="{StaticResource Caption}" Margin="0,4,0,8"/>
-                        <WrapPanel><Button x:Name="SaveSongButton" Content="Save for song" Click="SaveSongCorrection" Style="{StaticResource SmallButton}" Margin="0,0,6,6"/><Button x:Name="ResetSongButton" Content="Reset song" Click="ResetSongCorrection" Style="{StaticResource SmallButton}" Margin="0,0,6,6"/><Button Content="Use globally" Click="UseGlobalCorrection" Style="{StaticResource SmallButton}" Margin="0,0,0,6"/></WrapPanel>
-                      </StackPanel>
-                    </Expander>
-                  </StackPanel>
-                </StackPanel>
-                <Border x:Name="HomeColumnDivider" Grid.Column="1" Width="1" Background="{DynamicResource LineBrush}" HorizontalAlignment="Center"/>
-                <StackPanel x:Name="HomeRightColumn" Grid.Column="2">
-                  <StackPanel x:Name="ProfilesSection">
-                    <DockPanel><Button Content="Manage" Click="ManageProfiles" DockPanel.Dock="Right" Style="{StaticResource HomeHeaderAction}" AutomationProperties.Name="Manage profiles"/><TextBlock Text="P R O F I L E S" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Profiles"/></DockPanel>
-                    <Border Style="{StaticResource HomeSectionRule}"/>
-                    <ListBox x:Name="ProfileCards" SelectionChanged="SelectProfile" SelectedValuePath="Id" ItemContainerStyle="{StaticResource HomeChoiceItem}" AutomationProperties.Name="Saved display profiles">
-                      <ListBox.Template><ControlTemplate TargetType="ListBox"><ItemsPresenter/></ControlTemplate></ListBox.Template>
-                      <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
-                      <ListBox.ItemTemplate><DataTemplate><StackPanel MaxWidth="170"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding Name}"/><TextBlock Text="{Binding Preset}" FontSize="11" Foreground="{DynamicResource MutedBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
-                    </ListBox>
-                  </StackPanel>
-                  <StackPanel x:Name="ContextCard">
-                    <TextBlock Text="L Y R I C  C O N T E X T" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Lyric context"/>
-                    <Border Style="{StaticResource HomeSectionRule}"/>
-                    <ListBox x:Name="ContextBox" SelectionChanged="ContextChanged" ItemContainerStyle="{StaticResource HomeChoiceItem}" AutomationProperties.Name="Lyric context mode" ToolTip="{Binding Text, ElementName=ContextHint}">
-                      <ListBox.Template><ControlTemplate TargetType="ListBox"><ItemsPresenter/></ControlTemplate></ListBox.Template>
-                      <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-                      <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" FontSize="13" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/></DataTemplate></ListBox.ItemTemplate>
-                    </ListBox>
-                    <TextBlock x:Name="ContextHint" Text="Adds nearby lyrics when they fit. The current lyric always stays." Style="{StaticResource Caption}" Margin="0,2,0,0" Visibility="Collapsed"/>
-                  </StackPanel>
-                  <StackPanel x:Name="HomeToolsSection">
-                    <TextBlock Text="L Y R I C S  T O O L S" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Lyrics tools"/>
-                    <Border Style="{StaticResource HomeSectionRule}"/>
-                    <StackPanel x:Name="RecoveryCard" Visibility="Collapsed" Margin="0,0,0,10">
-                      <TextBlock x:Name="RecoveryTitle" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,2"/>
-                      <TextBlock x:Name="RecoveryHint" Style="{StaticResource Caption}"/>
+              <Grid Grid.Row="2">
+                <Border Background="{DynamicResource CanvasBrush}" Opacity="0.55"/>
+                <Border Style="{StaticResource PanelSeparator}" VerticalAlignment="Top"/>
+                <StackPanel x:Name="HeroTransport">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock x:Name="PositionText" Style="{StaticResource HomeTimeText}"/>
+                    <ProgressBar x:Name="PositionProgress" Grid.Column="1" Maximum="1" Height="4" Margin="16,0" BorderThickness="0" Background="{DynamicResource StrongLineBrush}" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Playback progress" ToolTip="Seeking is not available here"/>
+                    <TextBlock x:Name="DurationText" Grid.Column="2" Style="{StaticResource HomeTimeText}"/>
+                  </Grid>
+                  <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                      <Button x:Name="ShuffleButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8B1;" FontFamily="Segoe Fluent Icons" Tag="Shuffle" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Shuffle is unavailable" AutomationProperties.Name="Shuffle"/>
+                      <Button x:Name="PreviousButton" Style="{StaticResource MusicTransportButton}" Content="&#xE892;" FontFamily="Segoe Fluent Icons" Tag="Previous" Click="TransportClicked" ToolTip="Previous track" AutomationProperties.Name="Previous track"/>
+                      <Button x:Name="PlayPauseButton" Style="{StaticResource MusicPlayButton}" Content="&#xE768;" FontFamily="Segoe Fluent Icons" Tag="PlayPause" Click="TransportClicked" Margin="8,0" ToolTip="Play or pause" AutomationProperties.Name="Play or pause"/>
+                      <Button x:Name="NextButton" Style="{StaticResource MusicTransportButton}" Content="&#xE893;" FontFamily="Segoe Fluent Icons" Tag="Next" Click="TransportClicked" ToolTip="Next track" AutomationProperties.Name="Next track"/>
+                      <Button x:Name="RepeatButton" Style="{StaticResource MusicTransportButton}" Content="&#xE8EE;" FontFamily="Segoe Fluent Icons" Tag="Repeat" Click="TransportClicked" ToolTipService.ShowOnDisabled="True" ToolTip="Repeat is unavailable" AutomationProperties.Name="Repeat"/>
                     </StackPanel>
-                    <WrapPanel>
-                      <Button x:Name="HomeRetryButton" Content="Retry lyrics" Click="RetryLyrics" Style="{StaticResource SmallButton}" Margin="0,0,8,6" Visibility="Collapsed"/>
-                      <Button x:Name="InspectorSearchButton" Content="Search alternatives" Click="OpenMatches" Style="{StaticResource SmallButton}" Margin="0,0,8,6"/>
-                      <Button x:Name="HomeImportButton" Content="Import LRC…" Click="ImportLrc" IsEnabled="{Binding IsEnabled, ElementName=ImportButton}" Style="{StaticResource SmallButton}" Margin="0,0,8,6"/>
-                      <Button x:Name="IgnoreButton" Content="Ignore this recording" Click="ToggleIgnore" Style="{StaticResource SmallButton}" Margin="0,0,0,6"/>
-                    </WrapPanel>
-                    <StackPanel x:Name="MatchPanel" Visibility="Collapsed" Margin="0,8,0,0">
-                      <TextBox x:Name="MatchQuery" MaxLength="512" AutomationProperties.Name="Search lyrics candidates"/>
-                      <WrapPanel Margin="0,8,0,8"><Button x:Name="SearchMatchesButton" Content="Search" Click="SearchMatches" Style="{StaticResource SmallButton}" Margin="0,0,8,4"/><Button x:Name="UseMatchButton" Content="Use selected match" Click="UseMatch" Style="{StaticResource SmallButton}" Margin="0,0,8,4"/><Button Content="Cancel" Click="CloseMatches" Style="{StaticResource SmallButton}" Margin="0,0,0,4"/></WrapPanel>
-                      <TextBlock x:Name="MatchStatus" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
-                      <ListBox x:Name="MatchChoices" MaxHeight="220" Background="{DynamicResource RaisedBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Candidate recordings">
-                        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Display}" Margin="6" TextWrapping="Wrap"/></DataTemplate></ListBox.ItemTemplate>
-                        <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListBox.ItemContainerStyle>
-                      </ListBox>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                      <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE767;" Foreground="{DynamicResource SecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name=" "/>
+                      <Slider x:Name="MusicVolumeSlider" ValueChanged="MusicVolumeChanged" Minimum="0" Maximum="1" Width="96" IsEnabled="False" IsMoveToPointEnabled="True" SmallChange="0.02" LargeChange="0.1" AutomationProperties.Name="Music volume" ToolTip="Music volume" PreviewMouseLeftButtonUp="VolumeReleased" KeyUp="VolumeKeyReleased"/>
                     </StackPanel>
-                  </StackPanel>
+                  </Grid>
+                  <TextBlock x:Name="TransportStatus" Style="{StaticResource Caption}" FontSize="11" TextAlignment="Center" Visibility="Collapsed"/>
                 </StackPanel>
               </Grid>
-            </ScrollViewer>
-          </Grid>
+            </Grid>
+          </Border>
+        </Grid>
+        <Grid x:Name="HomeSectionsPanel" Grid.Column="1" Grid.RowSpan="2" Background="{DynamicResource SurfaceBrush}">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+          <Border x:Name="HomeInspectorEdge" Grid.RowSpan="2" BorderBrush="{DynamicResource LineBrush}" IsHitTestVisible="False"/>
+          <ListBox x:Name="HomeSectionBox" SelectedIndex="0" SelectionChanged="HomeSectionChanged" ItemContainerStyle="{StaticResource HomeSectionTab}" Margin="24,4,24,0" Visibility="Collapsed" AutomationProperties.Name="Home section">
+            <ListBox.Template><ControlTemplate TargetType="ListBox"><Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1"><ItemsPresenter/></Border></ControlTemplate></ListBox.Template>
+            <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+            <ListBoxItem Content="Preview"/><ListBoxItem Content="Profiles"/><ListBoxItem Content="Context"/><ListBoxItem Content="Details"/><ListBoxItem Content="Tools"/>
+          </ListBox>
+          <ScrollViewer x:Name="HomeSectionsScroller" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" AutomationProperties.Name="Home sections">
+            <StackPanel x:Name="HomeColumns">
+              <ContentControl x:Name="HomePreviewHost" Focusable="False" HorizontalContentAlignment="Stretch"/>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <StackPanel x:Name="ProfilesSection">
+                <DockPanel Margin="0,0,0,6"><Button Content="Manage" Click="ManageProfiles" DockPanel.Dock="Right" Style="{StaticResource HomeHeaderAction}" AutomationProperties.Name="Manage profiles"/><TextBlock Text="Profiles" Style="{StaticResource SectionHeading}"/></DockPanel>
+                <ListBox x:Name="ProfileCards" SelectionChanged="SelectProfile" SelectedValuePath="Id" ItemContainerStyle="{StaticResource HomeChoiceItem}" AutomationProperties.Name="Saved display profiles">
+                  <ListBox.Template><ControlTemplate TargetType="ListBox"><ItemsPresenter/></ControlTemplate></ListBox.Template>
+                  <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                  <ListBox.ItemTemplate><DataTemplate><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding Name}"/><TextBlock Grid.Column="1" Text="{Binding Preset}" Style="{StaticResource HomeChoiceDetail}" Margin="12,0,0,0"/></Grid></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+              </StackPanel>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <StackPanel x:Name="ContextCard">
+                <TextBlock Text="Lyric context" Style="{StaticResource SectionHeading}" Margin="0,0,0,6"/>
+                <ListBox x:Name="ContextBox" SelectionChanged="ContextChanged" ItemContainerStyle="{StaticResource HomeChoiceItem}" AutomationProperties.Name="Lyric context mode" ToolTip="{Binding Text, ElementName=ContextHint}">
+                  <ListBox.Template><ControlTemplate TargetType="ListBox"><ItemsPresenter/></ControlTemplate></ListBox.Template>
+                  <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                  <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock x:Name="ContextHint" Text="Adds nearby lyrics when they fit. The current lyric always stays." Style="{StaticResource Caption}" Margin="0,2,0,0" Visibility="Collapsed"/>
+              </StackPanel>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <StackPanel x:Name="InspectorSection">
+                <TextBlock Text="Lyrics details" Style="{StaticResource SectionHeading}" Margin="0,0,0,6"/>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="152"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                  <TextBlock Text="Source" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorSource" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
+                  <TextBlock Grid.Row="1" Text="Cache" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorCache" Grid.Row="1" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
+                  <TextBlock Grid.Row="2" Text="{x:Static local:PresentationText.TrackLyricsDurationLabel}" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorDuration" Grid.Row="2" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
+                  <TextBlock Grid.Row="3" Text="Global offset" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorGlobalOffset" Grid.Row="3" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
+                  <TextBlock Grid.Row="4" Text="Saved offset" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorSavedOffset" Grid.Row="4" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
+                  <TextBlock Grid.Row="5" Text="Effective offset" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorEffectiveOffset" Grid.Row="5" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}" Foreground="{DynamicResource AccentTextBrush}"/>
+                </Grid>
+                <Expander Header="Recording &amp; timing" Margin="0,8,0,0">
+                  <StackPanel Margin="0,8,0,0">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="152"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                      <TextBlock Text="Match" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorMatch" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
+                      <TextBlock Grid.Row="1" Text="Manual match" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorManual" Grid.Row="1" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
+                      <TextBlock Grid.Row="2" Text="Ignored" Style="{StaticResource HomeDetailLabel}"/><TextBlock x:Name="InspectorIgnored" Grid.Row="2" Grid.Column="1" Text="—" Style="{StaticResource HomeDetailValue}"/>
+                    </Grid>
+                    <Button Content="Forget manual match" Click="ForgetMatch" IsEnabled="{Binding IsEnabled, ElementName=ForgetMatchButton}" Style="{StaticResource SmallButton}" HorizontalAlignment="Left" Margin="0,8,0,12"/>
+                    <DockPanel><TextBlock x:Name="OffsetText" Text="0.0 s" DockPanel.Dock="Right" Foreground="{DynamicResource AccentTextBrush}"/><TextBlock Text="Lyric timing" FontWeight="SemiBold"/></DockPanel>
+                    <Slider x:Name="OffsetSlider" ToolTip="Positive timing values show lyrics later." Minimum="-5" Maximum="5" TickFrequency="0.1" SmallChange="0.1" LargeChange="0.5" IsSnapToTickEnabled="True" ValueChanged="OffsetChanged" AutomationProperties.Name="Lyric offset in seconds" Margin="0,6,0,2"/>
+                    <TextBlock x:Name="CorrectionStatus" Style="{StaticResource Caption}" Margin="0,4,0,8"/>
+                    <WrapPanel><Button x:Name="SaveSongButton" Content="Save for song" Click="SaveSongCorrection" Style="{StaticResource SmallButton}" Margin="0,0,6,6"/><Button x:Name="ResetSongButton" Content="Reset song" Click="ResetSongCorrection" Style="{StaticResource SmallButton}" Margin="0,0,6,6"/><Button Content="Use globally" Click="UseGlobalCorrection" Style="{StaticResource SmallButton}" Margin="0,0,0,6"/></WrapPanel>
+                  </StackPanel>
+                </Expander>
+              </StackPanel>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <StackPanel x:Name="HomeToolsSection">
+                <TextBlock Text="Lyrics tools" Style="{StaticResource SectionHeading}" Margin="0,0,0,8"/>
+                <StackPanel x:Name="RecoveryCard" Visibility="Collapsed" Margin="0,0,0,10">
+                  <TextBlock x:Name="RecoveryTitle" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,2"/>
+                  <TextBlock x:Name="RecoveryHint" Style="{StaticResource Caption}"/>
+                </StackPanel>
+                <WrapPanel>
+                  <Button x:Name="HomeRetryButton" Content="Retry lyrics" Click="RetryLyrics" Style="{StaticResource SmallButton}" Margin="0,0,8,6" Visibility="Collapsed"/>
+                  <Button x:Name="InspectorSearchButton" Content="Search alternatives" Click="OpenMatches" Style="{StaticResource SmallButton}" Margin="0,0,8,6"/>
+                  <Button x:Name="HomeImportButton" Content="Import LRC…" Click="ImportLrc" IsEnabled="{Binding IsEnabled, ElementName=ImportButton}" Style="{StaticResource SmallButton}" Margin="0,0,8,6"/>
+                  <Button x:Name="IgnoreButton" Content="Ignore this recording" Click="ToggleIgnore" Style="{StaticResource SmallButton}" Margin="0,0,0,6"/>
+                </WrapPanel>
+                <StackPanel x:Name="MatchPanel" Visibility="Collapsed" Margin="0,8,0,0">
+                  <TextBox x:Name="MatchQuery" MaxLength="512" AutomationProperties.Name="Search lyrics candidates"/>
+                  <WrapPanel Margin="0,8,0,8"><Button x:Name="SearchMatchesButton" Content="Search" Click="SearchMatches" Style="{StaticResource SmallButton}" Margin="0,0,8,4"/><Button x:Name="UseMatchButton" Content="Use selected match" Click="UseMatch" Style="{StaticResource SmallButton}" Margin="0,0,8,4"/><Button Content="Cancel" Click="CloseMatches" Style="{StaticResource SmallButton}" Margin="0,0,0,4"/></WrapPanel>
+                  <TextBlock x:Name="MatchStatus" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                  <ListBox x:Name="MatchChoices" MaxHeight="220" Background="{DynamicResource InputBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Candidate recordings">
+                    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Display}" Margin="6" TextWrapping="Wrap"/></DataTemplate></ListBox.ItemTemplate>
+                    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListBox.ItemContainerStyle>
+                  </ListBox>
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
         </Grid>
       </Grid>
       <ScrollViewer x:Name="DisplayPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
@@ -463,7 +426,7 @@
             <StackPanel x:Name="DisplayPrimaryColumn">
               <TextBlock Text="C O M P O S I T I O N" Style="{StaticResource AboutSectionLabel}" AutomationProperties.Name="Composition"/>
               <Border Style="{StaticResource HomeSectionRule}"/>
-              <ListBox x:Name="PresetBox" SelectionChanged="DisplayChanged" ItemContainerStyle="{StaticResource HomeChoiceItem}" AutomationProperties.Name="Display preset">
+              <ListBox x:Name="PresetBox" SelectionChanged="DisplayChanged" ItemContainerStyle="{StaticResource HomeChoiceItem}" Margin="12,0" AutomationProperties.Name="Display preset">
                 <ListBox.Template><ControlTemplate TargetType="ListBox"><ItemsPresenter/></ControlTemplate></ListBox.Template>
                 <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
@@ -770,21 +733,58 @@
         </Grid>
         </ScrollViewer>
       </Grid>
-      <ContentControl x:Name="PersistentPreviewHost" Grid.Row="2" Margin="30,0" MaxWidth="1400" HorizontalContentAlignment="Stretch">
+      <ContentControl x:Name="PersistentPreviewHost" Grid.Row="2" Focusable="False" Margin="30,0" MaxWidth="1400" HorizontalContentAlignment="Stretch">
         <Grid x:Name="PreviewPanel">
-          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-          <DockPanel x:Name="PreviewHeading"><Border Style="{StaticResource HomeSectionRule}" DockPanel.Dock="Bottom" Margin="0,4,0,0"/><TextBlock x:Name="BudgetText" Text="0 / 144" Style="{StaticResource Caption}" DockPanel.Dock="Right" VerticalAlignment="Center"/><TextBlock Text="C H A T B O X  P R E V I E W" Style="{StaticResource AboutSectionLabel}" FontWeight="SemiBold" FontSize="14" AutomationProperties.Name="Chatbox preview"/></DockPanel>
-          <TextBlock x:Name="PreviewProfileText" Grid.Row="1" Style="{StaticResource Caption}"/>
-          <Border x:Name="PreviewFrame" Grid.Row="2" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="3,0,0,0" Background="Transparent" CornerRadius="5">
-            <Border x:Name="PreviewBubble" Padding="0,4" VerticalAlignment="Center"><ScrollViewer x:Name="PreviewScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock x:Name="PreviewText" Text="Nothing to send yet" FontSize="20" FontWeight="Light"/></ScrollViewer></Border>
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <DockPanel x:Name="PreviewHeading"><TextBlock x:Name="BudgetText" Text="0 / 144" Style="{StaticResource Caption}" DockPanel.Dock="Right" VerticalAlignment="Center"/><TextBlock Text="Chatbox preview" Style="{StaticResource SectionHeading}" AutomationProperties.Name="Chatbox preview"/></DockPanel>
+          <Border x:Name="PreviewFrame" Grid.Row="1" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" Background="{DynamicResource InputBrush}" CornerRadius="7">
+            <Border x:Name="PreviewBubble" Padding="0,4" CornerRadius="6" VerticalAlignment="Center"><ScrollViewer x:Name="PreviewScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock x:Name="PreviewText" Text="Nothing to send yet" FontSize="16"/></ScrollViewer></Border>
           </Border>
-          <StackPanel x:Name="PreviewStatus" Grid.Row="3" Orientation="Horizontal"><TextBlock x:Name="OwnerText" Text="Automatic" Foreground="{DynamicResource AccentBrush}" FontSize="11"/><TextBlock x:Name="OscText" Text="OSC ready" Style="{StaticResource Caption}" FontSize="10" Margin="12,0,0,0"/></StackPanel>
+          <TextBlock x:Name="PreviewProfileText" Grid.Row="2" Style="{StaticResource Caption}"/>
+          <StackPanel x:Name="PreviewStatus" Grid.Row="3" Orientation="Horizontal"><TextBlock x:Name="OwnerText" Text="Automatic" Foreground="{DynamicResource AccentTextBrush}" FontSize="12"/><TextBlock x:Name="OscText" Text="OSC ready" Style="{StaticResource Caption}" Margin="10,0,0,0"/></StackPanel>
         </Grid>
       </ContentControl>
       <TextBlock Grid.Row="3" x:Name="ErrorText" Panel.ZIndex="2" Foreground="{DynamicResource WarningBrush}" Margin="30,8">
         <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers></Style></TextBlock.Style>
       </TextBlock>
     </Grid>
+    <Border x:Name="OutputPanel" Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0">
+      <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" Margin="16,0,8,0">
+          <TextBlock Text="Output" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+          <CheckBox x:Name="EnabledBox" VerticalAlignment="Center" Checked="EnabledChanged" Unchecked="EnabledChanged" AutomationProperties.Name="Enable Chatbox output"/>
+        </StackPanel>
+        <Border Grid.Column="1" Style="{StaticResource StatusSegment}">
+          <StackPanel Orientation="Horizontal">
+            <Ellipse x:Name="OutputStatusDot" Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" Margin="0,0,8,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+            <TextBlock x:Name="OutputStateText" Text="Off" Style="{StaticResource StatusText}" MaxWidth="220"/>
+          </StackPanel>
+        </Border>
+        <DockPanel Grid.Column="2" LastChildFill="False">
+          <Border Style="{StaticResource StatusSegment}"><TextBlock x:Name="OutputDestinationText" Text="" Style="{StaticResource StatusText}" AutomationProperties.Name="Configured OSC destination"/></Border>
+          <Border Style="{StaticResource StatusSegment}" Visibility="{Binding Visibility, ElementName=OutputActivityText}"><TextBlock x:Name="OutputActivityText" Text="" Style="{StaticResource StatusText}" Visibility="Collapsed"/></Border>
+          <Border Style="{StaticResource StatusSegment}" Visibility="{Binding Visibility, ElementName=OutputPauseHint}"><TextBlock x:Name="OutputPauseHint" Text="Pause remains scheduled" Style="{StaticResource StatusText}" Visibility="Collapsed"/></Border>
+        </DockPanel>
+        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button x:Name="OutputResumeButton" Content="Resume" Click="ResumeOutputPauseClicked" Style="{StaticResource StatusButton}" Visibility="Collapsed" AutomationProperties.Name="Resume Chatbox output"/>
+          <Button x:Name="OutputPauseButton" Content="Pause" Click="OutputPauseClicked" Style="{StaticResource StatusButton}" AutomationProperties.Name="Pause or change Chatbox output pause">
+            <Button.ContentTemplate><DataTemplate><StackPanel Orientation="Horizontal"><TextBlock Text="{Binding}"/><TextBlock Text="▾" Margin="6,0,0,0" FontSize="10" VerticalAlignment="Center" AutomationProperties.Name=" "/></StackPanel></DataTemplate></Button.ContentTemplate>
+            <Button.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="Pause for 5 minutes" Tag="5" Click="PauseOutputSelected"/>
+                <MenuItem Header="Pause for 15 minutes" Tag="15" Click="PauseOutputSelected"/>
+                <MenuItem Header="Pause for 30 minutes" Tag="30" Click="PauseOutputSelected"/>
+                <Separator/>
+                <MenuItem x:Name="PauseUntilTrackMenuItem" Header="Pause until next track" Tag="track" Click="PauseOutputSelected"/>
+                <MenuItem Header="Pause until I resume" Tag="resume" Click="PauseOutputSelected"/>
+              </ContextMenu>
+            </Button.ContextMenu>
+          </Button>
+        </StackPanel>
+        <Border Grid.Column="4" Style="{StaticResource StatusSegment}"><TextBlock x:Name="VersionCaption" Style="{StaticResource Caption}" FontSize="11" VerticalAlignment="Center"/></Border>
+      </Grid>
+    </Border>
     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0">
       <Button Content="&#xE921;" Style="{StaticResource CaptionButton}" Click="MinimizeWindow" AutomationProperties.Name="Minimize" ToolTip="Minimize"/>
       <Button x:Name="MaximizeCaptionButton" Content="&#xE922;" Style="{StaticResource CaptionButton}" Click="ToggleMaximizeWindow" AutomationProperties.Name="Maximize or restore" ToolTip="Maximize or restore"/>

@@ -749,3 +749,12 @@ Approved by the owner on 2026-11-02 with a control baseline taken at `38e24da`. 
 Phase 6 stays recorded as closed: its evidence belongs to that build. The revamp replaces its visual result, so release QA must run on the final revamp.
 
 - Authorized now: stages 0, a, b and c, then stop for owner review of real WPF renders.
+
+### Stages 0, a, b and c (2026-11-02, local commits, awaiting owner visual review)
+
+- Automated: Release build 0/0, 581/581 tests with no test changes, at each stage.
+- Isolated native, simulated: 115/115 checks on a hidden desktop with synthetic data and covers. Flows covered rail, logo, Output on and off, Pause menu, Resume, Held, scheduled hint, error row, profiles, Lyric Context, Manage, Recording & timing, Search alternatives open and close, Import cancel, Ignore, recovery, section tabs and focus-to-tab. Search itself, real transport, real volume and real artwork delivery were not run.
+- Text over artwork: lowest measured contrast 4.99:1 with a light cover, in 16 renders across two sizes, Rose and Blue, tint on and off, light and dark covers.
+- Baseline at `38e24da`: all event handlers are kept and `OpenAbout` is added. Removed names: the approved waveform pair, `HomeColumnDivider`, `HomeLeftColumn`, `HomeRightColumn` and an internal style `Marker`. Five headings dropped a redundant accessible name because their text now reads the same.
+- SkiaSharp: no code consumer remains after the waveform. The package, `Publish.ps1`, notices and license still reference it, so removal stays a separate cleanup.
+- Display, Settings and About are transitional until their stages.

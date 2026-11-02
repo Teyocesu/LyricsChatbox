@@ -10,7 +10,7 @@ The Decorations menu provides searchable symbols, text art, kaomoji, dividers, f
 
 Profiles can rotate up to 16 messages sequentially through `{message}` at a chosen interval. Rotation pauses while automatic output is unavailable and resumes without catching up on missed messages. Existing single status messages migrate without starting rotation.
 
-About now contains version, author links, update controls, diagnostics, data-folder access and third-party notices. The sidebar shows Output On/Off separately from a temporary pause. Spotify Desktop support has been verified with the Microsoft Store version on Windows.
+About now contains version, author links, update controls, diagnostics, data-folder access and third-party notices. The status bar shows Output On/Off separately from a temporary pause. Spotify Desktop support has been verified with the Microsoft Store version on Windows.
 
 If you return to v0.6.2, back up `%LocalAppData%\LyricsChatbox` first, or avoid editing and saving profiles in v0.6.2 before returning to v0.7.0. The older version can discard rotating-message settings when it saves a profile.
 
@@ -89,7 +89,7 @@ Download the installer or Windows x64 ZIP from [GitHub Releases](https://github.
 
 1. Open Apple Music for Windows or Spotify Desktop (Microsoft Store version tested) and play a song.
 2. In VRChat, enable **OSC** from the Action Menu. Make your own Chatbox visible to check output. Stop other apps that send Chatbox messages to avoid competing output.
-3. Open LyricsChatbox and enable **Output** in the sidebar. The first launch starts with sending off; this setting is remembered. **Lyrics Only** is the default, with no forced song title or prefix.
+3. Open LyricsChatbox and enable **Output** in the status bar. The first launch starts with sending off; this setting is remembered. **Lyrics Only** is the default, with no forced song title or prefix.
 
 The **Settings → VRChat OSC → Advanced destination** section contains the manual OSC destination. Default: `127.0.0.1:9000`. **Apply** accepts an IP address (IPv4/IPv6) or `localhost`, and a port from 1 to 65535, and selects manual mode. UDP has no delivery acknowledgement; “sent” does not prove that VRChat displayed a message. No inbound server is needed.
 
@@ -127,7 +127,7 @@ Fallback availability depends on the external service and network. The app keeps
 
 ## Desktop layout
 
-**Home** shows the current song, synchronized lyric, source and playback controls, plus the Chatbox preview, profiles, Lyric Context, lyrics details and lyrics tools. **Display** provides profiles, composition, contextual lyric controls, presentation and preview. **Settings** contains configurable behavior, lyrics and network controls; **About** contains updates, support and notices. The sidebar output switch and final formatted preview remain visible. The preview labels floating mode and omits its control suffix; it is not a replica of VRChat's renderer. The dark native WPF theme uses Windows fonts/icons and adds no UI framework dependency.
+**Home** shows the current song, synchronized lyric, source and playback controls, plus the Chatbox preview, profiles, Lyric Context, lyrics details and lyrics tools. **Display** provides profiles, composition, contextual lyric controls, presentation and preview. **Settings** contains configurable behavior, lyrics and network controls; **About** contains updates, support and notices. The status bar output switch stays visible, and the final formatted preview stays on Home, Display and Settings. The preview labels floating mode and omits its control suffix; it is not a replica of VRChat's renderer. The dark native WPF theme uses Windows fonts/icons and adds no UI framework dependency.
 
 ## Local data and privacy
 

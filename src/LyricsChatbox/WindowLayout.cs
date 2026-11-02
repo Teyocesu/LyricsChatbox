@@ -12,10 +12,13 @@ internal static class WindowLayout
     internal const double AboutUpdatesWideBreakpoint = 1120;
     internal const double AboutContentGutters = 60;
     internal const double HomeColumnsMinWidth = 840;
+    // Width after the rail: the 400-DIP inspector plus 600 DIP for the stage's transport, metadata and lyric.
+    internal const double HomeInspectorMinWidth = 1000;
     internal const double HomeRoomyMinHeight = 760;
     internal const double HomeTallMinHeight = 900;
     internal enum AboutUpdatesMode { Wide, Medium, CompactColumns, Compact }
     internal static bool UsesHomeColumns(double contentWidth) => contentWidth >= HomeColumnsMinWidth;
+    internal static bool UsesHomeInspector(double cellWidth) => cellWidth >= HomeInspectorMinWidth;
     internal static bool IsAboutCompact(double contentWidth) => contentWidth < AboutCompactBreakpoint;
     internal static AboutUpdatesMode SelectAboutUpdatesMode(double contentWidth) =>
         contentWidth < AboutUpdatesCompactColumnsBreakpoint ? AboutUpdatesMode.Compact :
@@ -78,15 +81,14 @@ internal static class WindowLayout
             ((ContentControl)preview.Parent).Content = null;
             destination.Content = preview;
         }
-        preview.Margin = home ? new(0, 0, 0, 24) : new(0, shortWindow ? 8 : 16, 0, 0);
+        preview.Margin = home ? new(0) : new(0, shortWindow ? 8 : 16, 0, 0);
         Find<DockPanel>("PreviewHeading").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
         Find<ScrollViewer>("PreviewScroller").MaxHeight = home ? 130 : shortWindow ? 24 : 72;
         Find<TextBlock>("PreviewProfileText").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
         Find<DockPanel>("PreviewHeading").Margin = new(0, 0, 0, home ? 8 : 6);
-        Find<TextBlock>("PreviewProfileText").Margin = new(0, 0, 0, home ? 10 : 6);
-        Find<Border>("PreviewFrame").Padding = home ? new(12, 8, 12, 8) : new(8, 2, 8, 2);
-        Find<Border>("PreviewFrame").Margin = new(0, 0, 0, home ? 10 : 6);
-        if (home) ApplyHomeLayout(scope, cellWidth - AboutContentGutters, contentHeight, shortWindow);
+        Find<TextBlock>("PreviewProfileText").Margin = new(0, 0, 0, 2);
+        Find<Border>("PreviewFrame").Margin = new(0, 0, 0, home ? 8 : 6);
+        if (home) ApplyHomeLayout(scope, cellWidth, contentHeight, shortWindow);
         if (display) ApplyWorkspaceLayout(scope, "Display", cellWidth - AboutContentGutters);
         if (settings) ApplyWorkspaceLayout(scope, "Settings", cellWidth - AboutContentGutters);
     }
@@ -106,44 +108,51 @@ internal static class WindowLayout
         Find<Border>("ColumnDivider").Visibility = columns ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private static void ApplyHomeLayout(FrameworkElement scope, double contentWidth, double contentHeight, bool shortWindow)
+    private static void ApplyHomeLayout(FrameworkElement scope, double cellWidth, double contentHeight, bool shortWindow)
     {
         T Find<T>(string name) => (T)scope.FindName(name);
-        var columns = UsesHomeColumns(contentWidth);
+        var inspector = UsesHomeInspector(cellWidth);
         var roomy = contentHeight >= HomeRoomyMinHeight;
-        var (artwork, title, lyric, lyricLine, lyricLines) = shortWindow ? (60, 18, 20, 26, 2)
-            : columns ? contentHeight >= HomeTallMinHeight ? (240, 36, 40, 50, 5) : roomy ? (208, 32, 34, 44, 4) : (160, 26, 30, 38, 3)
-            : roomy ? (128, 26, 30, 38, 4) : (84, 20, 24, 30, 2);
-        var spacious = columns && roomy;
-        var lyricBesideArtwork = columns && !shortWindow;
+        var (artwork, title, artist, lyric, lyricLine, lyricLines) = shortWindow ? (60, 18, 13, 20, 26, 2)
+            : !inspector ? roomy ? (128, 26, 15, 30, 38, 3) : (84, 20, 14, 24, 30, 2)
+            : contentHeight >= HomeTallMinHeight ? (288, 40, 18, 64, 76, 3)
+            : roomy ? (208, 34, 16, 48, 58, 3) : (148, 30, 15, 38, 46, 2);
+        var gutter = inspector ? 40 : 24;
 
-        var hero = Find<Border>("NowPlayingPanel");
-        hero.Padding = new(0, shortWindow ? 34 : spacious ? 40 : 36, 0, shortWindow ? 10 : spacious ? 20 : 14);
+        // The stage spans its column, or sits above the sections without the inspector.
+        Find<ColumnDefinition>("HomeInspectorColumn").Width = new(inspector ? 400 : 0);
+        Find<RowDefinition>("HomeStageRow").Height = inspector ? new(1, GridUnitType.Star) : GridLength.Auto;
+        Find<RowDefinition>("HomeSectionsRow").Height = inspector ? GridLength.Auto : new(1, GridUnitType.Star);
+        var stage = Find<Grid>("HomeCanvas");
+        Grid.SetRowSpan(stage, inspector ? 2 : 1);
+        Grid.SetColumnSpan(stage, inspector ? 1 : 2);
+        var panel = Find<Grid>("HomeSectionsPanel");
+        Grid.SetColumn(panel, inspector ? 1 : 0);
+        Grid.SetRow(panel, inspector ? 0 : 1);
+        Grid.SetRowSpan(panel, inspector ? 2 : 1);
+        Grid.SetColumnSpan(panel, inspector ? 1 : 2);
+        Find<Border>("HomeInspectorEdge").BorderThickness = inspector ? new(1, 0, 0, 0) : new(0, 1, 0, 0);
 
-        // Beside the lyric, the artwork sets the hero's height without taking part in row sizing,
-        // so ordinary lines keep the layout still and only an unusually long line needs more room.
+        // The status row starts below the caption area.
+        Find<Grid>("HeroStatusRow").Margin = new(gutter, 40, gutter, 0);
+        Find<Grid>("HeroGrid").Margin = new(inspector && !shortWindow ? gutter + 32 : gutter, shortWindow || !inspector ? 10 : 16, gutter, shortWindow || !inspector ? 10 : 16);
         var frame = Find<Border>("ArtworkFrame");
         frame.Width = frame.Height = artwork;
-        frame.Margin = new(0, 0, 0, lyricBesideArtwork ? -artwork : 0);
-        Grid.SetRowSpan(frame, lyricBesideArtwork ? 2 : 1);
-        Find<Grid>("HeroGrid").MinHeight = lyricBesideArtwork ? artwork : 0;
-        Find<ColumnDefinition>("ArtworkColumn").Width = new(artwork + (lyricBesideArtwork ? 28 : 18));
+        Find<ColumnDefinition>("ArtworkColumn").Width = new(artwork + (inspector ? 28 : 18));
         Find<TextBlock>("ArtFallback").FontSize = artwork * .3;
         Find<TextBlock>("TrackText").FontSize = title;
-        Find<TextBlock>("ArtistText").FontSize = shortWindow ? 13 : spacious ? 16 : 14;
+        Find<TextBlock>("ArtistText").FontSize = artist;
         Find<TextBlock>("AlbumText").Visibility = shortWindow ? Visibility.Collapsed : Visibility.Visible;
         var lyricText = Find<TextBlock>("LyricText");
         lyricText.FontSize = lyric;
         lyricText.LineHeight = lyricLine;
         lyricText.MaxHeight = lyricLine * lyricLines;
-        lyricText.Margin = new(0, shortWindow || lyricBesideArtwork ? 6 : 12, 0, 0);
-        Grid.SetColumn(lyricText, lyricBesideArtwork ? 1 : 0);
-        Grid.SetColumnSpan(lyricText, lyricBesideArtwork ? 1 : 2);
-        Find<StackPanel>("HeroTransport").Margin = new(0, shortWindow ? 8 : spacious ? 18 : 12, 0, 0);
+        lyricText.Margin = new(0, shortWindow || !inspector ? 10 : 24, 0, 0);
+        Find<StackPanel>("HeroTransport").Margin = new(gutter, shortWindow ? 6 : 10, gutter, shortWindow ? 4 : 8);
         foreach (var name in new[] { "ShuffleButton", "PreviousButton", "PlayPauseButton", "NextButton", "RepeatButton" })
         {
             var button = Find<Button>(name);
-            button.Width = button.Height = shortWindow ? 30 : name == "PlayPauseButton" ? 46 : 36;
+            button.Width = button.Height = shortWindow ? 30 : name == "PlayPauseButton" ? 44 : 36;
             button.MinHeight = shortWindow ? 30 : 36;
         }
 
@@ -151,20 +160,18 @@ internal static class WindowLayout
             .Select(Find<FrameworkElement>).ToArray();
         // One tree at every width: sections stay in place and only change cell or collapse.
         var selector = Find<ListBox>("HomeSectionBox");
-        if (!columns && Array.FindIndex(sections, section => section.IsKeyboardFocusWithin) is >= 0 and var focused)
+        if (!inspector && Array.FindIndex(sections, section => section.IsKeyboardFocusWithin) is >= 0 and var focused)
             selector.SelectedIndex = focused;
-        selector.Visibility = columns ? Visibility.Collapsed : Visibility.Visible;
+        selector.Visibility = inspector ? Visibility.Collapsed : Visibility.Visible;
         for (var index = 0; index < sections.Length; index++)
         {
-            sections[index].Visibility = columns || index == selector.SelectedIndex ? Visibility.Visible : Visibility.Collapsed;
-            sections[index].Margin = new(0, columns && index is not (0 or 1) ? 24 : 0, 0, 0);
+            sections[index].Visibility = inspector || index == selector.SelectedIndex ? Visibility.Visible : Visibility.Collapsed;
+            sections[index].Margin = new(inspector ? 20 : 24, 14, inspector ? 20 : 24, 14);
         }
-        Find<Border>("HomeColumnDivider").Visibility = columns ? Visibility.Visible : Visibility.Collapsed;
-        var left = Find<StackPanel>("HomeLeftColumn");
-        var right = Find<StackPanel>("HomeRightColumn");
-        Grid.SetColumnSpan(left, columns ? 1 : 3);
-        Grid.SetColumn(right, columns ? 2 : 0);
-        Grid.SetColumnSpan(right, columns ? 1 : 3);
+        foreach (var separator in Find<StackPanel>("HomeColumns").Children.OfType<Border>())
+            separator.Visibility = inspector ? Visibility.Visible : Visibility.Collapsed;
+        // Inspector content stays below the caption area; its background extends behind it.
+        Find<ScrollViewer>("HomeSectionsScroller").Margin = new(0, inspector ? 36 : 0, 0, 0);
     }
 
     private static void ApplyAboutLayout(FrameworkElement scope, double contentWidth)
