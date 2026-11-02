@@ -6,6 +6,14 @@ using System.Windows.Media;
 
 namespace LyricsChatbox;
 
+// Column scroller that passes the wheel to the page while the columns stack.
+public sealed class ColumnScrollViewer : ScrollViewer
+{
+    static ColumnScrollViewer() => DefaultStyleKeyProperty.OverrideMetadata(typeof(ColumnScrollViewer), new FrameworkPropertyMetadata(typeof(ScrollViewer)));
+    public bool HandlesWheel { get; set; } = true;
+    protected override void OnMouseWheel(MouseWheelEventArgs e) { if (HandlesWheel) base.OnMouseWheel(e); }
+}
+
 internal static class WindowLayout
 {
     internal const double AboutCompactBreakpoint = 1000;
@@ -15,11 +23,14 @@ internal static class WindowLayout
     internal const double HomeColumnsMinWidth = 840;
     // Width after the rail: the 400-DIP inspector plus 600 DIP for the stage's transport, metadata and lyric.
     internal const double HomeInspectorMinWidth = 1000;
+    // Width after the rail: both side columns plus 440 DIP for the editor and its token row.
+    internal const double DisplayColumnsMinWidth = 1020;
     internal const double HomeRoomyMinHeight = 760;
     internal const double HomeTallMinHeight = 900;
     internal enum AboutUpdatesMode { Wide, Medium, CompactColumns, Compact }
     internal static bool UsesHomeColumns(double contentWidth) => contentWidth >= HomeColumnsMinWidth;
     internal static bool UsesHomeInspector(double cellWidth) => cellWidth >= HomeInspectorMinWidth;
+    internal static bool UsesDisplayColumns(double cellWidth, bool shortWindow) => cellWidth >= DisplayColumnsMinWidth && !shortWindow;
     internal static bool IsAboutCompact(double contentWidth) => contentWidth < AboutCompactBreakpoint;
     internal static AboutUpdatesMode SelectAboutUpdatesMode(double contentWidth) =>
         contentWidth < AboutUpdatesCompactColumnsBreakpoint ? AboutUpdatesMode.Compact :
@@ -68,30 +79,73 @@ internal static class WindowLayout
         var about = Find<Grid>("AboutPage").Visibility == Visibility.Visible;
         var display = Find<ScrollViewer>("DisplayPage").Visibility == Visibility.Visible;
         var settings = Find<ScrollViewer>("SettingsPage").Visibility == Visibility.Visible;
-        Find<ContentControl>("PersistentPreviewHost").Visibility = home || about ? Visibility.Collapsed : Visibility.Visible;
         // The About breakpoint uses usable content width. Derive it synchronously from the
         // post-sidebar cell (stable across navigation) rather than the About viewport,
         // whose ActualWidth is stale on the navigating pass before WPF runs layout.
         var cellWidth = Find<Grid>("ContentRoot").ActualWidth - Find<Border>("Sidebar").ActualWidth;
         if (cellWidth <= 0) cellWidth = Find<Grid>("ContentPanel").ActualWidth;
         ApplyAboutLayout(scope, AboutUsableWidth(cellWidth));
+        var displayColumns = display && UsesDisplayColumns(cellWidth, shortWindow);
+        Find<ContentControl>("PersistentPreviewHost").Visibility = home || about || displayColumns ? Visibility.Collapsed : Visibility.Visible;
         var preview = Find<Grid>("PreviewPanel");
-        var destination = Find<ContentControl>(home ? "HomePreviewHost" : "PersistentPreviewHost");
+        var destination = Find<ContentControl>(home ? "HomePreviewHost" : displayColumns ? "DisplayPreviewHost" : "PersistentPreviewHost");
         if (preview.Parent != destination)
         {
             ((ContentControl)preview.Parent).Content = null;
             destination.Content = preview;
         }
-        preview.Margin = home ? new(0) : new(0, shortWindow ? 8 : 16, 0, 0);
+        preview.Margin = home || displayColumns ? new(0) : new(0, shortWindow ? 8 : 16, 0, 0);
         Find<DockPanel>("PreviewHeading").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
-        Find<ScrollViewer>("PreviewScroller").MaxHeight = home ? 130 : shortWindow ? 24 : 72;
+        Find<ScrollViewer>("PreviewScroller").MaxHeight = home ? 130 : displayColumns ? double.PositiveInfinity : shortWindow ? 24 : 72;
+        Find<Border>("PreviewBubble").VerticalAlignment = displayColumns ? VerticalAlignment.Top : VerticalAlignment.Center;
+        Find<TextBlock>("PreviewText").FontSize = displayColumns ? 18 : 17;
         Find<TextBlock>("PreviewProfileText").Visibility = shortWindow && !home ? Visibility.Collapsed : Visibility.Visible;
         Find<DockPanel>("PreviewHeading").Margin = new(0, 0, 0, home ? 8 : 6);
         Find<TextBlock>("PreviewProfileText").Margin = new(0, 0, 0, 2);
         Find<Border>("PreviewFrame").Margin = new(0, 0, 0, home ? 8 : 6);
         if (home) ApplyHomeLayout(scope, cellWidth, contentHeight, shortWindow);
-        if (display) ApplyWorkspaceLayout(scope, "Display", cellWidth - AboutContentGutters);
+        if (display) ApplyDisplayLayout(scope, displayColumns);
         if (settings) ApplyWorkspaceLayout(scope, "Settings", cellWidth - AboutContentGutters);
+    }
+
+    private static void ApplyDisplayLayout(FrameworkElement scope, bool columns)
+    {
+        T Find<T>(string name) => (T)scope.FindName(name);
+        // One tree: three full-height columns, or one scrolling stack with Preview pinned below it.
+        var page = Find<ScrollViewer>("DisplayPage");
+        Grid.SetRow(page, columns ? 0 : 1);
+        Grid.SetRowSpan(page, columns ? 3 : 1);
+        page.VerticalScrollBarVisibility = columns ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Visible;
+        Find<Grid>("DisplayCanvas").Margin = columns ? new(0) : new(30, 4, 30 - SystemParameters.VerticalScrollBarWidth, 8);
+        Find<ColumnDefinition>("DisplayProfilesColumn").Width = new(columns ? 260 : 0);
+        Find<ColumnDefinition>("DisplaySupportWidth").Width = new(columns ? 320 : 0);
+        Find<RowDefinition>("DisplayFirstRow").Height = columns ? new(1, GridUnitType.Star) : GridLength.Auto;
+        var cells = new (string Panel, int Row, int Column)[] { ("DisplayProfilesPanel", 0, 0), ("DisplayEditorPanel", 1, 1), ("DisplaySupportPanel", 2, 2) };
+        foreach (var (name, row, column) in cells)
+        {
+            var panel = Find<FrameworkElement>(name);
+            Grid.SetRow(panel, columns ? 0 : row);
+            Grid.SetColumn(panel, columns ? column : 0);
+            Grid.SetColumnSpan(panel, columns ? 1 : 3);
+        }
+        Find<Grid>("DisplayEditorPanel").Margin = columns ? new(24, 40, 24, 16) : new(0, 24, 0, 0);
+        foreach (var (panelName, scroller, content, edge) in new[]
+        {
+            ("DisplayProfilesPanel", "DisplayProfilesScroller", "DisplayProfilesContent", new Thickness(0, 0, 1, 0)),
+            ("DisplaySupportPanel", "DisplaySupportScroller", "DisplaySupportColumn", new Thickness(1, 0, 0, 0))
+        })
+        {
+            var panel = Find<Border>(panelName);
+            if (columns) panel.SetResourceReference(Border.BackgroundProperty, "SurfaceBrush");
+            else panel.Background = Brushes.Transparent;
+            panel.BorderThickness = columns ? edge : new(0);
+            var column = Find<ColumnScrollViewer>(scroller);
+            column.HandlesWheel = columns;
+            // Column content stays below the caption area; the panel background extends behind it.
+            // Stacked, the scroller keeps room for list rows that reach past their text.
+            column.Margin = columns ? new(0, 36, 0, 0) : new(-12, 0, -12, 0);
+            Find<StackPanel>(content).Margin = columns ? new(20, 4, 20, 16) : new(12, panelName == "DisplaySupportPanel" ? 24 : 0, 12, 0);
+        }
     }
 
     private static void ApplyWorkspaceLayout(FrameworkElement scope, string page, double contentWidth)

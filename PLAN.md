@@ -766,3 +766,12 @@ Owner-approved after review of real renders. Inspector scale, atmosphere masks r
 - 581/581 tests and 120/120 isolated native checks. Lowest text contrast over a light cover: 5.13:1.
 - Blur at 64 DIP: software render about 405 ms at 1448x990 against 49 ms without it, once per artwork with caching. Live CPU stayed at or below 0.4%, measured on a hidden desktop, so nothing was optimized. Not measured on a visible GPU window.
 - The five retired heading names read the same through their text in the automation tree, so they were not restored.
+
+### Stage d, Display (2026-11-02, local commit, awaiting owner visual review)
+
+Three columns with the editor and Preview together, one tree, Preview moved only between its hosts. Below 1020 DIP after the rail the columns stack with Preview pinned.
+
+- Stacked column scrollers pass the wheel to the page through `ColumnScrollViewer`.
+- `Rename` is clear of the caption band at seven sizes: `WM_NCHITTEST` returns client and the hit test reaches the button, also when scrolled. A physical click is still outstanding.
+- `TokenChips` is no longer an empty Tab stop, and profile rows expose their name instead of the record text.
+- Editor line numbers were skipped: they would need scroll and wrap synchronization for no functional gain.
