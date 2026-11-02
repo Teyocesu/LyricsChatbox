@@ -86,7 +86,7 @@ public partial class MainWindow
         var status = active ? OutputSidebarPresentation.ActiveStatusText : state.Primary;
         if (OutputStateText.Text != status) OutputStateText.Text = status;
         OutputStateText.SetResourceReference(TextBlock.ForegroundProperty,
-            active ? "SuccessBrush" : blocked ? "TextBrush" : "MutedBrush");
+            active ? "SuccessBrush" : blocked && engine.Enabled ? "WarningBrush" : "SecondaryBrush");
         OutputStatusDot.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
         var activity = sending ? OutputSidebarPresentation.SendingText : OutputSidebarPresentation.ReadyText;
         if (OutputActivityText.Text != activity) OutputActivityText.Text = activity;

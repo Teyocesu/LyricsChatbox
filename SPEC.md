@@ -25,7 +25,7 @@ The reference for each stage is the owner's approved mockups. They define compos
 ### Principles
 
 - No repeated cards or rounded containers, glassmorphism, glows, gradient borders, or fake metrics, waves or charts.
-- Headings use sentence case: 13 DIP SemiBold in the text color, with no rule beneath.
+- Headings use sentence case: SemiBold in the text color with no rule beneath, at 13 DIP, or 15 DIP for panel titles such as the Home inspector.
 - The accent marks selection, progress, primary actions, links and state only. It is never used on titles, dividers or decorative borders.
 - Alternative and custom accents recolor everything the accent colors, and the Accent brushes stay dynamic resources.
 

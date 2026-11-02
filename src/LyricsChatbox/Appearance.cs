@@ -132,6 +132,8 @@ public static class ThemeColors
         var strength = settings.ArtworkTintEnabled && artworkColor.HasValue ? .13 : .025;
         var hero = new LinearGradientBrush(surface, Blend(surface, tint, strength), 25); hero.Freeze();
         resources["HeroBrush"] = hero;
+        var heroTint = new SolidColorBrush(tint); heroTint.Freeze();
+        resources["HeroTintBrush"] = heroTint;
     }
 
     public static Task<Color?> SampleArtworkAsync(BitmapSource? image, CancellationToken token) => Task.Run<Color?>(() =>

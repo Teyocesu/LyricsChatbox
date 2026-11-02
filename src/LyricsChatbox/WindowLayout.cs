@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace LyricsChatbox;
 
@@ -114,10 +115,13 @@ internal static class WindowLayout
         var inspector = UsesHomeInspector(cellWidth);
         var roomy = contentHeight >= HomeRoomyMinHeight;
         var (artwork, title, artist, lyric, lyricLine, lyricLines) = shortWindow ? (60, 18, 13, 20, 26, 2)
-            : !inspector ? roomy ? (128, 26, 15, 30, 38, 3) : (84, 20, 14, 24, 30, 2)
+            : !inspector ? roomy ? (128, 28, 15, 36, 44, 3) : (96, 24, 15, 32, 40, 2)
             : contentHeight >= HomeTallMinHeight ? (288, 40, 18, 64, 76, 3)
             : roomy ? (208, 34, 16, 48, 58, 3) : (148, 30, 15, 38, 46, 2);
         var gutter = inspector ? 40 : 24;
+        // The artwork pool stays clear of the text: upper right beside the artwork, or under the compact lyric.
+        var pool = Find<RadialGradientBrush>("HeroPoolMask");
+        pool.Center = pool.GradientOrigin = new(inspector ? .72 : .84, inspector ? .3 : .78);
 
         // The stage spans its column, or sits above the sections without the inspector.
         Find<ColumnDefinition>("HomeInspectorColumn").Width = new(inspector ? 400 : 0);
@@ -166,7 +170,7 @@ internal static class WindowLayout
         for (var index = 0; index < sections.Length; index++)
         {
             sections[index].Visibility = inspector || index == selector.SelectedIndex ? Visibility.Visible : Visibility.Collapsed;
-            sections[index].Margin = new(inspector ? 20 : 24, 14, inspector ? 20 : 24, 14);
+            sections[index].Margin = new(inspector ? 20 : 24, 18, inspector ? 20 : 24, 18);
         }
         foreach (var separator in Find<StackPanel>("HomeColumns").Children.OfType<Border>())
             separator.Visibility = inspector ? Visibility.Visible : Visibility.Collapsed;

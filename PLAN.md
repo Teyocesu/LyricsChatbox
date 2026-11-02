@@ -758,3 +758,11 @@ Phase 6 stays recorded as closed: its evidence belongs to that build. The revamp
 - Baseline at `38e24da`: all event handlers are kept and `OpenAbout` is added. Removed names: the approved waveform pair, `HomeColumnDivider`, `HomeLeftColumn`, `HomeRightColumn` and an internal style `Marker`. Five headings dropped a redundant accessible name because their text now reads the same.
 - SkiaSharp: no code consumer remains after the waveform. The package, `Publish.ps1`, notices and license still reference it, so removal stays a separate cleanup.
 - Display, Settings and About are transitional until their stages.
+
+### Shell and Home refinement (2026-11-02)
+
+Owner-approved after review of real renders. Inspector scale, atmosphere masks reusing the existing artwork tint, compact lyric proportions and Output state colors. Output Off stays neutral with a scheduled pause, and the hint keeps the pause information.
+
+- 581/581 tests and 120/120 isolated native checks. Lowest text contrast over a light cover: 5.13:1.
+- Blur at 64 DIP: software render about 405 ms at 1448x990 against 49 ms without it, once per artwork with caching. Live CPU stayed at or below 0.4%, measured on a hidden desktop, so nothing was optimized. Not measured on a visible GPU window.
+- The five retired heading names read the same through their text in the automation tree, so they were not restored.
