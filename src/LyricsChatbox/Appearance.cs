@@ -29,6 +29,7 @@ public static class ThemeColors
         ["Green"] = "#7BD5A4", ["Orange"] = "#FFA768", ["Red"] = "#FF7373"
     };
     public static readonly string[] Backgrounds = ["Midnight", "Pure Dark", "Graphite", "Tinted"];
+    private const string MidnightCanvas = "#101115";
     public static bool TryHex(string? text, out Color color)
     {
         color = default;
@@ -60,32 +61,49 @@ public static class ThemeColors
         }
         return Colors.White;
     }
+    // Surface tokens are defined on Midnight; other backgrounds keep the same offset from their canvas.
+    private static Color FromCanvas(Color canvas, string midnight)
+    {
+        var token = Parse(midnight); var origin = Parse(MidnightCanvas);
+        static byte Shift(byte value, int offset) => (byte)Math.Clamp(value + offset, 0, 255);
+        return Color.FromRgb(Shift(canvas.R, token.R - origin.R), Shift(canvas.G, token.G - origin.G), Shift(canvas.B, token.B - origin.B));
+    }
+    private static Color Ink(Color accent)
+    {
+        var ink = Blend(accent, Colors.Black, .84);
+        return Contrast(ink, accent) >= 4.5 ? ink : Foreground(accent);
+    }
     public static IReadOnlyDictionary<string, Color> Create(AppearanceSettings? appearance)
     {
         var settings = AppearanceSettings.Normalize(appearance);
         var raw = Parse(settings.AccentPreset == "Custom" ? settings.CustomAccent! : Accents[settings.AccentPreset]);
-        var canvas = Parse(settings.BackgroundStyle switch { "Pure Dark" => "#08090B", "Graphite" => "#1B1A1D", "Tinted" => "#111218", _ => "#101218" });
+        var canvas = Parse(settings.BackgroundStyle switch { "Pure Dark" => "#08090B", "Graphite" => "#1B1A1D", "Tinted" => "#111218", _ => MidnightCanvas });
         if (settings.BackgroundStyle == "Tinted") canvas = Blend(canvas, raw, .055);
-        var sidebar = Blend(canvas, Colors.White, .018);
-        var surface = Blend(canvas, Colors.White, .035);
-        var raised = Blend(canvas, Colors.White, .075);
+        var surface = FromCanvas(canvas, "#0D0E12");
+        var raised = FromCanvas(canvas, "#1A1B21");
         var selected = Blend(surface, Readable(raw, raised), .13);
         var accent = Readable(raw, raised, selected);
-        var hover = Blend(accent, Colors.White, .12);
+        var rose = settings.AccentPreset == "Rose";
+        var hover = rose ? Parse("#FF7A90") : Blend(accent, Colors.White, .12);
         var pressed = Blend(accent, Colors.Black, .13);
         return new Dictionary<string, Color>
         {
-            ["CanvasBrush"] = canvas, ["SidebarBrush"] = sidebar, ["SurfaceBrush"] = surface,
-            ["RaisedBrush"] = raised, ["HoverBrush"] = Blend(raised, Colors.White, .035),
-            ["SelectedBrush"] = selected, ["LineBrush"] = Blend(surface, Colors.White, .105),
-            ["StrongLineBrush"] = Blend(surface, Colors.White, .27), ["TextBrush"] = Parse("#F5F5F8"),
-            ["MutedBrush"] = Readable(Parse("#ADB0BC"), raised, selected),
-            ["FaintBrush"] = Readable(Parse("#9498A7"), raised, selected),
+            ["CanvasBrush"] = canvas, ["SidebarBrush"] = FromCanvas(canvas, "#0B0C0F"), ["SurfaceBrush"] = surface,
+            ["InputBrush"] = FromCanvas(canvas, "#07080A"), ["RaisedBrush"] = raised,
+            ["HoverBrush"] = FromCanvas(canvas, "#17181D"), ["ButtonHoverBrush"] = FromCanvas(canvas, "#22232A"),
+            ["SelectedBrush"] = selected, ["LineBrush"] = FromCanvas(canvas, "#1C1E25"),
+            ["StrongLineBrush"] = FromCanvas(canvas, "#2B2E37"), ["ControlEdgeBrush"] = FromCanvas(canvas, "#60636F"),
+            ["TextBrush"] = Parse("#ECEDF1"), ["SelectedTextBrush"] = Colors.White,
+            ["SecondaryBrush"] = Readable(Parse("#C5C7CF"), raised, selected),
+            ["MutedBrush"] = Readable(Parse("#9396A2"), raised, selected),
+            ["FaintBrush"] = Readable(Parse("#7F828D"), FromCanvas(canvas, "#17181D")),
             ["AccentBrush"] = accent, ["AccentHoverBrush"] = hover, ["AccentPressedBrush"] = pressed,
-            ["AccentMutedBrush"] = Blend(surface, accent, .075), ["AccentInkBrush"] = Foreground(accent),
-            ["AccentHoverInkBrush"] = Foreground(hover), ["AccentPressedInkBrush"] = Foreground(pressed),
-            ["FocusBrush"] = accent, ["SuccessBrush"] = Readable(Parse("#75D49D"), raised),
-            ["WarningBrush"] = Readable(Parse("#F1BD73"), raised), ["ErrorBrush"] = Readable(Parse("#FF8897"), raised)
+            ["AccentTextBrush"] = rose ? Parse("#FF8A9C") : Blend(accent, Colors.White, .24),
+            ["AccentSubtleBrush"] = rose ? Parse("#FF9AAA") : Blend(accent, Colors.White, .34),
+            ["AccentMutedBrush"] = Blend(surface, accent, .075), ["AccentInkBrush"] = rose ? Parse("#2A0A12") : Ink(accent),
+            ["AccentHoverInkBrush"] = rose ? Parse("#2A0A12") : Ink(hover), ["AccentPressedInkBrush"] = rose ? Parse("#2A0A12") : Ink(pressed),
+            ["FocusBrush"] = accent, ["SuccessBrush"] = Readable(Parse("#5FD38D"), raised),
+            ["WarningBrush"] = Readable(Parse("#F0B35A"), raised), ["ErrorBrush"] = Readable(Parse("#FF8897"), raised)
         };
     }
     public static void Apply(ResourceDictionary resources, AppearanceSettings? appearance, Color? artworkColor = null)
