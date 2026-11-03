@@ -83,6 +83,14 @@ Text keeps 4.5:1 against its real background, including over artwork. Focus and 
 - **Behavior:** links, Copy, Export, Open Data Folder, notices, update check, channel, preferences, What's new, release details, download, cancel and explicit installer launch are unchanged. What's new stays conditional. Existing artwork files stay in the project.
 - **Responsive layout:** below the existing 1000-DIP usable width the panel stacks after the main content in one scrolling page, in reading order. The text columns need 800 DIP beside the panel and stack inside the main column below that. Nothing enters the safe band.
 
+### Logo
+
+The application mark is "Nota que habla". `Assets/Brand/AppIcon.svg` is its master. PNG frames at 16, 24, 32, 48, 64, 128 and 256 px and the ICO come from it, omitting the inner line at 24 px and below. The rail and About use the same design as a vector resource. The executable, window, tray and installer use the ICO. The mark keeps its colors under every accent.
+
+### Decorations
+
+The Decorations window uses the Instrumento surfaces: a category column, search and groups above items in rows or a grid without cards, and a footer with the selection, preview status and actions. Its frame is client drawn with drag, resize and Close preserved. Categories, search, filters, favorites, My items, preview, insertion, cancellation, data and handlers are unchanged. The Delete My item confirmation stays the system dialog.
+
 ### Preview
 
 One shared instance stays on Home, Display and Settings, and About has none. It reuses the existing count as its character meter and adds no new measurement.

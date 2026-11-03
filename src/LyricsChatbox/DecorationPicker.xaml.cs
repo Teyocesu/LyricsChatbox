@@ -133,6 +133,8 @@ public partial class DecorationPicker : Window
         else if (e.Key == Key.Escape) { DialogResult = false; e.Handled = true; }
     }
 
+    private void ClosePicker(object sender, RoutedEventArgs e) => DialogResult = false;
+
     private void InsertSelected(object sender, RoutedEventArgs e)
     {
         if (DecorationList.SelectedItem is not PickerItem item) return;

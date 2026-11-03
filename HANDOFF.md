@@ -11,4 +11,4 @@
 - Neutral naming is permanent: new branches, commits, PRs, public documentation and release metadata carry no AI model or tool names. History is not rewritten.
 - Manual messaging, Quick Messages and the typing indicator are gone. Manual lyrics matching stays. `quick-messages.json` stays on disk, unread and untouched.
 - Instrumento, the owner-approved visual revamp, replaces the earlier visual system page by page. `SPEC.md` lists what it substitutes. Pages not yet migrated are transitional. One shared Preview stays on Home, Display and Settings.
-- Stages 0, a, b and c are committed locally, and the owner approved Shell and Home. Display and Settings are accepted. About is committed locally. Next: owner review of About. Logo and Decorations wait for that approval. Local commits per stage, no push. Physical QA and release readiness follow the revamp.
+- Stages 0, a, b and c are committed locally, and the owner approved Shell and Home. Home, Display, Settings and About are accepted. Logo and Decorations are committed locally. Next: owner final review. Local commits per stage, no push. Physical QA and release readiness follow the revamp.

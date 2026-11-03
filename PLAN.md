@@ -797,3 +797,11 @@ About is committed locally and awaits owner visual review: editorial identity co
 - Isolated native: 382/382 across all pages, with links, folders, installer launch and clipboard intercepted in the QA copy. Update check, download and installer states were injected with synthetic text, and no network or installer ran. `MainWindow.Updates.cs` is unchanged.
 - Approved pages: 68 of 76 renders pixel-identical. The other 8 differ only in the clock digit of the Status / Time preview.
 - Existing artwork files stay bundled, as `AboutArtworkAndBrandMarksAreBundledAsWpfResources` requires, even though About no longer shows them.
+
+### Stage f accepted, final phase Logo and Decorations (2026-11-02)
+
+The owner accepted About, so all four main pages are accepted. Logo and Decorations ran as one phase, committed locally and awaiting owner visual review.
+
+- Logo: master SVG, WPF-rendered PNG frames, regenerated ICO, vector `AppLogo` in the rail and About. `Convert-Icon.ps1` gained `-FrameDirectory`, and `Render-AppIcon.ps1` is new. `AppIcon.png` is no longer an application resource because nothing loads it.
+- Decorations: no cards, client-drawn frame with its own Close, same handlers, plus `ClosePicker`. Removed the unused `SectionTitle` style.
+- SkiaSharp cleanup stays out of this phase, for the final reductive closure.

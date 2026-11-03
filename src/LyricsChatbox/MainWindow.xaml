@@ -207,7 +207,7 @@
       <DockPanel>
         <StackPanel x:Name="BrandPanel" DockPanel.Dock="Top" Margin="0,14,0,20">
           <Button Click="OpenAbout" Style="{StaticResource RailLogoButton}" AutomationProperties.Name="About LyricsChatbox" ToolTip="About LyricsChatbox">
-            <Image x:Name="BrandIcon" Source="Assets/AppIcon.png" Width="36" Height="36" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <Image x:Name="BrandIcon" Source="{StaticResource AppLogo}" Width="36" Height="36"/>
           </Button>
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -682,7 +682,7 @@
                 <Grid x:Name="AboutHero" Margin="0,0,0,36">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
                   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                  <Image x:Name="AboutLogo" Source="Assets/AppIcon.png" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center" AutomationProperties.Name=" "/>
+                  <Image x:Name="AboutLogo" Source="{StaticResource AppLogo}" VerticalAlignment="Center" AutomationProperties.Name=" "/>
                   <TextBlock x:Name="AboutHeroTitle" Grid.Column="1" FontFamily="Segoe UI Variable Display, Segoe UI" FontWeight="SemiBold" TextWrapping="NoWrap" VerticalAlignment="Center" AutomationProperties.Name="LyricsChatbox"><Run Text="Lyrics" Foreground="{DynamicResource TextBrush}"/><Run Text="Chatbox" Foreground="{DynamicResource AccentBrush}"/></TextBlock>
                   <TextBlock x:Name="AboutHeroDescription" Grid.Row="1" Grid.ColumnSpan="2" Text="LyricsChatbox sends synchronized lyrics from Apple Music for Windows or Spotify Desktop to your VRChat chatbox. You can customize how they appear." FontSize="18" LineHeight="26" MaxWidth="760" HorizontalAlignment="Left" Margin="0,18,0,10"/>
                   <TextBlock x:Name="AboutOriginText" Grid.Row="2" Grid.ColumnSpan="2" Text="When I looked for a way to show lyrics in VRChat, the tools I found focused on track titles. I wanted the lyrics themselves and control over their appearance, so I built LyricsChatbox." FontSize="14" LineHeight="21" Foreground="{DynamicResource MutedBrush}" MaxWidth="760" HorizontalAlignment="Left"/>
