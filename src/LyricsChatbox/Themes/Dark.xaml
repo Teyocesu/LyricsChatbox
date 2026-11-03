@@ -8,10 +8,10 @@
           <GeometryDrawing.Brush><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#271820" Offset="0"/><GradientStop Color="#140D11" Offset="1"/></LinearGradientBrush></GeometryDrawing.Brush>
           <GeometryDrawing.Geometry><RectangleGeometry Rect="2,2,44,44" RadiusX="9.5" RadiusY="9.5"/></GeometryDrawing.Geometry>
         </GeometryDrawing>
-        <GeometryDrawing Geometry="M15 26H21.5Q26 26 26 21.5V9A2 2 0 0 1 28 7C30.5 7 32 9.5 35 11.5C39.5 14.5 41 18.5 39.6 23.5C38.6 20.5 35.6 18.3 30 17.6V33A7 7 0 0 1 23 40H17.5L11.4 44.8Q10.4 45.5 10.4 44.4L10.6 39.4A7 7 0 0 1 8 33A7 7 0 0 1 15 26Z">
+        <GeometryDrawing Geometry="M15 24H21.5Q26 24 26 19.5V7A2 2 0 0 1 28 5C30.5 5 32 7.5 35 9.5C39.5 12.5 41 16.5 39.6 21.5C38.6 18.5 35.6 16.3 30 15.6V31A7 7 0 0 1 23 38H17.5L11.4 42.8Q10.4 43.5 10.4 42.4L10.6 37.4A7 7 0 0 1 8 31A7 7 0 0 1 15 24Z">
           <GeometryDrawing.Brush><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FF8095" Offset="0"/><GradientStop Color="#F04C6A" Offset="1"/></LinearGradientBrush></GeometryDrawing.Brush>
         </GeometryDrawing>
-        <GeometryDrawing Brush="#1C1218"><GeometryDrawing.Geometry><RectangleGeometry Rect="13,31.5,10,3" RadiusX="1.5" RadiusY="1.5"/></GeometryDrawing.Geometry></GeometryDrawing>
+        <GeometryDrawing Brush="#1C1218"><GeometryDrawing.Geometry><RectangleGeometry Rect="13,29.5,10,3" RadiusX="1.5" RadiusY="1.5"/></GeometryDrawing.Geometry></GeometryDrawing>
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>

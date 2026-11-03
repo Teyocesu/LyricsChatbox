@@ -21,7 +21,7 @@ public sealed class DecorationTests : IDisposable
         Assert.True(((IList<string>)catalog.Items.First(item => item.SearchTerms is not null).SearchTerms!).IsReadOnly);
         Assert.NotNull(resource);
         Assert.InRange(resource.Length, 1, DecorationCatalog.MaximumBytes);
-        Assert.InRange(catalog.Items.Count, 300, 350);
+        Assert.InRange(catalog.Items.Count, 550, 640);
         Assert.All(catalog.Items, item => Assert.True(item.IsValid, item.Id));
         Assert.Equal(catalog.Items.Count, catalog.Items.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count());
         Assert.Equal(catalog.Items.Count, catalog.Items.Select(item => item.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count());
@@ -46,7 +46,7 @@ public sealed class DecorationTests : IDisposable
         });
         Assert.Equal(new Dictionary<string, int>
         {
-            ["Symbol"] = 72, ["TextArt"] = 39, ["Kaomoji"] = 45, ["Divider"] = 39,
+            ["Symbol"] = 328, ["TextArt"] = 39, ["Kaomoji"] = 45, ["Divider"] = 39,
             ["Frame"] = 30, ["Heart"] = 36, ["Music"] = 36, ["Status"] = 30
         }, catalog.Items.GroupBy(item => item.Kind).ToDictionary(group => group.Key, group => group.Count()));
         Assert.All(DecorationKinds.All, kind =>
@@ -67,8 +67,8 @@ public sealed class DecorationTests : IDisposable
     {
         AssertRejected(Load([Entry()], 2));
         AssertRejected(Load([Entry("same"), Entry("same")]));
-        Assert.True(Load(Enumerable.Range(0, 384).Select(i => Entry("symbol-" + i, content: "☆" + i))).IsAvailable);
-        AssertRejected(Load(Enumerable.Range(0, 385).Select(i => Entry("symbol-" + i, content: "☆" + i))));
+        Assert.True(Load(Enumerable.Range(0, 640).Select(i => Entry("symbol-" + i, content: "☆" + i))).IsAvailable);
+        AssertRejected(Load(Enumerable.Range(0, 641).Select(i => Entry("symbol-" + i, content: "☆" + i))));
         AssertRejected(Load([Entry(kind: "Unknown")]));
         AssertRejected(Load([Entry(name: "")]));
         AssertRejected(Load([Entry(name: new string('n', 41))]));
