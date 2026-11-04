@@ -12,6 +12,56 @@ public partial class MainWindow
     private bool discovering;
     private double nextDiscovery;
     private OscDestination? configuredDestination;
+    private bool destinationUnavailable;
+    private bool oscTestQueued;
+
+    private string? OscTestBlockReason(DateTimeOffset nowUtc) =>
+        !engine.Enabled ? "Turn Output on to send a test."
+        : IsOutputPaused(nowUtc) ? "Output is paused. Resume it to send a test."
+        : nativeChatbox.Holding ? "Output is held while the VRChat Chatbox is open. Try again after it closes."
+        : null;
+
+    // Only a click queues a test. It uses the normal scheduler, so pacing, eligibility and the destination all apply.
+    private void SendOscTest(object sender, RoutedEventArgs e)
+    {
+        if (OscTestBlockReason(DateTimeOffset.UtcNow) is { } blocked) { OscTestStatus.Text = blocked; return; }
+        if (oscTestQueued) { OscTestStatus.Text = "A test is already waiting to be sent."; return; }
+        if (!scheduler.RequestTest(FloatingCompatibility.Effective(settings.Compact))) { OscTestStatus.Text = "Output is not ready yet. Try again."; return; }
+        oscTestQueued = true;
+        OscTestStatus.Text = "Sending test…";
+        Tick();
+    }
+
+    private void CancelBlockedOscTest(DateTimeOffset nowUtc)
+    {
+        if (!oscTestQueued || OscTestBlockReason(nowUtc) is not { } blocked) return;
+        scheduler.CancelTest(); oscTestQueued = false;
+        OscTestStatus.Text = "Test not sent. " + blocked;
+    }
+
+    private void ReportOscTest(bool sent)
+    {
+        oscTestQueued = false;
+        OscTestStatus.Text = sent
+            ? "Test sent from this PC at " + DateTime.Now.ToString("T") + ". Check VRChat to see whether it appeared."
+            : "Test could not be sent from this PC. Check the destination.";
+    }
+
+    private void ApplyOscRouteView()
+    {
+        // Describe the socket's actual destination, not one recomputed from settings.
+        var destination = configuredDestination ?? destinationSelection.Effective(settings);
+        var address = destination.Host + ":" + destination.Port;
+        var route = destinationUnavailable ? "Destination unavailable · check Advanced destination"
+            : destinationSelection.Automatic && destinationSelection.Discovered is not null ? "Found VRChat with OSCQuery · sending to " + address
+            : destinationSelection.Automatic ? "VRChat not detected · sending to the configured address " + address
+            : "Manual destination · sending to " + address;
+        var last = output.LastSentUtc is { } sent
+            ? "Last local send " + sent.ToLocalTime().ToString("T") + " · VRChat does not confirm delivery"
+            : "Nothing sent from this PC yet";
+        if (OscRouteText.Text != route) OscRouteText.Text = route;
+        if (OscLastSendText.Text != last) OscLastSendText.Text = last;
+    }
 
     private void InitializeDiscovery()
     {
@@ -76,10 +126,11 @@ public partial class MainWindow
         try
         {
             output.Configure(destination.Host, destination.Port);
-            configuredDestination = destination; scheduler.ReceiverChanged();
+            configuredDestination = destination; scheduler.ReceiverChanged(); destinationUnavailable = false;
         }
         catch (Exception ex) when (ex is System.Net.Sockets.SocketException or ArgumentException)
         {
+            destinationUnavailable = true;
             if (destinationSelection.Discovered is not null)
             {
                 destinationSelection.Invalidate();

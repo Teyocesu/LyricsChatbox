@@ -64,30 +64,60 @@ public sealed class ChatboxScheduler
 {
     // VRChat 2026.2.1 documents five messages per five seconds; retain margin and never burst.
     public const double IntervalSeconds = 1.05;
+    public const double TestHoldSeconds = 3;
+    public const string TestMessage = "LyricsChatbox test message";
     private long epoch;
     private string? last;
     private string desired = "";
     private double next;
     private bool enabled;
     private bool retry;
+    private string? test;
+    private (long Epoch, string Text)? testAttempt;
+    private double holdUntil;
+    public bool TestPending => test is not null;
     public void Set(long activeEpoch, string text, bool isEnabled, bool compact = false, bool preserveLayout = false)
     {
         epoch = activeEpoch; desired = ChatboxFormatter.Format(text, compact, preserveLayout); enabled = isEnabled;
+        if (!isEnabled) test = null;
     }
+    // One explicit test waits behind the same pacing and eligibility as normal output, then holds the Chatbox briefly.
+    public bool RequestTest(bool compact = false)
+    {
+        if (!enabled || test is not null) return false;
+        test = ChatboxFormatter.Format(TestMessage, compact);
+        return true;
+    }
+    public void CancelTest() => test = null;
     public void ReceiverChanged() { last = null; retry = true; }
     // After a hold: the current nonempty text counts as new. Unlike ReceiverChanged, empty text stays unsent.
     public void Rearm() { last = null; retry = false; }
     public (long Epoch, string Text)? Take(double now)
     {
-        if (!enabled || now < next || !retry && (desired == last || last is null && desired.Length == 0)) return null;
+        if (!enabled || now < next) return null;
+        if (test is not null)
+        {
+            next = now + IntervalSeconds; holdUntil = now + TestHoldSeconds;
+            testAttempt = (epoch, test); test = null;
+            return testAttempt;
+        }
+        if (now < holdUntil || !retry && (desired == last || last is null && desired.Length == 0)) return null;
         // Attempts are paced here, but delivery dedupe advances only after SendTo succeeds.
         next = now + IntervalSeconds; retry = false;
         return (epoch, desired);
     }
-    public void Complete((long Epoch, string Text) attempted, bool succeeded)
+    // Returns the outcome when the attempt was the test, otherwise null. A failed test is never retried.
+    public bool? Complete((long Epoch, string Text) attempted, bool succeeded)
     {
+        if (testAttempt == attempted)
+        {
+            testAttempt = null;
+            if (succeeded) last = attempted.Text; else holdUntil = 0;
+            return succeeded;
+        }
         if (succeeded) last = attempted.Text;
         else if (attempted.Epoch == epoch && attempted.Text == desired) retry = true;
+        return null;
     }
 }
 
@@ -96,6 +126,8 @@ public sealed class ChatboxOutput : IDisposable
     private Socket? socket;
     private IPEndPoint destination = new(IPAddress.Loopback, 9000);
     public string Status { get; private set; } = "OSC ready · delivery unconfirmed";
+    // A successful local send only means the packet left this PC.
+    public DateTimeOffset? LastSentUtc { get; private set; }
 
     public void Configure(string host, int port)
     {
@@ -105,6 +137,7 @@ public sealed class ChatboxOutput : IDisposable
         socket?.Dispose();
         destination = nextDestination;
         socket = nextSocket;
+        LastSentUtc = null;
         Status = "OSC ready · delivery unconfirmed";
     }
     public bool Send(string text)
@@ -115,6 +148,7 @@ public sealed class ChatboxOutput : IDisposable
             var packet = ChatboxFormatter.Packet(text);
             if (socket.SendTo(packet, destination) != packet.Length) return false;
             Status = "OSC sent · delivery unconfirmed";
+            LastSentUtc = DateTimeOffset.UtcNow;
             return true;
         }
         catch (SocketException) { Status = "OSC unavailable · next current line will be attempted"; return false; }

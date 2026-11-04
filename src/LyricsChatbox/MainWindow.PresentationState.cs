@@ -78,5 +78,6 @@ public partial class MainWindow
         var text = !engine.Enabled ? "Output off" : IsOutputPaused(DateTimeOffset.UtcNow) ? "Output paused" : nativeChatbox.Holding ? "Held for VRChat Chatbox" :
             output.Status.StartsWith("OSC unavailable") ? "OSC unavailable · check Settings" : "OSC ready · no delivery receipt";
         if (oscView.ShouldApply(text)) OscText.Text = text;
+        ApplyOscRouteView();
     }
 }

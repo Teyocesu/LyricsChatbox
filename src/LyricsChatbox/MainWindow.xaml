@@ -584,11 +584,25 @@
               <WrapPanel Margin="0,0,0,6"><TextBlock Text="VRChat OSC" Style="{StaticResource SettingsSectionTitle}" Margin="0,0,12,0"/><TextBlock x:Name="DiscoveryStatus" Text="Manual destination" Style="{StaticResource SettingsIndexDetail}" FontSize="13" VerticalAlignment="Center"/></WrapPanel>
               <Grid Style="{StaticResource SettingsRow}">
                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
-                <TextBlock Text="Enable OSC in VRChat and stop competing Chatbox senders. UDP cannot confirm that a message was displayed." Style="{StaticResource Caption}" Margin="0,0,24,0" VerticalAlignment="Center"/>
+                <StackPanel Margin="0,0,24,0" VerticalAlignment="Center">
+                  <TextBlock x:Name="OscRouteText" TextWrapping="Wrap"/>
+                  <TextBlock x:Name="OscLastSendText" Style="{StaticResource Caption}" Margin="0,2,0,0"/>
+                  <TextBlock Text="Enable OSC in VRChat and stop competing Chatbox senders. UDP cannot confirm that a message was displayed." Style="{StaticResource Caption}" Margin="0,6,0,0"/>
+                </StackPanel>
                 <StackPanel Grid.Column="1">
                   <TextBlock x:Name="OscDestinationText" FontFamily="Cascadia Mono, Consolas" FontSize="16" FontWeight="SemiBold" TextAlignment="Right" Margin="0,0,0,8"/>
                   <Button x:Name="DiscoverButton" Content="Find destination now" Click="DiscoverNow" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right"/>
                 </StackPanel>
+              </Grid>
+              <Border Style="{StaticResource PanelSeparator}"/>
+              <Grid Style="{StaticResource SettingsRow}">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,24,0">
+                  <TextBlock Text="Send test message"/>
+                  <TextBlock Text="Sends “LyricsChatbox test message” once, following the normal output rules: Output on, not paused and not held. It shows for 3 seconds, then normal output resumes." Style="{StaticResource Caption}" Margin="0,2,0,0"/>
+                  <TextBlock x:Name="OscTestStatus" Style="{StaticResource Caption}" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite"/>
+                </StackPanel>
+                <Button x:Name="SendTestButton" Grid.Column="1" Content="Send test" Click="SendOscTest" HorizontalAlignment="Right" VerticalAlignment="Center" AutomationProperties.Name="Send one OSC test message"/>
               </Grid>
               <Border Style="{StaticResource PanelSeparator}"/>
               <CheckBox x:Name="AutoOscBox" Content="Discover local VRChat with OSCQuery" Checked="DiscoveryModeChanged" Unchecked="DiscoveryModeChanged" Style="{StaticResource SettingsToggle}" Margin="0,10"/>

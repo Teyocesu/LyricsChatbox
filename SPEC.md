@@ -21,7 +21,7 @@ Four final improvements complete v1.0.0. They add no new providers, playback sou
 
 ### OSC status and Send test
 
-- Settings → VRChat OSC shows where output is sent and how that destination was chosen: found with OSCQuery, explicitly set manually, VRChat not detected while automatic (sending to the configured address), or destination unavailable. It never says connected, and it never claims VRChat received or displayed anything.
+- Settings → VRChat OSC shows where output is actually sent, from the destination the socket uses, and how that destination was chosen: found with OSCQuery, explicitly set manually, VRChat not detected while automatic (sending to the configured address), or destination unavailable. It never says connected, and it never claims VRChat received or displayed anything.
 - It shows the time of the last successful local UDP send in this session, or that nothing was sent yet. A successful send means only that the packet left this computer.
 - Send test queues one short fixed message, `LyricsChatbox test message`, after a deliberate click. It goes through the existing scheduler, destination and socket, so the 1.05-second pacing, current destination and receiver changes apply. It is refused while Output is off, explicitly paused or held by Native Chatbox Protection, and a queued test is cancelled if any of those start before it leaves. The test stays visible for 3 seconds, then normal output resumes and the current text is resent; when there is no current text the Chatbox is cleared. Lyrics, profiles, rotation and pause state are never changed. One click sends at most one test, there is no repetition or background testing, and failures are reported plainly.
 

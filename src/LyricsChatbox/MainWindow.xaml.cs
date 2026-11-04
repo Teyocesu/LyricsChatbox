@@ -209,9 +209,11 @@ public partial class MainWindow : Window
         var visible = ChatboxFormatter.Visible(previewAnalysis.Payload);
         ApplyPreviewView(visible, preserveLayout, showContext, previewAnalysis.Limit, floating);
         var outputEligible = OutputEligibility.CanSend(engine.Enabled, outputBlocked);
+        CancelBlockedOscTest(nowUtc);
         scheduler.Set(engine.Epoch, desired, outputEligible, floating, preserveLayout);
-        if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && outputEligible)
-            scheduler.Complete(packet, output.Send(packet.Text));
+        if (scheduler.Take(now) is { } packet && packet.Epoch == engine.Epoch && outputEligible &&
+            scheduler.Complete(packet, output.Send(packet.Text)) is { } tested)
+            ReportOscTest(tested);
         ApplyOscView();
         ApplyNativeChatboxView(now);
     }
