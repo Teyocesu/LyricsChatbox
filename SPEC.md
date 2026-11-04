@@ -1,5 +1,35 @@
 # LyricsChatbox
 
+## v1.0.0 normative final features contract
+
+Four final improvements complete v1.0.0. They add no new providers, playback sources, network services or visual system, and every other contract in this document stays in force. Chrome and YouTube are out of scope, Floating stays unavailable, and Manual messaging and Quick Messages stay removed.
+
+### Guided bug report
+
+- About → Project & tools → Report Issue opens a compact guide window in the Instrumento style instead of opening GitHub directly. The guide explains the steps, collects What happened, What you expected and Steps to reproduce in plain text boxes, and explains how to add a screenshot manually to the GitHub issue. Nothing is captured automatically.
+- Diagnostics come only from the existing sanitized export. They are excluded from the report until the user ticks Include diagnostics. Review diagnostics shows the exact text read-only, and Copy diagnostics copies it.
+- Copy report puts a structured Markdown report on the clipboard: the three answers, the app version and Windows version, and diagnostics only when included. Copy report and open GitHub copies the same report and then opens the official new-issue page through the existing allowlisted link handler. The report never travels in the URL, nothing is uploaded, and no account, backend or telemetry exists.
+- Don't show this guide again is an optional preference, saved as `SkipReportGuide` in `settings.json` and defaulting to off for older files. While it is on, Report Issue opens the new-issue page directly, and an Open report guide button stays in the same row so the guide can always be reopened and the preference turned off.
+- The guide is fully keyboard operable: logical Tab order, visible focus, Escape closes it, and focus returns to Report Issue.
+
+### Recent decorations
+
+- The Decorations picker gains a Recent view after Favorites, superseding the v0.7.0 exact navigation list and its exclusion of a recently-used subsystem. It lists the last 16 successfully inserted items, most recent first, without duplicates; reinserting an item moves it to the front. Popular stays the opening view.
+- Only a completed insertion into the editor updates Recent. Previewing, selecting, favoriting, cancelling, closing and insertions refused for lack of editor space do not.
+- `decorations.json` stores the IDs only, as `RecentIds`, capped at 16 valid unique IDs. Built-in and My item IDs are both allowed. Missing IDs, including deleted My items, are skipped when shown, and deleting a My item also removes it from Recent.
+- Older files without `RecentIds` stay readable as an empty Recent. An invalid `RecentIds` list is discarded on read without discarding Favorites or My items. The existing 256 KiB file limit, atomic writes and catalog stay unchanged. Rolling back to v0.7.0 ignores and later drops Recent.
+
+### OSC status and Send test
+
+- Settings → VRChat OSC shows where output is sent and how that destination was chosen: found with OSCQuery, explicitly set manually, VRChat not detected while automatic (sending to the configured address), or destination unavailable. It never says connected, and it never claims VRChat received or displayed anything.
+- It shows the time of the last successful local UDP send in this session, or that nothing was sent yet. A successful send means only that the packet left this computer.
+- Send test queues one short fixed message, `LyricsChatbox test message`, after a deliberate click. It goes through the existing scheduler, destination and socket, so the 1.05-second pacing, current destination and receiver changes apply. It is refused while Output is off, explicitly paused or held by Native Chatbox Protection, and a queued test is cancelled if any of those start before it leaves. The test stays visible for 3 seconds, then normal output resumes and the current text is resent; when there is no current text the Chatbox is cleared. Lyrics, profiles, rotation and pause state are never changed. One click sends at most one test, there is no repetition or background testing, and failures are reported plainly.
+
+### Accessibility and keyboard
+
+- Shell, Home, Display, Settings, About, Decorations, the bug report guide and the OSC controls keep a logical Tab order, visible keyboard focus, Enter or Space activation, meaningful accessible names, no needless keyboard stops, and focus restoration after dialogs, including at 820x650.
+- No action may sit under the 36-DIP caption band or be reachable only by scrolling behind window controls. Rename at 820x650 is checked against this rule and fixed with the smallest layout or focus change only if it fails.
+
 ## v1.0.0 normative visual contract — Instrumento
 
 Instrumento is the visual direction of v1.0.0. It treats the app as a precise instrument: a dark workspace organized by proximity, alignment and 1-pixel separators. It changes presentation only. Every behavior, persistence rule, privacy statement and safety contract in this document stays in force.

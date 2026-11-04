@@ -32,8 +32,11 @@ public partial class MainWindow
             { Owner = this };
         try
         {
-            if (picker.ShowDialog() == true && picker.SelectedContent is { } content)
-                ApplyDecorationInsertion(target, content);
+            // Recent changes only after the editor accepted the insertion.
+            if (picker.ShowDialog() == true && picker.SelectedContent is { } content &&
+                ApplyDecorationInsertion(target, content) && picker.SelectedId is { } id &&
+                decorationState.RecordInserted(id) is { } recorded)
+                _ = SaveDecorationState(recorded);
         }
         finally { target.Focus(); }
     }
@@ -64,12 +67,13 @@ public partial class MainWindow
         return TextInsertion.Preview(insertion, Compose(insertion.Text), floating, currentRawOutput: Compose(target.Text));
     }
 
-    private void ApplyDecorationInsertion(TextBox target, string content)
+    private bool ApplyDecorationInsertion(TextBox target, string content)
     {
         var result = TextInsertion.Insert(target.Text, target.SelectionStart, target.SelectionLength, target.MaxLength, content);
-        if (!result.CanInsert) { SetError("Not enough editor space for this item."); return; }
+        if (!result.CanInsert) { SetError("Not enough editor space for this item."); return false; }
         target.Text = result.Text;
         target.Select(result.CaretIndex, 0);
         ClearError();
+        return true;
     }
 }

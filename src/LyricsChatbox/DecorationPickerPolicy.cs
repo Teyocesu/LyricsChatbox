@@ -2,7 +2,7 @@ namespace LyricsChatbox;
 
 public enum DecorationNavigation
 {
-    Favorites, Popular, Symbols, TextArt, Kaomoji, Dividers, Frames, Hearts, Music, Status, MyItems
+    Favorites, Recent, Popular, Symbols, TextArt, Kaomoji, Dividers, Frames, Hearts, Music, Status, MyItems
 }
 
 public enum DecorationPresentation { Dense, Compact, Wide, Art }
@@ -16,6 +16,7 @@ public static class DecorationPickerPolicy
     public static readonly IReadOnlyList<DecorationNavigationOption> Options = Array.AsReadOnly(new[]
     {
         new DecorationNavigationOption(DecorationNavigation.Favorites, "Favorites"),
+        new DecorationNavigationOption(DecorationNavigation.Recent, "Recent"),
         new DecorationNavigationOption(DecorationNavigation.Popular, "Popular"),
         new DecorationNavigationOption(DecorationNavigation.Symbols, "Symbols"),
         new DecorationNavigationOption(DecorationNavigation.TextArt, "Text Art"),
@@ -47,9 +48,12 @@ public static class DecorationPickerPolicy
         else
         {
             var matches = library.Search(query).Select(item => item.Id).ToHashSet(StringComparer.Ordinal);
-            entries = mode == DecorationNavigation.Favorites
-            ? library.Favorites.Where(item => matches.Contains(item.Id)).ToArray()
-            : library.Items.Where(item => IsUserItem(item) && matches.Contains(item.Id)).ToArray();
+            entries = mode switch
+            {
+                DecorationNavigation.Favorites => library.Favorites.Where(item => matches.Contains(item.Id)).ToArray(),
+                DecorationNavigation.Recent => library.Recents.Where(item => matches.Contains(item.Id)).ToArray(),
+                _ => library.Items.Where(item => IsUserItem(item) && matches.Contains(item.Id)).ToArray()
+            };
         }
         if (group is not null) entries = entries.Where(item => item.Group == group);
         if (fits is not null) entries = entries.Where(fits);
@@ -71,12 +75,13 @@ public static class DecorationPickerPolicy
 
     public static string EmptyMessage(DecorationNavigation mode, string? query, bool catalogAvailable)
     {
-        if (!catalogAvailable && mode is not (DecorationNavigation.Favorites or DecorationNavigation.MyItems))
+        if (!catalogAvailable && mode is not (DecorationNavigation.Favorites or DecorationNavigation.Recent or DecorationNavigation.MyItems))
             return "Built-in decorations are unavailable.";
         if (!string.IsNullOrWhiteSpace(query)) return "No decorations found.";
         return mode switch
         {
             DecorationNavigation.Favorites => "Favorite items to find them here.",
+            DecorationNavigation.Recent => "Items you insert appear here.",
             DecorationNavigation.MyItems => "Save your own symbols or text art here.",
             _ => "No decorations found."
         };

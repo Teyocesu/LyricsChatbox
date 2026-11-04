@@ -809,3 +809,27 @@ The owner accepted About, so all four main pages are accepted. Logo and Decorati
 - Evidence: Release build 0 warnings, 578/578 tests, isolated Decorations harness 37/37, ICO frames byte-identical to the PNGs, deterministic regeneration, executable icon pixel-identical to the new 32 px frame, all 256 new glyphs render in WPF with Cascadia Mono/Consolas fallback.
 - Observed, not optimized: switching to Symbols with all 328 items takes about 330 ms warm and 604 ms on first open in the isolated harness, because the dense grid is not virtualized. No virtualization or refactor until physical QA shows the delay matters.
 - Pending physical QA: WPF PASS does not imply VRChat PASS. Rendering of the new symbols in the real VRChat Chatbox and perceived Symbols latency are unverified.
+
+## Final features, two phases (2026-11-04)
+
+Baseline `84b0cf6` on `dev/v1.0.0`, 11 local commits ahead of origin, clean worktree. Product version stays 0.7.0.
+
+### Phase 1, user experience and support
+
+- Guided bug report: new `BugReportWindow` with a pure `BugReport` builder; `MainWindow.About.cs` decides guide or direct link from `SkipReportGuide`; reuses `Diagnostics.Export` and `ExternalLinks.TryOpen`.
+- Recent decorations: `DecorationState.RecentIds` with `RecordInserted`, read-time normalization in `LocalData`, `DecorationLibrary.Recents`, a Recent navigation option, and recording only after `ApplyDecorationInsertion` succeeds.
+- Failure modes to cover: old files without Recent, invalid Recent wiping Favorites or My items, MRU order and dedupe, cap, preview or cancel updating Recent, deleted My items, the report carrying diagnostics without opt-in, the report in the URL, and the skip preference losing the way back.
+
+### Phase 1 evidence (2026-11-04)
+
+- Release build 0 warnings, 586/586 tests (578 plus 8 new: Recent order, cap, delete and old or invalid files; report composition, cleaning and the skip preference). A mutation that removed the read-time Recent normalization failed 3 of 4 isolation cases.
+- Isolated native harness 452/452 on the full run, plus 106/106 for About and the guide after the row fix. It covered: the guide opening without navigating or copying, Copy report without diagnostics, Review and Copy diagnostics, opt-in diagnostics with Copy and open on the plain issue URL, tab order, focus rings, 720x660 and 600x520 in Rose and Blue, Escape, focus return, the skip preference with direct GitHub and Open report guide, and Recent order, dedupe, persistence and no change on preview, favorite or cancel.
+- Render comparison against the approved set: About identical after the Report Issue row's first row became star-sized; a 2-pixel shift from two Auto rows was caught and fixed. The remaining differences are the Status clock digit and harness state in the status bar.
+- Not physically tested: clipboard paste into a real GitHub issue, the real browser opening, Narrator reading the guide.
+
+### Phase 2, OSC and final quality
+
+- OSC status from existing selection state plus a last-send time on `ChatboxOutput`. Send test is a one-shot request inside `ChatboxScheduler`, gated by `OutputEligibility` and shown for 3 seconds before normal output resumes.
+- Accessibility pass on every page, the guide and the OSC controls, at 1448x990 and 820x650, including Rename.
+- Failure modes to cover: a test bypassing pacing, Off, Pause or hold; a test retrying automatically; a test leaving stale text; a lost lyric resend after the test; status claiming delivery.
+- Integrated gates: locked restore, Release build, focused and full tests, package policy, diff review, isolated native harness. Physical QA is recorded as not tested unless the owner performs it.

@@ -133,7 +133,7 @@ public sealed class DecorationPickerTests : IDisposable
             Entry("frame-box", "Box", "Frame", "[]"), Entry("heart-one", "Heart", "Heart", "♡"),
             Entry("music-note", "Note", "Music", "♪"), Entry("status-ready", "Ready", "Status", "Ready")]);
         var user = new UserDecoration("user-00000000000000000000000000000001", "My star", "Symbol", "✦");
-        var state = new DecorationState(1, ["status-ready", user.Id, "symbol-star"], [user]);
+        var state = new DecorationState(1, ["status-ready", user.Id, "symbol-star"], [user], ["music-note", "symbol-missing", user.Id]);
         var library = DecorationLibrary.Create(catalog, state);
 
         Assert.Equal(new[] { "symbol-star" }, Ids(library, DecorationNavigation.Popular));
@@ -147,9 +147,10 @@ public sealed class DecorationPickerTests : IDisposable
         Assert.Equal(new[] { "status-ready" }, Ids(library, DecorationNavigation.Status));
         Assert.Equal(new[] { "status-ready", user.Id, "symbol-star" }, Ids(library, DecorationNavigation.Favorites));
         Assert.Equal(new[] { user.Id }, Ids(library, DecorationNavigation.MyItems));
+        Assert.Equal(new[] { "music-note", user.Id }, Ids(library, DecorationNavigation.Recent));
         Assert.Equal(new[]
         {
-            DecorationNavigation.Favorites, DecorationNavigation.Popular, DecorationNavigation.Symbols,
+            DecorationNavigation.Favorites, DecorationNavigation.Recent, DecorationNavigation.Popular, DecorationNavigation.Symbols,
             DecorationNavigation.TextArt, DecorationNavigation.Kaomoji, DecorationNavigation.Dividers,
             DecorationNavigation.Frames, DecorationNavigation.Hearts, DecorationNavigation.Music, DecorationNavigation.Status
         }, DecorationPickerPolicy.Options.Select(option => option.Mode));

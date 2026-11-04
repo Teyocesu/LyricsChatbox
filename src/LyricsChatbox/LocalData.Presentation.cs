@@ -20,7 +20,7 @@ public sealed partial class LocalData
     }
     public DecorationState ReadDecorationState()
     {
-        var state = Read<DecorationState>(Path.Combine(Root, "decorations.json"), DecorationBytes);
+        var state = Read<DecorationState>(Path.Combine(Root, "decorations.json"), DecorationBytes)?.WithReadableRecents();
         return state is { IsValid: true } ? state : DecorationState.Empty;
     }
     public bool SaveDecorationState(DecorationState state) => state.IsValid && WritePresentation("decorations.json", state, DecorationBytes);

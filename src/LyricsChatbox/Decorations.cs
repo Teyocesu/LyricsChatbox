@@ -97,17 +97,30 @@ public sealed record UserDecoration(string Id, string Name, string Kind, string 
 }
 
 public sealed record DecorationState(int Version = 1, IReadOnlyList<string>? FavoriteIds = null,
-    IReadOnlyList<UserDecoration>? MyItems = null)
+    IReadOnlyList<UserDecoration>? MyItems = null, IReadOnlyList<string>? RecentIds = null)
 {
     public const int MaximumFavorites = 128;
     public const int MaximumMyItems = 64;
+    public const int MaximumRecents = 16;
 
-    public static DecorationState Empty => new(1, [], []);
+    public static DecorationState Empty => new(1, [], [], []);
 
+    // Files written before Recent have no RecentIds, which reads as an empty list.
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsValid => Version == 1 && FavoriteIds is { Count: <= MaximumFavorites } && MyItems is { Count: <= MaximumMyItems } &&
         FavoriteIds.All(LocalContentValidation.ValidId) && FavoriteIds.Distinct(StringComparer.Ordinal).Count() == FavoriteIds.Count &&
-        MyItems.All(item => item is { IsValid: true }) && MyItems.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count() == MyItems.Count;
+        MyItems.All(item => item is { IsValid: true }) && MyItems.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count() == MyItems.Count &&
+        (RecentIds is null || RecentIds.Count <= MaximumRecents && RecentIds.All(LocalContentValidation.ValidId) &&
+            RecentIds.Distinct(StringComparer.Ordinal).Count() == RecentIds.Count);
+
+    // An invalid Recent list is dropped on read so it can never cost the user their Favorites or My items.
+    public DecorationState WithReadableRecents() => IsValid || RecentIds is null ? this : this with { RecentIds = null };
+
+    public DecorationState? RecordInserted(string id)
+    {
+        if (!IsValid || !LocalContentValidation.ValidId(id)) return null;
+        return this with { RecentIds = new[] { id }.Concat((RecentIds ?? []).Where(item => item != id)).Take(MaximumRecents).ToArray() };
+    }
 
     public DecorationState? Favorite(string id)
     {
@@ -143,7 +156,8 @@ public sealed record DecorationState(int Version = 1, IReadOnlyList<string>? Fav
         return this with
         {
             MyItems = items.Where(item => item.Id != id).ToArray(),
-            FavoriteIds = FavoriteIds!.Where(favorite => favorite != id).ToArray()
+            FavoriteIds = FavoriteIds!.Where(favorite => favorite != id).ToArray(),
+            RecentIds = RecentIds?.Where(recent => recent != id).ToArray()
         };
     }
 }
@@ -152,9 +166,10 @@ public sealed class DecorationLibrary
 {
     public IReadOnlyList<DecorationEntry> Items { get; }
     public IReadOnlyList<DecorationEntry> Favorites { get; }
+    public IReadOnlyList<DecorationEntry> Recents { get; }
 
-    private DecorationLibrary(IReadOnlyList<DecorationEntry> items, IReadOnlyList<DecorationEntry> favorites) =>
-        (Items, Favorites) = (items, favorites);
+    private DecorationLibrary(IReadOnlyList<DecorationEntry> items, IReadOnlyList<DecorationEntry> favorites,
+        IReadOnlyList<DecorationEntry> recents) => (Items, Favorites, Recents) = (items, favorites, recents);
 
     public static DecorationLibrary Create(DecorationCatalog catalog, DecorationState state)
     {
@@ -162,7 +177,8 @@ public sealed class DecorationLibrary
         var items = catalog.Items.Concat(state.MyItems!.Select(item => item.ToEntry())).ToArray();
         var byId = items.ToDictionary(item => item.Id, StringComparer.Ordinal);
         var favorites = state.FavoriteIds!.Where(byId.ContainsKey).Select(id => byId[id]).ToArray();
-        return new(Array.AsReadOnly(items), Array.AsReadOnly(favorites));
+        var recents = (state.RecentIds ?? []).Where(byId.ContainsKey).Select(id => byId[id]).ToArray();
+        return new(Array.AsReadOnly(items), Array.AsReadOnly(favorites), Array.AsReadOnly(recents));
     }
 
     public IReadOnlyList<DecorationEntry> Search(string? query = null, string? kind = null, bool popularOnly = false)

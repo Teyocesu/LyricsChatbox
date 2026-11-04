@@ -28,6 +28,7 @@ public partial class DecorationPicker : Window
     private bool refreshingGroups;
 
     public string? SelectedContent { get; private set; }
+    public string? SelectedId { get; private set; }
 
     public DecorationPicker(DecorationCatalog catalog, DecorationState state, DecorationLibrary library,
         Func<DecorationState, bool> saveState, Func<string, DecorationInsertionPreview> preview,
@@ -141,6 +142,7 @@ public partial class DecorationPicker : Window
         var result = PreviewFor(item.Entry);
         if (!result.CanInsert) { MutationStatus.Text = "Not enough editor space for this item."; return; }
         SelectedContent = item.Entry.Content;
+        SelectedId = item.Entry.Id;
         DialogResult = true;
     }
 

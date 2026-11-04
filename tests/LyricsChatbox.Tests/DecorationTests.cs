@@ -202,11 +202,53 @@ public sealed class DecorationTests : IDisposable
         Assert.False(File.Exists(Path.Combine(root, "decorations.json")));
 
         var item = UserDecoration.Create("Unicode", "Music", "日本語 🎵")!;
-        var saved = DecorationState.Empty.AddMyItem(item)!.Favorite("symbol-star-outline")!.Favorite(item.Id)!;
+        var saved = DecorationState.Empty.AddMyItem(item)!.Favorite("symbol-star-outline")!.Favorite(item.Id)!
+            .RecordInserted("symbol-star-outline")!.RecordInserted(item.Id)!;
         Assert.True(data.SaveDecorationState(saved));
         var restored = data.ReadDecorationState();
         Assert.Equal(saved.FavoriteIds, restored.FavoriteIds);
         Assert.Equal(saved.MyItems, restored.MyItems);
+        Assert.Equal(new[] { item.Id, "symbol-star-outline" }, restored.RecentIds);
+    }
+
+    [Fact]
+    public void RecentsAreMostRecentFirstDeduplicatedBoundedAndForgetDeletedItems()
+    {
+        var item = UserDecoration.Create("Mine", "Symbol", "✦")!;
+        var state = DecorationState.Empty.AddMyItem(item)!;
+        foreach (var i in Enumerable.Range(0, 20)) state = state.RecordInserted("symbol-" + i)!;
+        Assert.Equal(Enumerable.Range(4, 16).Reverse().Select(i => "symbol-" + i), state.RecentIds);
+
+        state = state.RecordInserted("symbol-10")!.RecordInserted(item.Id)!;
+        Assert.Equal(new[] { item.Id, "symbol-10", "symbol-19", "symbol-18" }, state.RecentIds!.Take(4));
+        Assert.Equal(DecorationState.MaximumRecents, state.RecentIds!.Count);
+        Assert.Single(state.RecentIds!, id => id == "symbol-10");
+        Assert.Null(state.RecordInserted("bad id"));
+
+        state = state.DeleteMyItem(item.Id)!;
+        Assert.DoesNotContain(item.Id, state.RecentIds!);
+        Assert.True(state.IsValid);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("\"RecentIds\":[\"a\",\"a\"],")]
+    [InlineData("\"RecentIds\":[\"bad id\"],")]
+    [InlineData("\"RecentIds\":[\"r0\",\"r1\",\"r2\",\"r3\",\"r4\",\"r5\",\"r6\",\"r7\",\"r8\",\"r9\",\"r10\",\"r11\",\"r12\",\"r13\",\"r14\",\"r15\",\"r16\"],")]
+    public void OlderOrInvalidRecentsNeverCostFavoritesOrMyItems(string? recents)
+    {
+        Directory.CreateDirectory(root);
+        var user = UserId(1);
+        File.WriteAllText(Path.Combine(root, "decorations.json"), "{\"Version\":1," + recents +
+            "\"FavoriteIds\":[\"symbol-star-outline\"],\"MyItems\":[{\"Id\":\"" + user + "\",\"Name\":\"Mine\",\"Kind\":\"Symbol\",\"Content\":\"✦\"}]}");
+
+        var state = new LocalData(root).ReadDecorationState();
+
+        Assert.True(state.IsValid);
+        Assert.Equal(new[] { "symbol-star-outline" }, state.FavoriteIds);
+        Assert.Equal(user, Assert.Single(state.MyItems!).Id);
+        Assert.Null(state.RecentIds);
+        Assert.Equal(new[] { "symbol-star-outline" }, state.RecordInserted("symbol-star-outline")!.RecentIds);
     }
 
     [Fact]
@@ -218,7 +260,9 @@ public sealed class DecorationTests : IDisposable
             .Select(i => new UserDecoration(UserId(i), name, "TextArt", content)).ToArray();
         var favorites = Enumerable.Range(0, DecorationState.MaximumFavorites)
             .Select(i => ("favorite-" + i.ToString("D3")).PadRight(64, 'x')).ToArray();
-        var state = new DecorationState(1, favorites, items);
+        var recents = Enumerable.Range(0, DecorationState.MaximumRecents)
+            .Select(i => ("recent-" + i.ToString("D3")).PadRight(64, 'x')).ToArray();
+        var state = new DecorationState(1, favorites, items, recents);
 
         Assert.True(state.IsValid);
         Assert.True(new LocalData(root).SaveDecorationState(state));

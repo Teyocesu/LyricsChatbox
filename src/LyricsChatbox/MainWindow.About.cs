@@ -13,6 +13,14 @@ public partial class MainWindow
         AboutVersionText.Text = ProductIdentity.DisplayVersion;
         UpdateCurrentVersion.Text = ProductIdentity.DisplayVersion;
         UpdateLastChecked.Text = "Not checked yet";
+        ApplyReportGuideView();
+    }
+
+    private void ApplyReportGuideView()
+    {
+        ReportGuideButton.Visibility = settings.SkipReportGuide ? Visibility.Visible : Visibility.Collapsed;
+        System.Windows.Automation.AutomationProperties.SetName(ReportIssueButton,
+            settings.SkipReportGuide ? "Report an issue on GitHub" : "Open the issue report guide");
     }
 
     private void OpenAboutLink(string url, TextBlock status)
@@ -25,7 +33,28 @@ public partial class MainWindow
     private void OpenVrChatProfile(object sender, RoutedEventArgs e) => OpenAboutLink(ProductIdentity.VrChatProfileUrl, CommunityStatus);
     private void ViewRepository(object sender, RoutedEventArgs e) => OpenAboutLink(ProductIdentity.Repository, ProjectStatus);
     private void ViewReleases(object sender, RoutedEventArgs e) => OpenAboutLink(ProductIdentity.ReleasesUrl, ProjectStatus);
-    private void ReportIssue(object sender, RoutedEventArgs e) => OpenAboutLink(ProductIdentity.ReportIssueUrl, ProjectStatus);
+    private void ReportIssue(object sender, RoutedEventArgs e)
+    {
+        if (settings.SkipReportGuide) OpenAboutLink(ProductIdentity.ReportIssueUrl, ProjectStatus);
+        else OpenReportGuide(sender, e);
+    }
+
+    private void OpenReportGuide(object sender, RoutedEventArgs e)
+    {
+        ProjectStatus.Text = "";
+        var guide = new BugReportWindow(DiagnosticText, settings.SkipReportGuide) { Owner = this };
+        try { guide.ShowDialog(); }
+        finally
+        {
+            if (guide.SkipGuide != settings.SkipReportGuide)
+            {
+                settings = settings with { SkipReportGuide = guide.SkipGuide };
+                Save();
+                ApplyReportGuideView();
+            }
+            (sender is UIElement { IsVisible: true } origin ? origin : ReportIssueButton).Focus();
+        }
+    }
     private void CopyDiscordName(object sender, RoutedEventArgs e)
     {
         try
