@@ -14,6 +14,8 @@ public partial class MainWindow
     private OscDestination? configuredDestination;
     private bool destinationUnavailable;
     private bool oscTestQueued;
+    // Text left once the shown refusal no longer applies; null when no refusal is shown.
+    private string? oscTestBlockNote;
 
     private string? OscTestBlockReason(DateTimeOffset nowUtc) =>
         !engine.Enabled ? "Turn Output on to send a test."
@@ -24,24 +26,30 @@ public partial class MainWindow
     // Only a click queues a test. It uses the normal scheduler, so pacing, eligibility and the destination all apply.
     private void SendOscTest(object sender, RoutedEventArgs e)
     {
-        if (OscTestBlockReason(DateTimeOffset.UtcNow) is { } blocked) { OscTestStatus.Text = blocked; return; }
+        if (OscTestBlockReason(DateTimeOffset.UtcNow) is { } blocked) { OscTestStatus.Text = blocked; oscTestBlockNote = ""; return; }
         if (oscTestQueued) { OscTestStatus.Text = "A test is already waiting to be sent."; return; }
         if (!scheduler.RequestTest(FloatingCompatibility.Effective(settings.Compact))) { OscTestStatus.Text = "Output is not ready yet. Try again."; return; }
         oscTestQueued = true;
+        oscTestBlockNote = null;
         OscTestStatus.Text = "Sending test…";
         Tick();
     }
 
     private void CancelBlockedOscTest(DateTimeOffset nowUtc)
     {
-        if (!oscTestQueued || OscTestBlockReason(nowUtc) is not { } blocked) return;
+        var blocked = OscTestBlockReason(nowUtc);
+        // A refusal's instruction stops being true once its condition ends; keep only the outcome.
+        if (blocked is null && oscTestBlockNote is { } outcome) { OscTestStatus.Text = outcome; oscTestBlockNote = null; }
+        if (!oscTestQueued || blocked is null) return;
         scheduler.CancelTest(); oscTestQueued = false;
         OscTestStatus.Text = "Test not sent. " + blocked;
+        oscTestBlockNote = "Test not sent.";
     }
 
     private void ReportOscTest(bool sent)
     {
         oscTestQueued = false;
+        oscTestBlockNote = null;
         OscTestStatus.Text = sent
             ? "Test sent from this PC at " + DateTime.Now.ToString("T") + ". Check VRChat to see whether it appeared."
             : "Test could not be sent from this PC. Check the destination.";
