@@ -40,7 +40,7 @@ public sealed class OscDiscovery(HttpClient http, Func<CancellationToken, Task<I
         {
             var candidates = (await browse(deadline.Token)).Where(s => IsVrchatName(s.Name) && s.QueryPort is > 0 and <= 65535 &&
                 IPAddress.TryParse(s.Address, out var ip) && IPAddress.IsLoopback(ip)).Distinct().Take(9).ToArray();
-            if (candidates.Length > 8) return new("Multiple OSCQuery services · using manual destination");
+            if (candidates.Length > 8) return new("Multiple OSCQuery services · using the configured address");
             var destinations = new HashSet<OscDestination>();
             foreach (var service in candidates)
             {
@@ -64,13 +64,13 @@ public sealed class OscDiscovery(HttpClient http, Func<CancellationToken, Task<I
             return destinations.Count switch
             {
                 1 => new("VRChat discovered via OSCQuery", destinations.Single()),
-                > 1 => new("Multiple VRChat destinations · using manual destination"),
-                _ => new("VRChat not discovered · using manual destination")
+                > 1 => new("Multiple VRChat destinations · using the configured address"),
+                _ => new("VRChat not discovered · using the configured address")
             };
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is not OutOfMemoryException)
-        { return new("OSCQuery unavailable · using manual destination"); }
+        { return new("OSCQuery unavailable · using the configured address"); }
     }
     private async Task<JsonDocument> ReadAsync(Uri uri, CancellationToken token)
     {

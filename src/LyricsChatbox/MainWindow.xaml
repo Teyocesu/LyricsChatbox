@@ -139,7 +139,7 @@
       <Setter Property="Margin" Value="0,2,0,0"/>
       <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
       <Style.Triggers>
-        <Trigger Property="Text" Value="VRChat not discovered · using manual destination"><Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/></Trigger>
+        <Trigger Property="Text" Value="VRChat not discovered · using the configured address"><Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/></Trigger>
         <Trigger Property="Text" Value="OSC destination unavailable · check manual settings"><Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/></Trigger>
       </Style.Triggers>
     </Style>
