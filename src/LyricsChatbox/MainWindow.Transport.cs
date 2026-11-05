@@ -52,8 +52,8 @@ public partial class MainWindow
             currentMusicVolume = volume;
             var enabled = volume is not null;
             if (MusicVolumeSlider.IsEnabled != enabled) MusicVolumeSlider.IsEnabled = enabled;
-            var player = playback.ActiveKind == PlaybackSourceKind.Spotify ? "Spotify" : "Apple Music";
-            var tooltip = enabled ? player + " volume" : player + " audio session unavailable";
+            var player = playback.ActiveKind switch { PlaybackSourceKind.Spotify => "Spotify", PlaybackSourceKind.AppleMusic => "Apple Music", _ => null };
+            var tooltip = player is null ? "Music volume unavailable" : enabled ? player + " volume" : player + " audio session unavailable";
             if (!Equals(MusicVolumeSlider.ToolTip, tooltip)) MusicVolumeSlider.ToolTip = tooltip;
             if (volume is not null && !MusicVolumeSlider.IsMouseCaptureWithin && !MusicVolumeSlider.IsKeyboardFocusWithin)
             {
