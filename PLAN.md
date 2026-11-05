@@ -851,3 +851,8 @@ Baseline `84b0cf6` on `dev/v1.0.0`, 11 local commits ahead of origin, clean work
 - Fixed: volume help text named Apple Music with no source (`b909555`); Send test refusal text stayed after its condition ended (`7a223e3`); discovery fallbacks said "using manual destination" in automatic mode (`1a182dd`).
 - Gates at `1a182dd`: locked restore, Release build 0/0, 590/590 tests, package policy, publish with package verification (506 files), no lock-file drift, diff check.
 - Still required physically: Apple Music and Spotify playback, synchronized lyrics, Lyric Context, candidate search, LRC import and recovery; non-100% DPI; Narrator; tray menu and Output menu; restore from a taskbar click; startup options; updater; Custom accent and color picker; new symbols in the real Chatbox. PCVR stays waived.
+### Owner acceptance and release candidate (2026-11-05)
+
+- Owner-verified physical QA (the owner's explicit confirmation; no new screenshots or measurements recorded): Apple Music and Spotify playback, synchronized lyrics and Lyric Context, Native Chatbox Protection with playback, window scaling and layout, keyboard and accessibility, tray and Windows behavior, and the other pending acceptance checks all passed.
+- Evidence levels stay separate: agent-performed physical QA (section above, external QA report), owner-verified physical QA (this entry), automated tests, source inspection, and the isolated harness (simulated). PCVR integration remains unverified by owner waiver.
+- Release preparation: version 1.0.0 in `LyricsChatbox.csproj` (single source for app, About, diagnostics, updater, ZIP and installer), version tests updated, README and `docs/RELEASE-NOTES-v1.0.0.md`. Remote CI on the candidate SHA is pending; nothing pushed, tagged or published.

@@ -2,6 +2,12 @@
 
 A small Windows app that follows Apple Music or Spotify Desktop playback, finds synchronized lyrics, and sends the current line to the VRChat OSC Chatbox. Built with C# / .NET 10 / WPF. No accounts, telemetry, player credentials or backend.
 
+## v1.0.0
+
+Home, Display, Settings and About are redesigned with a new logo and visual system. Decorations add a Recent view and more symbols. Report issue opens a short guide that copies a ready-to-paste report; diagnostics are included only if you choose. Settings → VRChat OSC shows where output goes and how that address was chosen, and **Send test** sends one test message under the normal output rules. Native Chatbox Protection (experimental, off by default) can hold automatic output while you type in VRChat's own Chatbox.
+
+Floating stays temporarily unavailable with saved preferences kept. Manual Chatbox messaging and Quick Messages are removed; manual lyrics matching remains. Existing settings and profiles carry over.
+
 ## v0.7.0
 
 Display now groups profile, composition, lyric context, presentation and preview controls. Custom composition offers insertable token buttons. Status messages appear when the composition uses `{message}`; Lyric Context stays visible and explains when the composition cannot use it.
@@ -115,7 +121,7 @@ To write your own messages, use VRChat's Chatbox. **Settings → Native Chatbox 
 
 Custom/Status messages have **Left**, **Center** and **Right** choices. Center and Right insert ordinary spaces over an approximate 24–48-column block. VRChat's font and wrapping can render this differently; OSC does not provide an exact alignment or rich-text styling command. The layout preview uses a monospaced font to make the transmitted spaces visible, not to promise the same font in VRChat.
 
-**Decorations menu** inserts the selected item at the current caret or replaces the selection in Custom composition or a rotating message. Search, Favorites and My items help find reusable snippets; **Only show items that fit** filters out items that would exceed editor space or truncate the current output. Custom templates can still contain the eight display tokens. Intentional indentation and internal blank lines are preserved; ordinary Lyrics Only / Song + Lyrics formatting stays unchanged. Spaces count toward the 144-unit payload limit. The final formatter preserves complete graphemes and at most nine explicit lines; the manual counter marks trimmed content. Whitespace-only messages still clear the Chatbox.
+**Decorations menu** inserts the selected item at the current caret or replaces the selection in Custom composition or a rotating message. Search, Favorites, Recent and My items help find reusable snippets; **Only show items that fit** filters out items that would exceed editor space or truncate the current output. Custom templates can still contain the eight display tokens. Intentional indentation and internal blank lines are preserved; ordinary Lyrics Only / Song + Lyrics formatting stays unchanged. Spaces count toward the 144-unit payload limit. The final formatter preserves complete graphemes and at most nine explicit lines; the manual counter marks trimmed content. Whitespace-only messages still clear the Chatbox.
 
 ## Secondary lyrics source
 
@@ -159,7 +165,7 @@ dotnet run --project src/LyricsChatbox
 .\scripts\Publish.ps1
 ```
 
-The publish script produces `artifacts/v<version>/win-x64`, a ZIP and SHA256 file, including documentation and third-party license texts. The regression suite covers timeline boundaries, offsets/gaps, pause/resume/seeks, stale lookup epochs, conservative matching, provider failures/cancellation/rate limiting, local persistence corruption and migration, composer tokens, diagnostics, artwork, corrections, matching recovery, themes, profiles, context, ignored recordings, Quick Messages, OSCQuery boundaries and verified downloads. Normal tests do not access Apple Music, live lyrics providers or VRChat.
+The publish script produces `artifacts/v<version>/win-x64`, a ZIP and SHA256 file, including documentation and third-party license texts. The regression suite covers timeline boundaries, offsets/gaps, pause/resume/seeks, stale lookup epochs, conservative matching, provider failures/cancellation/rate limiting, local persistence corruption and migration, composer tokens, diagnostics, artwork, corrections, matching recovery, themes, profiles, context, ignored recordings, OSC route status and Send test, Native Chatbox Protection, OSCQuery boundaries and verified downloads. Normal tests do not access Apple Music, live lyrics providers or VRChat.
 
 For explicit physical diagnostics:
 
