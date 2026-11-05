@@ -61,6 +61,8 @@ public class UpdateTests
     [InlineData("0.6.2", false, "v0.6.1", false)]
     [InlineData("0.6.2", false, "v0.7.0", true)]
     [InlineData("0.7.0", false, "v0.7.0", false)]
+    [InlineData("0.7.0", false, "v1.0.0", true)]
+    [InlineData("1.0.0", false, "v0.7.0", false)]
     public async Task PrereleaseAwareStableComparison(string current, bool prerelease, string latest, bool offered)
     {
         using var http = new HttpClient(new Handler((_, _) => Task.FromResult(Json(latest))));
